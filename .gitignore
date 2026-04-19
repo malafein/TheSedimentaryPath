@@ -1,0 +1,9 @@
+bin/
+obj/
+.vs/
+Releases/
+staging/
+*.user
+*.suo
+screenshots.debug/
+todos/

@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net462</TargetFramework>
+    <AssemblyName>TheSedimentaryPath</AssemblyName>
+    <Description>The Rock provides. The Rock abides. A mod for Totally Normal Rock Enthusiasts</Description>
+    <Version>0.0.11</Version>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <RestoreAdditionalProjectSources>
+      https://nuget.bepinex.dev/v3/index.json
+    </RestoreAdditionalProjectSources>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Analyzers" Version="1.0.8" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" />
+    <PackageReference Include="UnityEngine.Modules" Version="2019.4.31" IncludeAssets="compile" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.44.2" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ServerSync">
+      <HintPath>Libs/ServerSync.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="assembly_valheim">
+      <HintPath>/home/malafein/.local/share/Steam/steamapps/common/Valheim/valheim_Data/Managed/assembly_valheim.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="assembly_guiutils">
+      <HintPath>/home/malafein/.local/share/Steam/steamapps/common/Valheim/valheim_Data/Managed/assembly_guiutils.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="assembly_utils">
+      <HintPath>/home/malafein/.local/share/Steam/steamapps/common/Valheim/valheim_Data/Managed/assembly_utils.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="assembly_postprocessing">
+      <HintPath>/home/malafein/.local/share/Steam/steamapps/common/Valheim/valheim_Data/Managed/assembly_postprocessing.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
