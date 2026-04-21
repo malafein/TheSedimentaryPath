@@ -17,19 +17,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         public static void Prefix(Player __instance, ref Vector3 movedir)
         {
             if (__instance != Player.m_localPlayer) return;
+            if (__instance.IsSitting() || __instance.IsAttached()) return; // Pause physical sway while sitting
 
             float multiplier = MeadCameraEffectPatch.GetDrunkMultiplier(__instance);
             if (multiplier <= 0f) return;
 
             float t = Time.time * SwaySpeed;
             float sway = (Mathf.PerlinNoise(t, 0.8f) - 0.5f) * 2f * MaxSwayInput * multiplier;
-
-            int activeMeads = 0;
-            foreach (var se in __instance.GetSEMan().GetStatusEffects())
-            {
-                if (se is SE_DrunkMead) activeMeads++;
-            }
-            if (activeMeads > 1) sway /= activeMeads;
 
             movedir.x += sway;
             movedir.x = Mathf.Clamp(movedir.x, -1f, 1f);

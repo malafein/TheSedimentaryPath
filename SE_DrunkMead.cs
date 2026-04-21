@@ -39,23 +39,30 @@ namespace malafein.Valheim.TheSedimentaryPath
                 {
                     ZLog.LogWarning($"[TheSedimentaryPath] {name}: SE_Puke not found in ObjectDB");
                 }
+            }
 
-                // Puking purges all OTHER drunk mead effects
-                // TODO: Extend to future meads that don't necessarily cause puke, but should still be purged by puking
-                var effects = player.GetSEMan().GetStatusEffects();
-                for (int i = effects.Count - 1; i >= 0; i--)
-                {
-                    var se = effects[i];
-                    if (se is SE_DrunkMead && se.name != this.name)
-                    {
-                        player.GetSEMan().RemoveStatusEffect(se.name.GetStableHashCode(), quiet: false);
-                    }
-                }
+            // Apply Drunk Effect
+            float tolerance = Mathf.Lerp(2.0f, 0.1f, skillLevel / 100f);
+            float drunkDuration = 600f; // 10 minutes default drunk duration
+
+            var seman = player.GetSEMan();
+            int hash = "SE_Drunk".GetStableHashCode();
+            var seDrunk = seman.GetStatusEffect(hash) as SE_Drunk;
+            
+            if (seDrunk == null)
+            {
+                seDrunk = ScriptableObject.CreateInstance<SE_Drunk>();
+                seDrunk.name = "SE_Drunk";
+                seDrunk.m_name = "Drunk";
+                seDrunk.m_icon = this.m_icon;
+                seman.AddStatusEffect(seDrunk);
+                seDrunk = seman.GetStatusEffect(hash) as SE_Drunk; // Get the added instance
+            }
+            
+            if (seDrunk != null)
+            {
+                seDrunk.AddDrunkInstance(drunkDuration, tolerance);
             }
         }
-
-        // Lateral stumble is applied in Patches.DrunkStumblePatch as an input
-        // modification on Player.SetControls, so the walk animation plays and
-        // the character rotates to face the stumble direction.
     }
 }

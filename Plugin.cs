@@ -10,8 +10,8 @@ namespace malafein.Valheim.TheSedimentaryPath
     public class Plugin : BaseUnityPlugin
     {
         public const string ModGUID = "com.malafein.thesedimentarypath";
-        public const string ModName = "TheSedimentaryPath";
-        public const string ModVersion = "0.0.11";
+        public const string ModName = "The Sedimentary Path";
+        public const string ModVersion = "0.0.12";
 
         public static GameObject HeftyStonePrefab;
         public static GameObject SmoothStonePrefab;
@@ -74,6 +74,15 @@ namespace malafein.Valheim.TheSedimentaryPath
 
         public static Plugin Instance { get; private set; }
 
+        public static ConfigEntry<KeyboardShortcut> ToggleRockeryProximity;
+        public static ConfigEntry<KeyboardShortcut> ToggleVineryProximity;
+
+        public static ConfigEntry<bool> DetectVines;
+        public static ConfigEntry<bool> DetectBerries;
+        public static ConfigEntry<bool> DetectMushrooms;
+        public static ConfigEntry<bool> DetectFieldCrops;
+        public static ConfigEntry<bool> DetectHerbs;
+
         private void Awake()
         {
             Instance = this;
@@ -90,10 +99,21 @@ namespace malafein.Valheim.TheSedimentaryPath
                 "When enabled, sufficiently skilled practitioners may sense nearby harvestable stone.");
             RockeryProximityEffect = ClientConfig("Rockery", "ProximityEffect", true,
                 "When enabled, a deeper mastery of Rockery may unlock an additional sense.");
+            ToggleRockeryProximity = ClientConfig("Rockery", "ToggleHotkey", new KeyboardShortcut(KeyCode.R, KeyCode.LeftAlt),
+                "Hotkey to quickly toggle the Rockery proximity sense on and off.");
+
             VineryProximityAlert = ClientConfig("Vinery", "ProximityAlert", true,
                 "When enabled, sufficiently skilled practitioners may sense nearby harvestable growth.");
             VineryProximityEffect = ClientConfig("Vinery", "ProximityEffect", true,
                 "When enabled, a deeper mastery of Vinery may unlock an additional sense.");
+            ToggleVineryProximity = ClientConfig("Vinery", "ToggleHotkey", new KeyboardShortcut(KeyCode.V, KeyCode.LeftAlt),
+                "Hotkey to quickly toggle the Vinery proximity sense on and off.");
+
+            DetectVines = ClientConfig("Vinery Categories", "DetectVines", true, "Sense Vines and Vineberries.");
+            DetectBerries = ClientConfig("Vinery Categories", "DetectBerries", true, "Sense Raspberries, Blueberries, and Cloudberries.");
+            DetectMushrooms = ClientConfig("Vinery Categories", "DetectMushrooms", true, "Sense all types of Mushrooms.");
+            DetectFieldCrops = ClientConfig("Vinery Categories", "DetectFieldCrops", true, "Sense agricultural crops like Turnips, Carrots, Onions, Barley, and Flax.");
+            DetectHerbs = ClientConfig("Vinery Categories", "DetectHerbs", true, "Sense wild herbs like Thistle and Dandelion.");
 
             const string section = "Debug - HeftyStone Held";
             HeldOffsetX = ClientConfig(section, "OffsetX", 0.08f, "X position offset for mesh within attach node");

@@ -30,28 +30,14 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         public static float GetDrunkMultiplier(Player player)
         {
             if (player == null) return 0f;
-            float totalMultiplier = 0f;
 
-            var seJuice = player.GetSEMan()?.GetStatusEffect("SE_VineberryJuice".GetStableHashCode()) as SE_VineberryJuice;
-            if (seJuice != null && seJuice.CurrentTime < DrunkDuration)
+            var seDrunk = player.GetSEMan()?.GetStatusEffect("SE_Drunk".GetStableHashCode()) as SE_Drunk;
+            if (seDrunk != null)
             {
-                float timeDecay = 1f - (seJuice.CurrentTime / DrunkDuration);
-                float skill = player.GetSkillLevel(VinerySkill.SkillType);
-                // Skill 0 -> 2.0x, Skill 100 -> 0.1x
-                float tolerance = Mathf.Lerp(2.0f, 0.1f, skill / 100f);
-                totalMultiplier += timeDecay * tolerance;
+                return seDrunk.GetTotalMultiplier();
             }
 
-            var seBrew = player.GetSEMan()?.GetStatusEffect("SE_BlackstoneBrew".GetStableHashCode()) as SE_BlackstoneBrew;
-            if (seBrew != null && seBrew.CurrentTime < DrunkDuration)
-            {
-                float timeDecay = 1f - (seBrew.CurrentTime / DrunkDuration);
-                float skill = player.GetSkillLevel(RockerySkill.SkillType);
-                float tolerance = Mathf.Lerp(2.0f, 0.1f, skill / 100f);
-                totalMultiplier += timeDecay * tolerance;
-            }
-
-            return totalMultiplier;
+            return 0f;
         }
 
         public static void Postfix(GameCamera __instance)

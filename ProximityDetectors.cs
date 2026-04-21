@@ -299,7 +299,18 @@ namespace malafein.Valheim.TheSedimentaryPath
     /// </summary>
     public class VineryProximityDetector : SkillProximityDetector
     {
-        private bool _nearestIsVine;
+        private enum Category
+        {
+            None,
+            Vine,
+            Berry,
+            Mushroom,
+            Crop,
+            Herb
+        }
+
+        private Category _nearestCategory = Category.None;
+        private static readonly System.Collections.Generic.Dictionary<string, Category> _prefabCategoryCache = new System.Collections.Generic.Dictionary<string, Category>();
 
         protected override bool IsEnabled       => Plugin.VineryProximityAlert.Value;
         protected override bool IsEffectEnabled => Plugin.VineryProximityEffect.Value;
@@ -319,6 +330,38 @@ namespace malafein.Valheim.TheSedimentaryPath
             "The vine has been patient. So should you.",
         };
 
+        private static readonly string[] BerryMessages =
+        {
+            "You smell the sweet scent of wild berries.",
+            "A ripe bush is rustling nearby.",
+            "Fresh fruit is within reach.",
+            "Nature offers a sweet bounty here.",
+        };
+
+        private static readonly string[] MushroomMessages =
+        {
+            "You sense the earthy musk of fungi.",
+            "A mushroom cap peeks from the soil nearby.",
+            "Spores drift faintly in the air.",
+            "The damp earth hides a fungal treasure.",
+        };
+
+        private static readonly string[] CropMessages =
+        {
+            "The soil has yielded a harvest.",
+            "Crops are ready for the picking.",
+            "You sense agricultural growth.",
+            "A bountiful harvest awaits.",
+        };
+
+        private static readonly string[] HerbMessages =
+        {
+            "A sharp, herbal scent catches your attention.",
+            "Wild herbs bloom close by.",
+            "The flora here holds potent properties.",
+            "A delicate blossom stirs in the breeze.",
+        };
+
         private static readonly string[] HarvestMessages =
         {
             "Something ripe awaits.",
@@ -327,7 +370,21 @@ namespace malafein.Valheim.TheSedimentaryPath
             "The forest offers something.",
         };
 
-        protected override string[] Messages => _nearestIsVine ? VineMessages : HarvestMessages;
+        protected override string[] Messages
+        {
+            get
+            {
+                switch (_nearestCategory)
+                {
+                    case Category.Vine: return VineMessages;
+                    case Category.Berry: return BerryMessages;
+                    case Category.Mushroom: return MushroomMessages;
+                    case Category.Crop: return CropMessages;
+                    case Category.Herb: return HerbMessages;
+                    default: return HarvestMessages;
+                }
+            }
+        }
 
         protected override float FindNearest(float radius)
         {
@@ -335,9 +392,6 @@ namespace malafein.Valheim.TheSedimentaryPath
             float nearest = float.MaxValue;
             int found     = 0;
 
-            // OverlapSphere is unreliable here — dense bases easily exceed any fixed
-            // buffer size, silently dropping targets. Iterating all Pickables directly
-            // is layer-agnostic, buffer-free, and trivially cheap at 1 Hz.
             foreach (Pickable pickable in Object.FindObjectsOfType<Pickable>())
             {
                 float dist = Utils.DistanceXZ(pos, pickable.transform.position);
@@ -346,37 +400,58 @@ namespace malafein.Valheim.TheSedimentaryPath
                 bool isPicked    = pickable.GetPicked();
                 bool hasVine     = pickable.GetComponentInParent<Vine>() != null;
                 bool isWatchable = VinerySkill.IsVineryWatchable(pickable);
-                string prefab    = Utils.GetPrefabName(pickable.gameObject);
 
-                if (Plugin.DebugMode.Value)
-                    ZLog.Log($"[VineryProximityDetector] Candidate: prefab={prefab} picked={isPicked} " +
-                             $"hasVine={hasVine} isWatchable={isWatchable} dist={dist:F1}m");
-
-                // Exclude vine-body objects that carry no item (structural, not harvestable).
-                // Vineberry clusters share the Vine's GameObject so their prefab is "VineAsh",
-                // not "Pickable_*" — but they do have m_itemPrefab set (the Vineberry item).
                 if (hasVine && pickable.m_itemPrefab == null) continue;
                 if (isPicked || (!hasVine && !isWatchable)) continue;
+
+                Category cat = Category.None;
+                string rawName = pickable.gameObject.name;
+
+                if (!_prefabCategoryCache.TryGetValue(rawName, out cat))
+                {
+                    string clean = Utils.GetPrefabName(pickable.gameObject).ToLowerInvariant();
+                    if (hasVine) cat = Category.Vine;
+                    else if (clean.Contains("raspberry") || clean.Contains("blueberry") || clean.Contains("cloudberry") || clean.Contains("vineberry")) cat = Category.Berry;
+                    else if (clean.Contains("mushroom") || clean.Contains("magecap") || clean.Contains("jotunpuffs")) cat = Category.Mushroom;
+                    else if (clean.Contains("turnip") || clean.Contains("carrot") || clean.Contains("onion") || clean.Contains("barley") || clean.Contains("flax")) cat = Category.Crop;
+                    else if (clean.Contains("thistle") || clean.Contains("dandelion")) cat = Category.Herb;
+                    else cat = Category.None; // Fallback
+
+                    _prefabCategoryCache[rawName] = cat;
+                }
+
+                bool allowed = false;
+                switch (cat)
+                {
+                    case Category.Vine: allowed = Plugin.DetectVines.Value; break;
+                    case Category.Berry: allowed = Plugin.DetectBerries.Value; break;
+                    case Category.Mushroom: allowed = Plugin.DetectMushrooms.Value; break;
+                    case Category.Crop: allowed = Plugin.DetectFieldCrops.Value; break;
+                    case Category.Herb: allowed = Plugin.DetectHerbs.Value; break;
+                    default: allowed = Plugin.VineryProximityAlert.Value; break;
+                }
+
+                if (!allowed) continue;
 
                 found++;
                 if (dist < nearest)
                 {
                     nearest         = dist;
                     NearestPosition = pickable.transform.position;
-                    _nearestIsVine  = hasVine;
+                    _nearestCategory = cat;
 
                     if (Plugin.DebugMode.Value)
                     {
                         ZNetView nv = pickable.GetComponentInParent<ZNetView>()
                                    ?? pickable.GetComponent<ZNetView>();
                         ZDOID uid = nv != null && nv.IsValid() ? nv.GetZDO().m_uid : ZDOID.None;
-                        ZLog.Log($"[VineryProximityDetector] Nearest: prefab={prefab} dist={dist:F1}m ZDO={uid}");
+                        ZLog.Log($"[VineryProximityDetector] Nearest: prefab={rawName} cat={cat} dist={dist:F1}m ZDO={uid}");
                     }
                 }
             }
 
             if (Plugin.DebugMode.Value)
-                ZLog.Log($"[VineryProximityDetector] Scan r={radius:F1}: {found} valid");
+                ZLog.Log($"[VineryProximityDetector] Scan r={radius:F1}: {found} valid targets allowed by config.");
 
             if (nearest == float.MaxValue) NearestPosition = Vector3.zero;
             return nearest;

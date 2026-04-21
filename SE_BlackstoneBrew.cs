@@ -14,16 +14,26 @@ namespace malafein.Valheim.TheSedimentaryPath
 
         public override Skills.SkillType AssociatedSkill => RockerySkill.SkillType;
 
+        public override void Setup(Character character)
+        {
+            base.Setup(character);
+            m_fallDamageModifier = -0.5f; // Halve fall damage
+            m_noiseModifier = 0.8f;       // 80% noise penalty
+        }
+
         public override void ModifyJump(Vector3 baseJump, ref Vector3 jump)
         {
             // Heavier belly — reduce jump height without affecting horizontal momentum
             jump.y *= 0.75f;
         }
 
-        public override void ModifyFallDamage(float baseDamage, ref float damage)
+        public override void ModifyWalkVelocity(ref Vector3 vel)
         {
-            // The stone does not float — feather cloaks offer no protection
-            damage = baseDamage;
+            base.ModifyWalkVelocity(ref vel);
+            if (vel.y < 0f && m_character != null && !m_character.IsOnGround())
+            {
+                vel.y *= 1.2f;
+            }
         }
 
         // Fraction of the buff remaining, using the same power curve as vanilla food.

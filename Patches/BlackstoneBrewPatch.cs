@@ -20,26 +20,42 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         }
     }
 
-    // Ensures the brew's fall speed restoration runs after ALL status effects
-    // have applied their walk velocity changes — order-independent.
-    [HarmonyPatch(typeof(SEMan), "ModifyWalkVelocity")]
-    public static class BlackstoneBrewFallSpeedPatch
+    // Suppress Feather Cape's slow fall and fall damage protection when the Brew is active
+    [HarmonyPatch(typeof(SE_Stats))]
+    public static class BlackstoneBrewFallPatch
     {
-        private static readonly System.Reflection.FieldInfo CharacterField =
-            AccessTools.Field(typeof(SEMan), "m_character");
-
-        public static void Postfix(SEMan __instance, ref Vector3 vel)
+        [HarmonyPatch("ModifyWalkVelocity")]
+        [HarmonyPrefix]
+        public static bool ModifyWalkVelocity_Prefix(SE_Stats __instance, ref Vector3 vel)
         {
-            if (vel.y >= 0f) return; // only during a fall
+            // Only care about effects that limit fall speed (like the Feather Cape)
+            if (__instance.m_maxMaxFallSpeed > 0f && vel.y < 0f && __instance.name != "SE_BlackstoneBrew")
+            {
+                var seman = __instance.m_character?.GetSEMan();
+                if (seman != null && seman.HaveStatusEffect("SE_BlackstoneBrew".GetStableHashCode()))
+                {
+                    // The brew suppresses the slow fall. We skip the original method so it doesn't clamp the fall speed.
+                    return false; 
+                }
+            }
+            return true;
+        }
 
-            var character = CharacterField?.GetValue(__instance) as Character;
-            if (character == null || character.IsOnGround()) return;
-
-            var se = character.GetSEMan()?.GetStatusEffect("SE_BlackstoneBrew".GetStableHashCode()) as SE_BlackstoneBrew;
-            if (se == null) return;
-
-            // Override any slow-fall cap — you fall at normal speed
-            vel.y = Mathf.Min(vel.y, -20f);
+        [HarmonyPatch("ModifyFallDamage")]
+        [HarmonyPrefix]
+        public static bool ModifyFallDamage_Prefix(SE_Stats __instance, float baseDamage, ref float damage)
+        {
+            // Only care about effects that negate fall damage (like the Feather Cape with m_fallDamageModifier = -1)
+            if (__instance.m_fallDamageModifier < 0f && __instance.name != "SE_BlackstoneBrew")
+            {
+                var seman = __instance.m_character?.GetSEMan();
+                if (seman != null && seman.HaveStatusEffect("SE_BlackstoneBrew".GetStableHashCode()))
+                {
+                    // The brew suppresses the cape's fall damage protection.
+                    return false; 
+                }
+            }
+            return true;
         }
     }
 }

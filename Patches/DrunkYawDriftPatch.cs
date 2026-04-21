@@ -22,6 +22,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         {
             if (__instance != Player.m_localPlayer) return;
             if (LookYawField == null) return;
+            if (__instance.IsSitting() || __instance.IsAttached()) return;
 
             float multiplier = MeadCameraEffectPatch.GetDrunkMultiplier(__instance);
             if (multiplier <= 0f) return;
