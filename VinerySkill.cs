@@ -16,6 +16,9 @@ namespace malafein.Valheim.TheSedimentaryPath
         // XP awarded when successfully picking a pickable from a vine
         public const float PickupXP = 1.0f;
 
+        // XP awarded when crafting a Vinery brew base at the Mead Kettle
+        public const float CraftXP = 1f;
+
         // Credit applied per watch tick, scaled by watcher's skill factor (0-1).
         // Now represents a fraction of the target's total max growth time.
         // At max level, 30 ticks (5 minutes) covers 100% of max growth.
@@ -53,6 +56,11 @@ namespace malafein.Valheim.TheSedimentaryPath
         /// Matches anything that raises the Farming skill on pick — berries, mushrooms,
         /// cultivated crops — while naturally excluding rocks and minerals.
         /// </summary>
+        public static bool IsVineryItem(string itemName)
+        {
+            return itemName == "$item_vineberryjuicebase";
+        }
+
         public static bool IsVineryWatchable(Pickable pickable) =>
             pickable != null && pickable.m_pickRaiseSkill == Skills.SkillType.Farming;
 
@@ -88,7 +96,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             }
 
             skills.m_skills.Add(vinery);
-            ZLog.Log("[TheSedimentaryPath] VinerySkill: registered Vinery skill");
+            ZLog.Log("[TheSedimentaryPath] VinerySkill: registered");
         }
     }
 }

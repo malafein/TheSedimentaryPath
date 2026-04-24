@@ -63,6 +63,9 @@ namespace malafein.Valheim.TheSedimentaryPath
         protected const float DistantFrequency = 5f;
         protected const float RadiusAtUnlock   = 25f; // radius (m) at skill level 25 (unlock threshold)
         protected const float RadiusAtMax      = 50f; // radius (m) at skill level 100
+        // Beacon.m_range default — pitch/rate fraction is computed over this inner radius so
+        // the feel matches the real Wishbone regardless of our (larger) detection radius.
+        protected const float PingFractionRadius = 20f;
 
         protected abstract bool IsEnabled { get; }
         protected abstract bool IsEffectEnabled { get; }
@@ -149,7 +152,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             SE_Finder se = WishboneEffects.Get();
             if (se == null) return;
 
-            float fraction = Mathf.Clamp01(NearestDistance / radius);
+            float fraction = Mathf.Clamp01(NearestDistance / PingFractionRadius);
             float freq     = Mathf.Lerp(CloseFrequency, DistantFrequency, fraction);
 
             _pingTimer += Time.deltaTime;
@@ -221,9 +224,6 @@ namespace malafein.Valheim.TheSedimentaryPath
     /// </summary>
     public class RockeryProximityDetector : SkillProximityDetector
     {
-        private static int s_mask;
-        private readonly Collider[] _colliders = new Collider[64];
-
         protected override bool IsEnabled       => Plugin.RockeryProximityAlert.Value;
         protected override bool IsEffectEnabled => Plugin.RockeryProximityEffect.Value;
         protected override Color DebugLineColor => Color.red;
@@ -247,20 +247,13 @@ namespace malafein.Valheim.TheSedimentaryPath
 
         protected override float FindNearest(float radius)
         {
-            if (s_mask == 0)
-                s_mask = LayerMask.GetMask("Default", "Default_small");
-
             Vector3 pos   = Player.transform.position;
-            int count     = Physics.OverlapSphereNonAlloc(pos, radius, _colliders, s_mask);
             float nearest = float.MaxValue;
             int found     = 0;
 
-            for (int i = 0; i < count; i++)
+            foreach (Pickable pickable in Object.FindObjectsOfType<Pickable>())
             {
-                if (_colliders[i] == null) continue;
-
-                Pickable pickable = _colliders[i].GetComponentInParent<Pickable>();
-                if (pickable == null || pickable.GetPicked()) continue;
+                if (pickable.GetPicked()) continue;
 
                 string prefabName = Utils.GetPrefabName(pickable.gameObject);
                 if (prefabName != "Pickable_StoneRock") continue;
@@ -271,8 +264,8 @@ namespace malafein.Valheim.TheSedimentaryPath
                 found++;
                 if (dist < nearest)
                 {
-                    nearest          = dist;
-                    NearestPosition  = pickable.transform.position;
+                    nearest         = dist;
+                    NearestPosition = pickable.transform.position;
 
                     if (Plugin.DebugMode.Value)
                     {
@@ -283,8 +276,8 @@ namespace malafein.Valheim.TheSedimentaryPath
                 }
             }
 
-            if (Plugin.DebugMode.Value && count > 0)
-                ZLog.Log($"[RockeryProximityDetector] OverlapSphere: {count} colliders checked, {found} valid StoneRock(s)");
+            if (Plugin.DebugMode.Value)
+                ZLog.Log($"[RockeryProximityDetector] Scan r={radius:F1}: {found} valid StoneRock(s) in range.");
 
             if (nearest == float.MaxValue) NearestPosition = Vector3.zero;
             return nearest;

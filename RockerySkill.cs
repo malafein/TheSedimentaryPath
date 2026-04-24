@@ -53,7 +53,9 @@ namespace malafein.Valheim.TheSedimentaryPath
 
         public static bool IsRockeryItem(string itemName)
         {
-            return itemName == "$item_heftystone" || itemName == "$item_smoothstone";
+            return itemName == "$item_heftystone"
+                || itemName == "$item_smoothstone"
+                || itemName == "$item_blackstonebrewbase";
         }
 
         public static void RegisterSkill(Skills skills)
@@ -88,7 +90,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             }
 
             skills.m_skills.Add(rockery);
-            ZLog.Log("[TheSedimentaryPath] RockerySkill: registered Rockery skill");
+            ZLog.Log("[TheSedimentaryPath] RockerySkill: registered");
         }
     }
 }

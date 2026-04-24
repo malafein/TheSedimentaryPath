@@ -18,6 +18,8 @@ namespace malafein.Valheim.TheSedimentaryPath
             se.m_healthPerTick = 2f;
             se.m_tickInterval = 10f;
             se.m_swimStaminaUseModifier = 0.3f;
+            se.m_skillLevel         = RockerySkill.SkillType;
+            se.m_skillLevelModifier = 10f;
             se.m_tooltip = "$se_blackstonebrew_tooltip";
             se.m_startMessage = "$se_blackstonebrew_start";
             se.m_stopMessage = "$se_blackstonebrew_stop";

@@ -17,22 +17,37 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 return;
 
             string itemName = recipe.m_item.m_itemData.m_shared.m_name;
-            if (!RockerySkill.IsRockeryItem(itemName))
-                return;
 
             Player player = Player.m_localPlayer;
             if (player == null)
                 return;
 
-            // Raise Rockery skill
-            player.RaiseSkill(RockerySkill.SkillType, RockerySkill.CraftXP);
-            ZLog.Log($"[TheSedimentaryPath] CraftingPatch: raised Rockery by {RockerySkill.CraftXP} for crafting {itemName}");
+            Skills.SkillType craftSkill;
+            float craftXP;
+
+            if (RockerySkill.IsRockeryItem(itemName))
+            {
+                craftSkill = RockerySkill.SkillType;
+                craftXP    = RockerySkill.CraftXP;
+            }
+            else if (VinerySkill.IsVineryItem(itemName))
+            {
+                craftSkill = VinerySkill.SkillType;
+                craftXP    = VinerySkill.CraftXP;
+            }
+            else
+            {
+                return;
+            }
+
+            player.RaiseSkill(craftSkill, craftXP);
+            ZLog.Log($"[TheSedimentaryPath] CraftingPatch: raised {craftSkill} by {craftXP} for crafting {itemName}");
 
             // Bonus yield for stackable items
             if (recipe.m_item.m_itemData.m_shared.m_maxStackSize <= 1)
                 return;
 
-            float skillFactor = player.GetSkillFactor(RockerySkill.SkillType);
+            float skillFactor = player.GetSkillFactor(craftSkill);
             float bonusChance = __instance.m_craftBonusChance;
             int bonusAmount = __instance.m_craftBonusAmount;
 

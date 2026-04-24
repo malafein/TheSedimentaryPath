@@ -17,6 +17,8 @@ namespace malafein.Valheim.TheSedimentaryPath
             se.m_ttl = SE_VineberryJuice.Duration;
             se.m_noiseModifier = 0.8f;
             se.m_runStaminaDrainModifier = 0.2f;
+            se.m_skillLevel         = VinerySkill.SkillType;
+            se.m_skillLevelModifier = 10f;
             se.m_tooltip = "$se_vineberryjuice_tooltip";
             se.m_startMessage = "$se_vineberryjuice_start";
             se.m_stopMessage = "$se_vineberryjuice_stop";

@@ -10,25 +10,12 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
     [HarmonyPatch]
     public static class VineHoverPatch
     {
-        private static string FormatWatchTime(float seconds)
-        {
-            int totalMinutes = Mathf.FloorToInt(seconds / 60f);
-            int hours        = totalMinutes / 60;
-            int minutes      = totalMinutes % 60;
-            if (hours > 0)   return $"{hours}h {minutes}m";
-            if (minutes > 0) return $"{minutes}m";
-            return $"{Mathf.FloorToInt(seconds)}s";
-        }
-
         private static void AppendVineryStatus(ref string result, ZDO zdo)
         {
+            if (!Plugin.DebugMode.Value) return;
+
             float totalWatch = zdo.GetFloat(VinerySkill.ZdoCreditKey, 0f);
-
-            if (totalWatch > 0f)
-                result += $"\n<color=#90EE90>[Watched: {FormatWatchTime(totalWatch)}]</color>";
-
-            if (Plugin.DebugMode.Value)
-                result += $"<size=12>\n[DBG] ZDO: <color=#0FF>{zdo.m_uid}</color> | total watch: {totalWatch:F1}s</size>";
+            result += $"<size=12>\n[DBG] ZDO: <color=#0FF>{zdo.m_uid}</color> | total watch: {totalWatch:F1}s</size>";
         }
 
         // Vine berry pickables share the Vine's ZNetView/ZDO

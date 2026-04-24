@@ -11,7 +11,7 @@ namespace malafein.Valheim.TheSedimentaryPath
     {
         public const string ModGUID = "com.malafein.thesedimentarypath";
         public const string ModName = "The Sedimentary Path";
-        public const string ModVersion = "0.0.12";
+        public const string ModVersion = "0.0.13";
 
         public static GameObject HeftyStonePrefab;
         public static GameObject SmoothStonePrefab;
@@ -76,6 +76,8 @@ namespace malafein.Valheim.TheSedimentaryPath
 
         public static ConfigEntry<KeyboardShortcut> ToggleRockeryProximity;
         public static ConfigEntry<KeyboardShortcut> ToggleVineryProximity;
+        public static ConfigEntry<KeyboardShortcut> DebugSkillSet25;
+        public static ConfigEntry<KeyboardShortcut> DebugSkillSet50;
 
         public static ConfigEntry<bool> DetectVines;
         public static ConfigEntry<bool> DetectBerries;
@@ -94,6 +96,10 @@ namespace malafein.Valheim.TheSedimentaryPath
 
             DebugMode = ClientConfig("Debug", "DebugMode", false,
                 "When enabled, shows ZDO IDs and raw credit/skill-factor values in vine and plant hover text.");
+            DebugSkillSet25 = ClientConfig("Debug", "SkillSet25Hotkey", new KeyboardShortcut(KeyCode.F7),
+                "Debug: set Rockery and Vinery skills to 25. Only fires when DebugMode is on.");
+            DebugSkillSet50 = ClientConfig("Debug", "SkillSet50Hotkey", new KeyboardShortcut(KeyCode.F7, KeyCode.LeftAlt),
+                "Debug: set Rockery and Vinery skills to 50. Only fires when DebugMode is on.");
 
             RockeryProximityAlert = ClientConfig("Rockery", "ProximityAlert", true,
                 "When enabled, sufficiently skilled practitioners may sense nearby harvestable stone.");
