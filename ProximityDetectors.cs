@@ -110,8 +110,8 @@ namespace malafein.Valheim.TheSedimentaryPath
 
             if (Plugin.DebugMode.Value)
             {
-                ZLog.Log($"[ProximityDetector:{GetType().Name}] Scan: skillFactor={skillFactor:F2} " +
-                         $"radius={radius:F1} nearest={NearestDistance:F1} cooldown={_messageCooldown:F1}");
+                Plugin.DebugLog($"[ProximityDetector:{GetType().Name}] Scan: skillFactor={skillFactor:F2} " +
+                                $"radius={radius:F1} nearest={NearestDistance:F1} cooldown={_messageCooldown:F1}");
             }
 
             if (NearestDistance < radius)
@@ -122,8 +122,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                     _messageCooldown = MessageCooldown;
                     string msg = Messages[Random.Range(0, Messages.Length)];
 
-                    if (Plugin.DebugMode.Value)
-                        ZLog.Log($"[ProximityDetector:{GetType().Name}] Firing HUD message (nearest={NearestDistance:F1}m, radius={radius:F1}m)");
+                    Plugin.DebugLog($"[ProximityDetector:{GetType().Name}] Firing HUD message (nearest={NearestDistance:F1}m, radius={radius:F1}m)");
 
                     MessageHud.instance?.ShowMessage(
                         MessageHud.MessageType.Center,
@@ -132,8 +131,8 @@ namespace malafein.Valheim.TheSedimentaryPath
             }
             else
             {
-                if (Plugin.DebugMode.Value && NearestDistance == float.MaxValue && _messageCooldown != 0f)
-                    ZLog.Log($"[ProximityDetector:{GetType().Name}] Nothing in range — resetting cooldown (was {_messageCooldown:F1})");
+                if (NearestDistance == float.MaxValue && _messageCooldown != 0f)
+                    Plugin.DebugLog($"[ProximityDetector:{GetType().Name}] Nothing in range — resetting cooldown (was {_messageCooldown:F1})");
 
                 _messageCooldown = 0f; // reset so next entry fires immediately
                 _pingTimer       = 0f;
@@ -271,13 +270,12 @@ namespace malafein.Valheim.TheSedimentaryPath
                     {
                         ZNetView nv = pickable.GetComponent<ZNetView>();
                         ZDOID uid = nv != null && nv.IsValid() ? nv.GetZDO().m_uid : ZDOID.None;
-                        ZLog.Log($"[RockeryProximityDetector] Nearest Pickable_StoneRock: dist={dist:F1}m ZDO={uid}");
+                        Plugin.DebugLog($"[RockeryProximityDetector] Nearest Pickable_StoneRock: dist={dist:F1}m ZDO={uid}");
                     }
                 }
             }
 
-            if (Plugin.DebugMode.Value)
-                ZLog.Log($"[RockeryProximityDetector] Scan r={radius:F1}: {found} valid StoneRock(s) in range.");
+            Plugin.DebugLog($"[RockeryProximityDetector] Scan r={radius:F1}: {found} valid StoneRock(s) in range.");
 
             if (nearest == float.MaxValue) NearestPosition = Vector3.zero;
             return nearest;
@@ -438,13 +436,12 @@ namespace malafein.Valheim.TheSedimentaryPath
                         ZNetView nv = pickable.GetComponentInParent<ZNetView>()
                                    ?? pickable.GetComponent<ZNetView>();
                         ZDOID uid = nv != null && nv.IsValid() ? nv.GetZDO().m_uid : ZDOID.None;
-                        ZLog.Log($"[VineryProximityDetector] Nearest: prefab={rawName} cat={cat} dist={dist:F1}m ZDO={uid}");
+                        Plugin.DebugLog($"[VineryProximityDetector] Nearest: prefab={rawName} cat={cat} dist={dist:F1}m ZDO={uid}");
                     }
                 }
             }
 
-            if (Plugin.DebugMode.Value)
-                ZLog.Log($"[VineryProximityDetector] Scan r={radius:F1}: {found} valid targets allowed by config.");
+            Plugin.DebugLog($"[VineryProximityDetector] Scan r={radius:F1}: {found} valid targets allowed by config.");
 
             if (nearest == float.MaxValue) NearestPosition = Vector3.zero;
             return nearest;

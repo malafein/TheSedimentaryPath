@@ -136,6 +136,12 @@ namespace malafein.Valheim.TheSedimentaryPath
             ZLog.Log($"{ModName} loaded!");
         }
 
+        public static void DebugLog(string message)
+        {
+            if (DebugMode.Value)
+                ZLog.Log($"[DEBUG] {message}");
+        }
+
         private void OnSettingChanged(object sender, SettingChangedEventArgs args)
         {
             if (HeftyStonePrefab == null)

@@ -26,6 +26,10 @@ namespace malafein.Valheim.TheSedimentaryPath
         // Crafting XP per craft action
         public const float CraftXP = 1f;
 
+        // Rock-skipping XP and damage per successful water skip
+        public const float SkipXPPerSkip     = 0.5f;
+        public const float SkipDamagePerSkip = 1f;
+
         // Pickable prefab names that grant small XP
         private static readonly HashSet<string> SmallXPPickables = new HashSet<string>
         {
