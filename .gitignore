@@ -5,5 +5,4 @@ Releases/
 staging/
 *.user
 *.suo
-screenshots.debug/
-todos/
+dev/

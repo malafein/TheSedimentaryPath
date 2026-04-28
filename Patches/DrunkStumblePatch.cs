@@ -1,3 +1,4 @@
+using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         public static void Prefix(Player __instance, ref Vector3 movedir)
         {
             if (__instance != Player.m_localPlayer) return;
-            if (__instance.IsSitting() || __instance.IsAttached()) return; // Pause physical sway while sitting
+            if (__instance.InEmote() || __instance.IsAttached()) return;
 
             float multiplier = MeadCameraEffectPatch.GetDrunkMultiplier(__instance);
             if (multiplier <= 0f) return;
@@ -27,6 +28,32 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             movedir.x += sway;
             movedir.x = Mathf.Clamp(movedir.x, -1f, 1f);
+        }
+    }
+
+    // UpdateEmote (LateUpdate) calls StopEmote if InEmote() && m_moveDir != zero.
+    // At high framerates, LateUpdate runs in frames where no FixedUpdate fired, so
+    // m_moveDir can hold a stale non-zero value from drunk sway set in a prior physics
+    // tick. Zeroing it here before the check fires prevents that stale value from
+    // cancelling an emote the player just started. Intentional stand-up still works:
+    // SetControls already called StopEmote and updated the ZDO when the player pressed
+    // a movement key, so UpdateEmote clears the emote via the ZDO change regardless.
+    [HarmonyPatch(typeof(Player), "UpdateEmote")]
+    public static class DrunkUpdateEmotePatch
+    {
+        private static readonly FieldInfo MoveDirField =
+            AccessTools.Field(typeof(Character), "m_moveDir");
+
+        [HarmonyPrefix]
+        public static void Prefix(Player __instance)
+        {
+            if (__instance != Player.m_localPlayer) return;
+            if (!__instance.InEmote()) return;
+
+            float multiplier = MeadCameraEffectPatch.GetDrunkMultiplier(__instance);
+            if (multiplier <= 0f) return;
+
+            MoveDirField.SetValue(__instance, Vector3.zero);
         }
     }
 }
