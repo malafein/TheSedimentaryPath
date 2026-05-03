@@ -107,6 +107,41 @@ namespace malafein.Valheim.TheSedimentaryPath
             return result;
         }
 
+        // Copies the mesh and materials from the first MeshFilter/MeshRenderer found under
+        // `source` into the first MeshFilter/MeshRenderer found under `target`. Returns true
+        // on success. Useful for giving a projectile the same appearance as a weapon.
+        public static bool CopyMeshInto(GameObject target, GameObject source)
+        {
+            if (target == null || source == null) return false;
+
+            MeshFilter sourceMF = source.GetComponentInChildren<MeshFilter>();
+            MeshRenderer sourceMR = source.GetComponentInChildren<MeshRenderer>();
+            if (sourceMF == null || sourceMR == null) return false;
+
+            MeshFilter targetMF = target.GetComponentInChildren<MeshFilter>();
+            MeshRenderer targetMR = target.GetComponentInChildren<MeshRenderer>();
+            if (targetMF == null || targetMR == null) return false;
+
+            targetMF.sharedMesh      = sourceMF.sharedMesh;
+            targetMR.sharedMaterials = sourceMR.sharedMaterials;
+            return true;
+        }
+
+        // Sets _EmissionColor to black on every material under `root`'s MeshRenderers.
+        // Call after TintMaterials so the cloned materials are already unique instances.
+        public static void ZeroEmission(GameObject root)
+        {
+            if (root == null) return;
+            foreach (var mr in root.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                foreach (var mat in mr.sharedMaterials)
+                {
+                    if (mat != null && mat.HasProperty("_EmissionColor"))
+                        mat.SetColor("_EmissionColor", Color.black);
+                }
+            }
+        }
+
         // Clones every material under `root`'s MeshRenderers and sets _Color to `tint`.
         // (Sets, not multiplies — the texture already provides highlight/shadow detail;
         // we just want the overall hue to read as the brew color.)

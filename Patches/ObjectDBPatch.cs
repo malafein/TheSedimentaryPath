@@ -117,6 +117,48 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: VineberryJuice already registered, skipping");
             }
 
+            // Register the stance status effect once (shared by all stance weapons)
+            if (!__instance.m_StatusEffects.Exists(se => se is SE_WeaponStance))
+            {
+                SE_WeaponStance stanceSE = ScriptableObject.CreateInstance<SE_WeaponStance>();
+                stanceSE.name  = "SE_WeaponStance";
+                stanceSE.m_name = "$se_weaponstance";
+                stanceSE.m_ttl  = 3600f;
+                __instance.m_StatusEffects.Add(stanceSE);
+                Plugin.DebugLog("ObjectDB.Awake: SE_WeaponStance registered");
+            }
+
+            // Register Kaldmörk (obsidian frost dagger)
+            if (__instance.GetItemPrefab("Kaldmork") == null)
+            {
+                var kaldmorkWeapon = new ObsidianDagger();
+                GameObject kaldmorkPrefab = kaldmorkWeapon.CreatePrefab();
+                if (kaldmorkPrefab != null)
+                {
+                    Plugin.KaldmorkPrefab = kaldmorkPrefab;
+                    RegisterItem(__instance, kaldmorkPrefab);
+                    RegisterInZNetScene(kaldmorkPrefab);
+
+                    if (kaldmorkWeapon.ProjectilePrefab != null)
+                    {
+                        Plugin.KaldmorkProjectilePrefab = kaldmorkWeapon.ProjectilePrefab;
+                        RegisterInZNetScene(kaldmorkWeapon.ProjectilePrefab);
+                    }
+
+                    Plugin.StanceWeapons["$item_kaldmork"] = kaldmorkWeapon;
+                    AddKaldmorkRecipe(__instance);
+                    Plugin.DebugLog("ObjectDB.Awake: obsidian dagger fully registered");
+                }
+                else
+                {
+                    ZLog.LogError("[TheSedimentaryPath] ObjectDB.Awake: ObsidianDagger.CreatePrefab returned null");
+                }
+            }
+            else
+            {
+                Plugin.DebugLog("ObjectDB.Awake: obsidian dagger already registered, skipping");
+            }
+
             // Register Smooth Stone
             if (__instance.GetItemPrefab("SmoothStone") == null)
             {
@@ -231,6 +273,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             translations["se_blackstonebrew_tooltip"]    = "The stone is in you now. +40 health, +10 stamina. Your feet feel heavier.";
             translations["se_blackstonebrew_start"]      = "The brew takes hold...";
             translations["se_blackstonebrew_stop"]       = "The stone's blessing fades.";
+            translations["item_kaldmork"]        = "Kaldmörk";
+            translations["item_kaldmork_desc"]   = "Forged from the dark glass of the mountain. It holds cold the way stone holds memory. A chill that bites the soul before it claims the flesh.";
+            translations["kaldmork_stance_throw"] = "Throw stance";
+            translations["kaldmork_stance_leap"]  = "Leap stance";
+            translations["se_weaponstance"]       = "Weapon Stance";
             translations[$"skill_{RockerySkill.SkillId}"]             = "Rockery";
             translations[$"skill_{RockerySkill.SkillId}_description"]  = "Stone speaks to those who listen.";
             translations["skill_rockery_desc"]                          = "Stone speaks to those who listen.";
@@ -337,6 +384,38 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             }
 
             db.m_recipes.Add(recipe);
+        }
+
+        private static void AddKaldmorkRecipe(ObjectDB db)
+        {
+            GameObject obsidianPrefab    = db.GetItemPrefab("Obsidian");
+            GameObject freezeGlandPrefab = db.GetItemPrefab("FreezeGland");
+            GameObject leatherPrefab     = db.GetItemPrefab("LeatherScraps");
+            GameObject workbenchPrefab   = ZNetScene.instance?.GetPrefab("piece_workbench");
+
+            if (obsidianPrefab == null || freezeGlandPrefab == null || leatherPrefab == null)
+            {
+                ZLog.LogError("[TheSedimentaryPath] AddKaldmorkRecipe: one or more ingredient prefabs not found " +
+                    $"(Obsidian={obsidianPrefab != null}, FreezeGland={freezeGlandPrefab != null}, LeatherScraps={leatherPrefab != null})");
+                return;
+            }
+
+            Recipe recipe = ScriptableObject.CreateInstance<Recipe>();
+            recipe.name             = "Recipe_Kaldmork";
+            recipe.m_item           = Plugin.KaldmorkPrefab.GetComponent<ItemDrop>();
+            recipe.m_amount         = 1;
+            recipe.m_enabled        = true;
+            recipe.m_craftingStation = workbenchPrefab?.GetComponent<CraftingStation>();
+            recipe.m_minStationLevel = 2;
+            recipe.m_resources = new Piece.Requirement[]
+            {
+                new Piece.Requirement { m_resItem = obsidianPrefab.GetComponent<ItemDrop>(),    m_amount = 15, m_amountPerLevel = 0, m_recover = true },
+                new Piece.Requirement { m_resItem = freezeGlandPrefab.GetComponent<ItemDrop>(), m_amount = 5,  m_amountPerLevel = 10, m_recover = true },
+                new Piece.Requirement { m_resItem = leatherPrefab.GetComponent<ItemDrop>(),     m_amount = 3,  m_amountPerLevel = 0, m_recover = true },
+            };
+
+            db.m_recipes.Add(recipe);
+            Plugin.DebugLog("AddKaldmorkRecipe: registered");
         }
 
         private static void AddSmoothStoneRecipe(ObjectDB db)

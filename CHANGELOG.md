@@ -1,7 +1,4 @@
 # Changelog
 
-## 0.0.12
-- Early test build
-
-## 0.0.11
+## 0.1.0
 - Early test build

@@ -1,5 +1,9 @@
 # The Sedimentary Path
 
+<img src="https://raw.githubusercontent.com/malafein/TheSedimentaryPath/main/Assets/icon.png" width="256" height="256">
+
+> **Note**: This mod is currently in early development. It is highly experimental and subject to change. It is not yet published on Thunderstore or Nexus Mods, but will be released there once more of the main features are in place.
+
 The Sedimentary Path is a Valheim BepInEx mod.
 
 ## Features

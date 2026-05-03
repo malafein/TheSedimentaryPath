@@ -46,6 +46,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     $"Vinery sense: {(Plugin.VineryProximityAlert.Value ? "Enabled" : "Disabled")}");
             });
 
+            HandleHotkey(Plugin.ToggleWeaponStance, () =>
+            {
+                string itemName = __instance.GetCurrentWeapon()?.m_shared?.m_name;
+                if (itemName != null && Plugin.StanceWeapons.TryGetValue(itemName, out IStanceWeapon weapon))
+                    weapon.ToggleStance();
+            });
+
             if (Plugin.DebugMode.Value)
             {
                 if (Plugin.DebugSkillSet50.Value.IsDown())

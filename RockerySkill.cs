@@ -59,7 +59,8 @@ namespace malafein.Valheim.TheSedimentaryPath
         {
             return itemName == "$item_heftystone"
                 || itemName == "$item_smoothstone"
-                || itemName == "$item_blackstonebrewbase";
+                || itemName == "$item_blackstonebrewbase"
+                || itemName == "$item_kaldmork";
         }
 
         public static void RegisterSkill(Skills skills)

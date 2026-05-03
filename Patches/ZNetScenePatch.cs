@@ -12,6 +12,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         {
             ZLog.Log("[TheSedimentaryPath] ZNetScene.Awake postfix fired");
 
+            RockShrine.RegisterRPCs();
+
             FieldInfo field = AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs");
             if (field == null)
             {

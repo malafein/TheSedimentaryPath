@@ -11,11 +11,18 @@ namespace malafein.Valheim.TheSedimentaryPath
     {
         public const string ModGUID = "com.malafein.thesedimentarypath";
         public const string ModName = "The Sedimentary Path";
-        public const string ModVersion = "0.0.13";
+        public const string ModVersion = "0.1.0";
 
         public static GameObject HeftyStonePrefab;
         public static GameObject SmoothStonePrefab;
+        public static GameObject KaldmorkPrefab;
+        public static GameObject KaldmorkProjectilePrefab;
         public static GameObject BlackstoneBrewBasePrefab;
+
+        // Keyed by $item_* name. Any weapon implementing IStanceWeapon registers here
+        // so the hotkey and equip patches can route without knowing weapon names.
+        public static readonly System.Collections.Generic.Dictionary<string, IStanceWeapon> StanceWeapons
+            = new System.Collections.Generic.Dictionary<string, IStanceWeapon>();
         public static GameObject BlackstoneBrewPrefab;
         public static GameObject VineberryJuiceBasePrefab;
         public static GameObject VineberryJuicePrefab;
@@ -27,6 +34,8 @@ namespace malafein.Valheim.TheSedimentaryPath
         public static ConfigEntry<bool> RockeryProximityEffect;
         public static ConfigEntry<bool> VineryProximityAlert;
         public static ConfigEntry<bool> VineryProximityEffect;
+
+        public static ConfigEntry<float> ShrineIntervalDebug;
 
         // Debug config entries for mesh positioning (held in hand)
         public static ConfigEntry<float> HeldOffsetX;
@@ -76,6 +85,7 @@ namespace malafein.Valheim.TheSedimentaryPath
 
         public static ConfigEntry<KeyboardShortcut> ToggleRockeryProximity;
         public static ConfigEntry<KeyboardShortcut> ToggleVineryProximity;
+        public static ConfigEntry<KeyboardShortcut> ToggleWeaponStance;
         public static ConfigEntry<KeyboardShortcut> DebugSkillSet25;
         public static ConfigEntry<KeyboardShortcut> DebugSkillSet50;
 
@@ -100,6 +110,8 @@ namespace malafein.Valheim.TheSedimentaryPath
                 "Debug: set Rockery and Vinery skills to 25. Only fires when DebugMode is on.");
             DebugSkillSet50 = ClientConfig("Debug", "SkillSet50Hotkey", new KeyboardShortcut(KeyCode.F7, KeyCode.LeftAlt),
                 "Debug: set Rockery and Vinery skills to 50. Only fires when DebugMode is on.");
+            ShrineIntervalDebug = ClientConfig("Debug", "ShrineIntervalSeconds", 0f,
+                "Debug: override rock shrine conversion check interval in seconds. 0 = default (1800s / one Valheim day).");
 
             RockeryProximityAlert = ClientConfig("Rockery", "ProximityAlert", true,
                 "When enabled, sufficiently skilled practitioners may sense nearby harvestable stone.");
@@ -114,6 +126,9 @@ namespace malafein.Valheim.TheSedimentaryPath
                 "When enabled, a deeper mastery of Vinery may unlock an additional sense.");
             ToggleVineryProximity = ClientConfig("Vinery", "ToggleHotkey", new KeyboardShortcut(KeyCode.V, KeyCode.LeftAlt),
                 "Hotkey to quickly toggle the Vinery proximity sense on and off.");
+
+            ToggleWeaponStance = ClientConfig("Combat", "WeaponStanceHotkey", new KeyboardShortcut(KeyCode.G),
+                "Hotkey to toggle the stance of weapons that support it (e.g. throw / leap). Only fires when such a weapon is equipped.");
 
             DetectVines = ClientConfig("Vinery Categories", "DetectVines", true, "Sense Vines and Vineberries.");
             DetectBerries = ClientConfig("Vinery Categories", "DetectBerries", true, "Sense Raspberries, Blueberries, and Cloudberries.");
