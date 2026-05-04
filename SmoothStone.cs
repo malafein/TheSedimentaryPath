@@ -4,6 +4,8 @@ namespace malafein.Valheim.TheSedimentaryPath
 {
     public static class SmoothStone
     {
+        public static GameObject ProjectilePrefab { get; private set; }
+
         private static Transform _meshTransform;
         private static Vector3 _flintBaseScale;
 
@@ -37,6 +39,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             ZLog.Log("[TheSedimentaryPath] SmoothStone.CreatePrefab: cloned Club under inactive container");
 
             SwapMesh(prefab, flintPrefab);
+            ProjectilePrefab = CreateProjectilePrefab(prefab, greydwarfProjectile);
 
             ItemDrop itemDrop = prefab.GetComponent<ItemDrop>();
             if (itemDrop == null)
@@ -100,7 +103,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                 shared.m_secondaryAttack = new Attack();
             shared.m_secondaryAttack.m_attackType = Attack.AttackType.Projectile;
             shared.m_secondaryAttack.m_attackAnimation = "spear_throw";
-            shared.m_secondaryAttack.m_attackProjectile = greydwarfProjectile;
+            shared.m_secondaryAttack.m_attackProjectile = ProjectilePrefab ?? greydwarfProjectile;
             shared.m_secondaryAttack.m_projectileVel = 30f;
             shared.m_secondaryAttack.m_projectileVelMin = 20f;
             shared.m_secondaryAttack.m_projectileAccuracy = 1f;
@@ -126,6 +129,34 @@ namespace malafein.Valheim.TheSedimentaryPath
             _meshTransform.localRotation = Quaternion.Euler(
                 Plugin.HeldRotX.Value, Plugin.HeldRotY.Value, Plugin.HeldRotZ.Value);
             _meshTransform.localScale = _flintBaseScale * Plugin.HeldScale.Value;
+        }
+
+        private static GameObject CreateProjectilePrefab(GameObject weaponPrefab, GameObject baseProjectile)
+        {
+            GameObject projPrefab = Object.Instantiate(baseProjectile, Plugin.PrefabContainer);
+            projPrefab.name = "SmoothStone_projectile";
+
+            Transform attach = weaponPrefab.transform.Find("attach");
+            if (attach != null)
+            {
+                if (VisualUtil.CopyMeshInto(projPrefab, attach.gameObject))
+                {
+                    // Match the weapon's displayed mesh scale so the in-flight stone reads the same size as the held one.
+                    MeshFilter targetMF = projPrefab.GetComponentInChildren<MeshFilter>();
+                    if (targetMF != null && _meshTransform != null)
+                        targetMF.transform.localScale = _meshTransform.localScale;
+                }
+                else
+                {
+                    ZLog.LogWarning("[TheSedimentaryPath] SmoothStone: CopyMeshInto projectile failed");
+                }
+            }
+            else
+            {
+                ZLog.LogWarning("[TheSedimentaryPath] SmoothStone: no 'attach' node on weapon — projectile will use default mesh");
+            }
+
+            return projPrefab;
         }
 
         private static void SwapMesh(GameObject weaponPrefab, GameObject flintPrefab)

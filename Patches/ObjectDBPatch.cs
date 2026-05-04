@@ -168,6 +168,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     Plugin.SmoothStonePrefab = smoothPrefab;
                     RegisterItem(__instance, smoothPrefab);
                     RegisterInZNetScene(smoothPrefab);
+
+                    if (SmoothStone.ProjectilePrefab != null)
+                    {
+                        Plugin.SmoothStoneProjectilePrefab = SmoothStone.ProjectilePrefab;
+                        RegisterInZNetScene(SmoothStone.ProjectilePrefab);
+                    }
+
                     AddSmoothStoneRecipe(__instance);
                     ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: Smooth Stone fully registered");
                 }

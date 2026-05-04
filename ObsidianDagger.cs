@@ -22,8 +22,6 @@ namespace malafein.Valheim.TheSedimentaryPath
 
         public GameObject CreatePrefab()
         {
-            Plugin.DebugLog("ObsidianDagger.CreatePrefab: starting");
-
             GameObject knifeChitinPrefab = ZNetScene.instance.GetPrefab("KnifeChitin");
             if (knifeChitinPrefab == null)
             {
@@ -33,7 +31,6 @@ namespace malafein.Valheim.TheSedimentaryPath
 
             GameObject prefab = Object.Instantiate(knifeChitinPrefab, Plugin.PrefabContainer);
             prefab.name = "Kaldmork";
-            Plugin.DebugLog("ObsidianDagger: cloned KnifeChitin");
 
             VisualUtil.TintMaterials(prefab, ObsidianMaterialTint);
             VisualUtil.ZeroEmission(prefab);
@@ -55,6 +52,31 @@ namespace malafein.Valheim.TheSedimentaryPath
             shared.m_skillType   = Skills.SkillType.Knives;
 
             shared.m_icons = VisualUtil.TintIcons(shared.m_icons, ObsidianIconTint);
+
+            // Ambient cold effect — vfx_Cold is the particle effect applied to characters in cold biomes.
+            // Scaled down and attached to the weapon's grip node so it drifts off the blade while held or dropped.
+            GameObject vfxColdPrefab = ZNetScene.instance?.GetPrefab("vfx_Cold");
+            Transform attachNode = prefab.transform.Find("attach");
+            if (vfxColdPrefab != null && attachNode != null)
+            {
+                GameObject ambientVfx = Object.Instantiate(vfxColdPrefab, attachNode);
+                ambientVfx.name = "vfx_frost_ambient";
+                ambientVfx.transform.localPosition = new Vector3(0f, 0f, 0.25f);
+                ambientVfx.transform.localRotation = Quaternion.identity;
+                ambientVfx.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
+
+                foreach (var ps in ambientVfx.GetComponentsInChildren<ParticleSystem>(true))
+                {
+                    var main = ps.main;
+                    main.loop = true;
+                    main.playOnAwake = true;
+                    ps.Play();
+                }
+            }
+            else
+            {
+                ZLog.LogWarning("[TheSedimentaryPath] ObsidianDagger: vfx_Cold not found or no attach node — ambient effect skipped");
+            }
 
             // Stats sit between Abyssal Razor and Silver Knife; frost replaces spirit.
             shared.m_damages = new HitData.DamageTypes
@@ -99,14 +121,12 @@ namespace malafein.Valheim.TheSedimentaryPath
 
             shared.m_secondaryAttack = IsThrowStance ? (_throwAttack ?? _meleeSecondary) : _meleeSecondary;
 
-            Plugin.DebugLog("ObsidianDagger.CreatePrefab: complete");
             return prefab;
         }
 
         public void ToggleStance()
         {
             IsThrowStance = !IsThrowStance;
-            Plugin.DebugLog($"ObsidianDagger: stance → {( IsThrowStance ? "throw" : "leap")}, meleeNull={_meleeSecondary == null}, throwNull={_throwAttack == null}");
             ApplyStance();
         }
 
@@ -153,8 +173,6 @@ namespace malafein.Valheim.TheSedimentaryPath
             {
                 if (!VisualUtil.CopyMeshInto(projPrefab, attach.gameObject))
                     ZLog.LogWarning("[TheSedimentaryPath] ObsidianDagger: CopyMeshInto projectile failed");
-                else
-                    Plugin.DebugLog("ObsidianDagger: knife mesh copied into projectile");
             }
             else
             {
@@ -179,7 +197,36 @@ namespace malafein.Valheim.TheSedimentaryPath
                 proj.m_dodgeable           = true;
             }
 
-            Plugin.DebugLog("ObsidianDagger: projectile prefab created");
+            // Add trailing frost to projectile
+            GameObject arrowFrost = ZNetScene.instance?.GetPrefab("ArrowFrost");
+            if (arrowFrost != null)
+            {
+                foreach (Transform child in arrowFrost.transform)
+                {
+                    if (child.GetComponentInChildren<ParticleSystem>(true) != null)
+                    {
+                        GameObject trail = Object.Instantiate(child.gameObject, projPrefab.transform);
+                        trail.name = "vfx_projectile_trail";
+                        trail.transform.localPosition = Vector3.zero;
+                        trail.transform.localRotation = Quaternion.identity;
+
+                        // Strip any arrow mesh — we only want the particle trail, not the visual geometry.
+                        foreach (var mr in trail.GetComponentsInChildren<MeshRenderer>(true))
+                            Object.Destroy(mr);
+                        foreach (var mf in trail.GetComponentsInChildren<MeshFilter>(true))
+                            Object.Destroy(mf);
+
+                        foreach (var ps in trail.GetComponentsInChildren<ParticleSystem>(true))
+                        {
+                            var main = ps.main;
+                            main.playOnAwake = true;
+                            ps.Play();
+                        }
+                        break; // Just need the first VFX node we find on the arrow
+                    }
+                }
+            }
+
             return projPrefab;
         }
     }
