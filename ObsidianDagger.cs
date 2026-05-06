@@ -93,8 +93,8 @@ namespace malafein.Valheim.TheSedimentaryPath
             };
             shared.m_attackForce        = 20f;
             shared.m_backstabBonus      = 3f;
-            shared.m_maxDurability      = 200f;
-            shared.m_durabilityPerLevel = 50f;
+            shared.m_maxDurability      = 175f;
+            shared.m_durabilityPerLevel = 40f;
             shared.m_weight             = 1.0f;
             shared.m_blockPower         = 15f;
             shared.m_maxQuality         = 4;
