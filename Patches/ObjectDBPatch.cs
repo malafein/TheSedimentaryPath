@@ -145,7 +145,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                         RegisterInZNetScene(kaldmorkWeapon.ProjectilePrefab);
                     }
 
-                    Plugin.StanceWeapons["$item_kaldmork"] = kaldmorkWeapon;
+                    Plugin.StanceWeapons["$item_kaldmork"]    = kaldmorkWeapon;
+                    Plugin.SplitSkillWeapons["$item_kaldmork"] = RockerySkill.SkillType;
                     AddKaldmorkRecipe(__instance);
                     Plugin.DebugLog("ObjectDB.Awake: obsidian dagger fully registered");
                 }
@@ -157,6 +158,32 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             else
             {
                 Plugin.DebugLog("ObjectDB.Awake: obsidian dagger already registered, skipping");
+            }
+
+            // Register Dökkblað (obsidian frost sword) — must follow dagger registration (clones KaldmorkPrefab)
+            if (__instance.GetItemPrefab("Dokkblad") == null)
+            {
+                var dokkbladWeapon = new ObsidianSword();
+                GameObject dokkbladPrefab = dokkbladWeapon.CreatePrefab();
+                if (dokkbladPrefab != null)
+                {
+                    Plugin.DokkbladPrefab = dokkbladPrefab;
+                    RegisterItem(__instance, dokkbladPrefab);
+                    RegisterInZNetScene(dokkbladPrefab);
+
+                    Plugin.StanceWeapons["$item_dokkblad"]    = dokkbladWeapon;
+                    Plugin.SplitSkillWeapons["$item_dokkblad"] = RockerySkill.SkillType;
+                    AddDokkbladRecipe(__instance);
+                    Plugin.DebugLog("ObjectDB.Awake: obsidian sword fully registered");
+                }
+                else
+                {
+                    ZLog.LogError("[TheSedimentaryPath] ObjectDB.Awake: ObsidianSword.CreatePrefab returned null");
+                }
+            }
+            else
+            {
+                Plugin.DebugLog("ObjectDB.Awake: obsidian sword already registered, skipping");
             }
 
             // Register Smooth Stone
@@ -284,6 +311,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             translations["item_kaldmork_desc"]   = "Forged from the dark glass of the mountain. It holds cold the way stone holds memory. A chill that bites the soul before it claims the flesh.";
             translations["kaldmork_stance_throw"] = "Throw stance";
             translations["kaldmork_stance_leap"]  = "Leap stance";
+            translations["item_dokkblad"]        = "Dökkblað";
+            translations["item_dokkblad_desc"]   = "The dark glass of the mountain, drawn long. It does not reflect. It only cuts.";
+            translations["dokkblad_stance_a"]    = "Thrust stance";
+            translations["dokkblad_stance_b"]    = "Leap stance";
             translations["se_weaponstance"]       = "Weapon Stance";
             translations[$"skill_{RockerySkill.SkillId}"]             = "Rockery";
             translations[$"skill_{RockerySkill.SkillId}_description"]  = "Stone speaks to those who listen.";
@@ -391,6 +422,38 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             }
 
             db.m_recipes.Add(recipe);
+        }
+
+        private static void AddDokkbladRecipe(ObjectDB db)
+        {
+            GameObject obsidianPrefab    = db.GetItemPrefab("Obsidian");
+            GameObject freezeGlandPrefab = db.GetItemPrefab("FreezeGland");
+            GameObject leatherPrefab     = db.GetItemPrefab("LeatherScraps");
+            GameObject workbenchPrefab   = ZNetScene.instance?.GetPrefab("piece_workbench");
+
+            if (obsidianPrefab == null || freezeGlandPrefab == null)
+            {
+                ZLog.LogError("[TheSedimentaryPath] AddDokkbladRecipe: one or more ingredient prefabs not found " +
+                    $"(Obsidian={obsidianPrefab != null}, FreezeGland={freezeGlandPrefab != null})");
+                return;
+            }
+
+            Recipe recipe = ScriptableObject.CreateInstance<Recipe>();
+            recipe.name              = "Recipe_Dokkblad";
+            recipe.m_item            = Plugin.DokkbladPrefab.GetComponent<ItemDrop>();
+            recipe.m_amount          = 1;
+            recipe.m_enabled         = true;
+            recipe.m_craftingStation = workbenchPrefab?.GetComponent<CraftingStation>();
+            recipe.m_minStationLevel = 3;
+            recipe.m_resources = new Piece.Requirement[]
+            {
+                new Piece.Requirement { m_resItem = obsidianPrefab.GetComponent<ItemDrop>(),    m_amount = 45, m_amountPerLevel = 0,  m_recover = true },
+                new Piece.Requirement { m_resItem = freezeGlandPrefab.GetComponent<ItemDrop>(), m_amount = 10, m_amountPerLevel = 15, m_recover = true },
+                new Piece.Requirement { m_resItem = leatherPrefab.GetComponent<ItemDrop>(),     m_amount = 3,  m_amountPerLevel = 0, m_recover = true },
+            };
+
+            db.m_recipes.Add(recipe);
+            Plugin.DebugLog("AddDokkbladRecipe: registered");
         }
 
         private static void AddKaldmorkRecipe(ObjectDB db)

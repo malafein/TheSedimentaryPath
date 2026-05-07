@@ -4,7 +4,14 @@ namespace malafein.Valheim.TheSedimentaryPath
 {
     public static class HeftyStone
     {
-        // Reference to the mesh transform so we can re-apply config changes
+        internal const float HeldOffsetX  =  0.08f;
+        internal const float HeldOffsetY  = -0.03f;
+        internal const float HeldOffsetZ  = -0.01f;
+        internal const float HeldRotX     = 150f;
+        internal const float HeldRotY     = -45f;
+        internal const float HeldRotZ     =   0f;
+        internal const float HeldScale    =   0.5f;
+
         private static Transform _meshTransform;
         private static Vector3 _stoneBaseScale;
 
@@ -139,12 +146,18 @@ namespace malafein.Valheim.TheSedimentaryPath
             if (_meshTransform == null)
                 return;
 
+#if DEBUG
             _meshTransform.localPosition = new Vector3(
                 Plugin.HeldOffsetX.Value, Plugin.HeldOffsetY.Value, Plugin.HeldOffsetZ.Value);
             _meshTransform.localRotation = Quaternion.Euler(
                 Plugin.HeldRotX.Value, Plugin.HeldRotY.Value, Plugin.HeldRotZ.Value);
             _meshTransform.localScale = _stoneBaseScale * Plugin.HeldScale.Value;
             ZLog.Log($"[TheSedimentaryPath] ApplyMeshTransforms: pos={_meshTransform.localPosition}, rot={_meshTransform.localEulerAngles}, scale={Plugin.HeldScale.Value}");
+#else
+            _meshTransform.localPosition = new Vector3(HeldOffsetX, HeldOffsetY, HeldOffsetZ);
+            _meshTransform.localRotation = Quaternion.Euler(HeldRotX, HeldRotY, HeldRotZ);
+            _meshTransform.localScale = _stoneBaseScale * HeldScale;
+#endif
         }
 
         private static void SwapMesh(GameObject weaponPrefab, GameObject stonePrefab)

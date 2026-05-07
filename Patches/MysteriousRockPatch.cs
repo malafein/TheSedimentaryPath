@@ -87,12 +87,46 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
     [HarmonyPatch(typeof(Pet), nameof(Pet.GetHoverText))]
     public static class RockShrineHoverPatch
     {
+        private static readonly System.Collections.Generic.HashSet<int> s_logged
+            = new System.Collections.Generic.HashSet<int>();
+
         [HarmonyPostfix]
         [HarmonyPriority(Priority.Low)]
         public static void Postfix(Pet __instance, ref string __result)
         {
-            if (!Plugin.DebugMode.Value) return;
+            if (!Plugin.IsDebugMode) return;
             if (Utils.GetPrefabName(__instance.gameObject) != RockShrine.RockPrefabName) return;
+
+            // Dump hierarchy and Animator info once per rock instance
+            int id = __instance.gameObject.GetInstanceID();
+            if (s_logged.Add(id))
+            {
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine("[RockDebug] Placeable_HardRock children:");
+                foreach (Transform child in __instance.GetComponentsInChildren<Transform>(includeInactive: true))
+                {
+                    if (child == __instance.transform) continue;
+                    int depth = 0;
+                    for (Transform p = child.parent; p != null && p != __instance.transform; p = p.parent)
+                        depth++;
+                    sb.AppendLine($"  {new string('-', depth)} {child.name} (active={child.gameObject.activeSelf})");
+                }
+
+                var anim = __instance.GetComponentInChildren<Animator>(includeInactive: true);
+                if (anim != null)
+                {
+                    sb.AppendLine($"[RockDebug] Animator: {anim.name} | controller={anim.runtimeAnimatorController?.name}");
+                    if (anim.runtimeAnimatorController != null)
+                        foreach (var param in anim.parameters)
+                            sb.AppendLine($"  param: {param.name} ({param.type})");
+                }
+                else
+                {
+                    sb.AppendLine("[RockDebug] No Animator found.");
+                }
+
+                Plugin.DebugLog(sb.ToString());
+            }
 
             int score = RockShrine.ComputeScore(__instance.transform.position, __instance.gameObject);
             float t      = Mathf.Clamp01((float)(score - RockShrine.MinScore) / (RockShrine.MaxScoreCap - RockShrine.MinScore));
@@ -111,8 +145,12 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 }
                 else
                 {
+#if DEBUG
                     float baseInterval = Plugin.ShrineIntervalDebug != null && Plugin.ShrineIntervalDebug.Value > 0f
                         ? Plugin.ShrineIntervalDebug.Value : RockShrine.DefaultInterval;
+#else
+                    float baseInterval = RockShrine.DefaultInterval;
+#endif
                     System.DateTime lastCheck = new System.DateTime(lastCheckTicks);
                     float elapsed   = (float)(ZNet.instance.GetTime() - lastCheck).TotalSeconds;
                     float remaining = baseInterval - elapsed;

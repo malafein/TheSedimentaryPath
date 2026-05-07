@@ -48,9 +48,13 @@ namespace malafein.Valheim.TheSedimentaryPath
                     continue;
                 }
 
+#if DEBUG
                 float baseInterval = Plugin.ShrineIntervalDebug != null && Plugin.ShrineIntervalDebug.Value > 0f
                     ? Plugin.ShrineIntervalDebug.Value
                     : RockShrine.DefaultInterval;
+#else
+                float baseInterval = RockShrine.DefaultInterval;
+#endif
 
                 long lastCheckTicks = m_nview.GetZDO().GetLong(ZdoKeyLastCheck, 0L);
                 DateTime currentTime = ZNet.instance.GetTime();
@@ -320,9 +324,9 @@ namespace malafein.Valheim.TheSedimentaryPath
 
         private static void PlayShrineEffects(Vector3 chestPos, Vector3 rockPos, string speechLine)
         {
-            // Particle effect at chest
-            var vfx = ZNetScene.instance?.GetPrefab("vfx_offering")
-                   ?? ZNetScene.instance?.GetPrefab("vfx_lootspawn");
+            // Particle effect at chest — small pickable-item sparkle
+            var vfx = ZNetScene.instance?.GetPrefab("vfx_pickable_pick")
+                   ?? ZNetScene.instance?.GetPrefab("vfx_spawn_small");
             if (vfx != null)
                 Object.Instantiate(vfx, chestPos + Vector3.up * 0.5f, Quaternion.identity);
             else

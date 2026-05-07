@@ -108,7 +108,7 @@ namespace malafein.Valheim.TheSedimentaryPath
 
             NearestDistance = FindNearest(radius);
 
-            if (Plugin.DebugMode.Value)
+            if (Plugin.IsDebugMode)
             {
                 Plugin.DebugLog($"[ProximityDetector:{GetType().Name}] Scan: skillFactor={skillFactor:F2} " +
                                 $"radius={radius:F1} nearest={NearestDistance:F1} cooldown={_messageCooldown:F1}");
@@ -195,7 +195,7 @@ namespace malafein.Valheim.TheSedimentaryPath
 
         private void OnRenderObject()
         {
-            if (!Plugin.DebugMode.Value) return;
+            if (!Plugin.IsDebugMode) return;
             if (Player == null || Player != global::Player.m_localPlayer) return;
             if (NearestDistance == float.MaxValue) return;
 
@@ -266,7 +266,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                     nearest         = dist;
                     NearestPosition = pickable.transform.position;
 
-                    if (Plugin.DebugMode.Value)
+                    if (Plugin.IsDebugMode)
                     {
                         ZNetView nv = pickable.GetComponent<ZNetView>();
                         ZDOID uid = nv != null && nv.IsValid() ? nv.GetZDO().m_uid : ZDOID.None;
@@ -431,7 +431,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                     NearestPosition = pickable.transform.position;
                     _nearestCategory = cat;
 
-                    if (Plugin.DebugMode.Value)
+                    if (Plugin.IsDebugMode)
                     {
                         ZNetView nv = pickable.GetComponentInParent<ZNetView>()
                                    ?? pickable.GetComponent<ZNetView>();

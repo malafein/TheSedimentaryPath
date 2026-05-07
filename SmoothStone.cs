@@ -123,12 +123,17 @@ namespace malafein.Valheim.TheSedimentaryPath
             if (_meshTransform == null)
                 return;
 
-            // Reuse the same config values as HeftyStone for now (both are hand-held stones)
+#if DEBUG
             _meshTransform.localPosition = new Vector3(
                 Plugin.HeldOffsetX.Value, Plugin.HeldOffsetY.Value, Plugin.HeldOffsetZ.Value);
             _meshTransform.localRotation = Quaternion.Euler(
                 Plugin.HeldRotX.Value, Plugin.HeldRotY.Value, Plugin.HeldRotZ.Value);
             _meshTransform.localScale = _flintBaseScale * Plugin.HeldScale.Value;
+#else
+            _meshTransform.localPosition = new Vector3(HeftyStone.HeldOffsetX, HeftyStone.HeldOffsetY, HeftyStone.HeldOffsetZ);
+            _meshTransform.localRotation = Quaternion.Euler(HeftyStone.HeldRotX, HeftyStone.HeldRotY, HeftyStone.HeldRotZ);
+            _meshTransform.localScale = _flintBaseScale * HeftyStone.HeldScale;
+#endif
         }
 
         private static GameObject CreateProjectilePrefab(GameObject weaponPrefab, GameObject baseProjectile)

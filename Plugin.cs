@@ -11,34 +11,36 @@ namespace malafein.Valheim.TheSedimentaryPath
     {
         public const string ModGUID = "com.malafein.thesedimentarypath";
         public const string ModName = "The Sedimentary Path";
-        public const string ModVersion = "0.1.1";
+        public const string ModVersion = "0.1.2";
 
         public static GameObject HeftyStonePrefab;
         public static GameObject SmoothStonePrefab;
         public static GameObject SmoothStoneProjectilePrefab;
         public static GameObject KaldmorkPrefab;
         public static GameObject KaldmorkProjectilePrefab;
+        public static GameObject DokkbladPrefab;
         public static GameObject BlackstoneBrewBasePrefab;
 
         // Keyed by $item_* name. Any weapon implementing IStanceWeapon registers here
         // so the hotkey and equip patches can route without knowing weapon names.
         public static readonly System.Collections.Generic.Dictionary<string, IStanceWeapon> StanceWeapons
             = new System.Collections.Generic.Dictionary<string, IStanceWeapon>();
+
+        // Keyed by $item_* name → secondary skill type. Weapons in this registry
+        // derive their skill factor from a 50/50 blend of their native weapon skill
+        // and the secondary skill, and split XP evenly between the two on each hit.
+        // Add Rockery weapons at registration; Vinery weapons follow the same pattern.
+        public static readonly System.Collections.Generic.Dictionary<string, Skills.SkillType> SplitSkillWeapons
+            = new System.Collections.Generic.Dictionary<string, Skills.SkillType>();
         public static GameObject BlackstoneBrewPrefab;
         public static GameObject VineberryJuiceBasePrefab;
         public static GameObject VineberryJuicePrefab;
 
-        // Debug mode: shows ZDO IDs and raw credit values in vine hover text
+#if DEBUG
         public static ConfigEntry<bool> DebugMode;
-
-        public static ConfigEntry<bool> RockeryProximityAlert;
-        public static ConfigEntry<bool> RockeryProximityEffect;
-        public static ConfigEntry<bool> VineryProximityAlert;
-        public static ConfigEntry<bool> VineryProximityEffect;
-
+        public static ConfigEntry<KeyboardShortcut> DebugSkillSet25;
+        public static ConfigEntry<KeyboardShortcut> DebugSkillSet50;
         public static ConfigEntry<float> ShrineIntervalDebug;
-
-        // Debug config entries for mesh positioning (held in hand)
         public static ConfigEntry<float> HeldOffsetX;
         public static ConfigEntry<float> HeldOffsetY;
         public static ConfigEntry<float> HeldOffsetZ;
@@ -46,6 +48,19 @@ namespace malafein.Valheim.TheSedimentaryPath
         public static ConfigEntry<float> HeldRotY;
         public static ConfigEntry<float> HeldRotZ;
         public static ConfigEntry<float> HeldScale;
+#endif
+
+        public static bool IsDebugMode =>
+#if DEBUG
+            DebugMode?.Value ?? false;
+#else
+            false;
+#endif
+
+        public static ConfigEntry<bool> RockeryProximityAlert;
+        public static ConfigEntry<bool> RockeryProximityEffect;
+        public static ConfigEntry<bool> VineryProximityAlert;
+        public static ConfigEntry<bool> VineryProximityEffect;
 
         // Inactive container for cloned prefabs. Clones parented here have
         // activeSelf=true but activeInHierarchy=false, which prevents
@@ -87,8 +102,6 @@ namespace malafein.Valheim.TheSedimentaryPath
         public static ConfigEntry<KeyboardShortcut> ToggleRockeryProximity;
         public static ConfigEntry<KeyboardShortcut> ToggleVineryProximity;
         public static ConfigEntry<KeyboardShortcut> ToggleWeaponStance;
-        public static ConfigEntry<KeyboardShortcut> DebugSkillSet25;
-        public static ConfigEntry<KeyboardShortcut> DebugSkillSet50;
 
         public static ConfigEntry<bool> DetectVines;
         public static ConfigEntry<bool> DetectBerries;
@@ -105,14 +118,27 @@ namespace malafein.Valheim.TheSedimentaryPath
                 "Configuration is locked and can only be changed by server admins.");
             configSync.AddLockingConfigEntry(configLocked);
 
+#if DEBUG
             DebugMode = ClientConfig("Debug", "DebugMode", false,
                 "When enabled, shows ZDO IDs and raw credit/skill-factor values in vine and plant hover text.");
-            DebugSkillSet25 = ClientConfig("Debug", "SkillSet25Hotkey", new KeyboardShortcut(KeyCode.F7),
+            DebugSkillSet25 = ClientConfig("Debug", "SkillSet25Hotkey", KeyboardShortcut.Empty,
                 "Debug: set Rockery and Vinery skills to 25. Only fires when DebugMode is on.");
-            DebugSkillSet50 = ClientConfig("Debug", "SkillSet50Hotkey", new KeyboardShortcut(KeyCode.F7, KeyCode.LeftAlt),
+            DebugSkillSet50 = ClientConfig("Debug", "SkillSet50Hotkey", KeyboardShortcut.Empty,
                 "Debug: set Rockery and Vinery skills to 50. Only fires when DebugMode is on.");
             ShrineIntervalDebug = ClientConfig("Debug", "ShrineIntervalSeconds", 0f,
                 "Debug: override rock shrine conversion check interval in seconds. 0 = default (1800s / one Valheim day).");
+
+            const string heldSection = "Debug - HeftyStone Held";
+            HeldOffsetX = ClientConfig(heldSection, "OffsetX", HeftyStone.HeldOffsetX, "X position offset for mesh within attach node");
+            HeldOffsetY = ClientConfig(heldSection, "OffsetY", HeftyStone.HeldOffsetY, "Y position offset (up into palm)");
+            HeldOffsetZ = ClientConfig(heldSection, "OffsetZ", HeftyStone.HeldOffsetZ, "Z position offset (forward/back in grip)");
+            HeldRotX = ClientConfig(heldSection, "RotationX", HeftyStone.HeldRotX, "X euler rotation for mesh");
+            HeldRotY = ClientConfig(heldSection, "RotationY", HeftyStone.HeldRotY, "Y euler rotation for mesh");
+            HeldRotZ = ClientConfig(heldSection, "RotationZ", HeftyStone.HeldRotZ, "Z euler rotation for mesh");
+            HeldScale = ClientConfig(heldSection, "Scale", HeftyStone.HeldScale, "Scale multiplier for mesh");
+
+            Config.SettingChanged += OnSettingChanged;
+#endif
 
             RockeryProximityAlert = ClientConfig("Rockery", "ProximityAlert", true,
                 "When enabled, sufficiently skilled practitioners may sense nearby harvestable stone.");
@@ -137,27 +163,19 @@ namespace malafein.Valheim.TheSedimentaryPath
             DetectFieldCrops = ClientConfig("Vinery Categories", "DetectFieldCrops", true, "Sense agricultural crops like Turnips, Carrots, Onions, Barley, and Flax.");
             DetectHerbs = ClientConfig("Vinery Categories", "DetectHerbs", true, "Sense wild herbs like Thistle and Dandelion.");
 
-            const string section = "Debug - HeftyStone Held";
-            HeldOffsetX = ClientConfig(section, "OffsetX", 0.08f, "X position offset for mesh within attach node");
-            HeldOffsetY = ClientConfig(section, "OffsetY", -0.03f, "Y position offset (up into palm)");
-            HeldOffsetZ = ClientConfig(section, "OffsetZ", -0.01f, "Z position offset (forward/back in grip)");
-            HeldRotX = ClientConfig(section, "RotationX", 150f, "X euler rotation for mesh");
-            HeldRotY = ClientConfig(section, "RotationY", -45f, "Y euler rotation for mesh");
-            HeldRotZ = ClientConfig(section, "RotationZ", 0f, "Z euler rotation for mesh");
-            HeldScale = ClientConfig(section, "Scale", 0.5f, "Scale multiplier for mesh");
-
-            Config.SettingChanged += OnSettingChanged;
-
             harmony.PatchAll();
             ZLog.Log($"{ModName} loaded!");
         }
 
         public static void DebugLog(string message)
         {
+#if DEBUG
             if (DebugMode.Value)
                 ZLog.Log($"[DEBUG] {message}");
+#endif
         }
 
+#if DEBUG
         private void OnSettingChanged(object sender, SettingChangedEventArgs args)
         {
             if (HeftyStonePrefab == null)
@@ -171,5 +189,6 @@ namespace malafein.Valheim.TheSedimentaryPath
             HeftyStone.ApplyMeshTransforms(HeftyStonePrefab);
             SmoothStone.ApplyMeshTransforms(SmoothStonePrefab);
         }
+#endif
     }
 }

@@ -53,7 +53,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     weapon.ToggleStance();
             });
 
-            if (Plugin.DebugMode.Value)
+#if DEBUG
+            if (Plugin.IsDebugMode)
             {
                 if (Plugin.DebugSkillSet50.Value.IsDown())
                 {
@@ -68,6 +69,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center, "[Debug] Skills set to 25");
                 }
             }
+#endif
         }
 
         private static void HandleHotkey(ConfigEntry<KeyboardShortcut> config, System.Action onFired)

@@ -51,7 +51,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     return;
                 }
 
-                if (Plugin.DebugMode.Value)
+                if (Plugin.IsDebugMode)
                 {
                     var sb = new System.Text.StringBuilder("[SkipStone] FishingRodFloatProjectile has no water effects; components:");
                     foreach (Component c in floatPrefab.GetComponents<Component>())

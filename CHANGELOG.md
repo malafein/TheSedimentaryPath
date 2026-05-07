@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+- a longer darkness, a different edge
+- skill finds its own level
+
 ## 0.1.1
 - cold clings to the blade
 - stone remembers its shape

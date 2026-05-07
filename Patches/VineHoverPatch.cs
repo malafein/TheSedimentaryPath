@@ -12,7 +12,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
     {
         private static void AppendVineryStatus(ref string result, ZDO zdo)
         {
-            if (!Plugin.DebugMode.Value) return;
+            if (!Plugin.IsDebugMode) return;
 
             float totalWatch = zdo.GetFloat(VinerySkill.ZdoCreditKey, 0f);
             result += $"<size=12>\n[DBG] ZDO: <color=#0FF>{zdo.m_uid}</color> | total watch: {totalWatch:F1}s</size>";
@@ -75,7 +75,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         [HarmonyPriority(Priority.VeryLow)]
         public static void Postfix_DebugPickableInfo(Pickable __instance, ref string __result)
         {
-            if (!Plugin.DebugMode.Value) return;
+            if (!Plugin.IsDebugMode) return;
 
             ZNetView nview = __instance.GetComponent<ZNetView>();
             if (nview == null || !nview.IsValid()) return;
