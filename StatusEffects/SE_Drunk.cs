@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace malafein.Valheim.TheSedimentaryPath
+namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
 {
     public class SE_Drunk : StatusEffect
     {

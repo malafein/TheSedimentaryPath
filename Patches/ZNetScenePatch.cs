@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
+using malafein.Valheim.TheSedimentaryPath.World;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
 {

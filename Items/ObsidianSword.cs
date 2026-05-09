@@ -1,6 +1,8 @@
 using UnityEngine;
+using ValheimSkills = global::Skills;
+using malafein.Valheim.TheSedimentaryPath.StatusEffects;
 
-namespace malafein.Valheim.TheSedimentaryPath
+namespace malafein.Valheim.TheSedimentaryPath.Items
 {
     public class ObsidianSword : IStanceWeapon
     {
@@ -48,7 +50,7 @@ namespace malafein.Valheim.TheSedimentaryPath
 
             shared.m_name        = "$item_dokkblad";
             shared.m_description = "$item_dokkblad_desc";
-            shared.m_skillType   = Skills.SkillType.Swords;
+            shared.m_skillType   = ValheimSkills.SkillType.Swords;
             // Icons are already tinted obsidian from the dagger clone — no re-tinting needed.
 
             // The dagger clone's m_secondaryAttack may be set to the throw attack (dagger

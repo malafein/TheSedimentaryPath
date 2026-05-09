@@ -1,5 +1,8 @@
 using System.Reflection;
 using HarmonyLib;
+using ValheimSkills = global::Skills;
+using malafein.Valheim.TheSedimentaryPath.Skills;
+using malafein.Valheim.TheSedimentaryPath.World;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
 {
@@ -11,7 +14,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
         public static void Postfix(Player __instance)
         {
-            Skills skills = (Skills)SkillsField?.GetValue(__instance);
+            ValheimSkills skills = (ValheimSkills)SkillsField?.GetValue(__instance);
             if (skills == null)
             {
                 Log.Warn("PlayerAwakePatch: m_skills is null");

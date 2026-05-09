@@ -3,6 +3,8 @@ using System.Reflection;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
+using ValheimSkills = global::Skills;
+using malafein.Valheim.TheSedimentaryPath.Skills;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
 {
@@ -21,7 +23,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         private static readonly FieldInfo _skillsField =
             AccessTools.Field(typeof(Player), "m_skills");
         private static readonly MethodInfo _getSkillMethod =
-            AccessTools.Method(typeof(Skills), "GetSkill", new[] { typeof(Skills.SkillType) });
+            AccessTools.Method(typeof(ValheimSkills), "GetSkill", new[] { typeof(ValheimSkills.SkillType) });
 
         [HarmonyPrefix]
         public static void Prefix(Player __instance)
@@ -124,11 +126,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             return _keyCodeToPathMethod?.Invoke(null, new object[] { key, false }) as string;
         }
 
-        private static void SetDebugSkillLevel(Player player, Skills.SkillType skillType, float level)
+        private static void SetDebugSkillLevel(Player player, ValheimSkills.SkillType skillType, float level)
         {
-            var skills = (Skills)_skillsField?.GetValue(player);
+            var skills = (ValheimSkills)_skillsField?.GetValue(player);
             if (skills == null) return;
-            var skill = (Skills.Skill)_getSkillMethod?.Invoke(skills, new object[] { skillType });
+            var skill = (ValheimSkills.Skill)_getSkillMethod?.Invoke(skills, new object[] { skillType });
             if (skill == null) return;
             skill.m_level = level;
             skill.m_accumulator = 0f;

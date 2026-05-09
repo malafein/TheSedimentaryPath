@@ -1,4 +1,5 @@
 using HarmonyLib;
+using ValheimSkills = global::Skills;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
 {
@@ -14,8 +15,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         // Weapon cache — refreshed only on weapon change, not every call.
         private static string _cachedWeaponName;
         private static bool _isSplitWeapon;
-        private static Skills.SkillType _primarySkill;
-        private static Skills.SkillType _secondarySkill;
+        private static ValheimSkills.SkillType _primarySkill;
+        private static ValheimSkills.SkillType _secondarySkill;
 
         // Re-entry guards.
         private static bool _inSkillBlend;
@@ -27,7 +28,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             if (name == _cachedWeaponName) return;
 
             _cachedWeaponName = name;
-            if (name != null && Plugin.SplitSkillWeapons.TryGetValue(name, out Skills.SkillType secondary))
+            if (name != null && Plugin.SplitSkillWeapons.TryGetValue(name, out ValheimSkills.SkillType secondary))
             {
                 _isSplitWeapon  = true;
                 _secondarySkill = secondary;
@@ -44,7 +45,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         // matches the weapon's native skill type.
         [HarmonyPatch("GetSkillFactor")]
         [HarmonyPostfix]
-        public static void GetSkillFactor_Postfix(Player __instance, Skills.SkillType skill, ref float __result)
+        public static void GetSkillFactor_Postfix(Player __instance, ValheimSkills.SkillType skill, ref float __result)
         {
             if (__instance != Player.m_localPlayer || _inSkillBlend) return;
             RefreshCache(__instance);
@@ -61,7 +62,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         // the other half to the secondary skill.
         [HarmonyPatch("RaiseSkill")]
         [HarmonyPrefix]
-        public static void RaiseSkill_Prefix(Player __instance, Skills.SkillType skill, ref float value)
+        public static void RaiseSkill_Prefix(Player __instance, ValheimSkills.SkillType skill, ref float value)
         {
             if (__instance != Player.m_localPlayer || _raisingSecondary) return;
             RefreshCache(__instance);

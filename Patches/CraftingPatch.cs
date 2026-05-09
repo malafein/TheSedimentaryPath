@@ -1,6 +1,8 @@
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
+using ValheimSkills = global::Skills;
+using malafein.Valheim.TheSedimentaryPath.Skills;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
 {
@@ -22,7 +24,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             if (player == null)
                 return;
 
-            Skills.SkillType craftSkill;
+            ValheimSkills.SkillType craftSkill;
             float craftXP;
 
             if (RockerySkill.IsRockeryItem(itemName))

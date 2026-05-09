@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimSkills = global::Skills;
 
-namespace malafein.Valheim.TheSedimentaryPath
+namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
 {
     public abstract class SE_DrunkMead : SE_Stats
     {
         // Subclasses define which skill governs their puke tolerance
-        public abstract Skills.SkillType AssociatedSkill { get; }
+        public abstract ValheimSkills.SkillType AssociatedSkill { get; }
 
         public float CurrentTime => m_time;
 

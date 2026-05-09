@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace malafein.Valheim.TheSedimentaryPath
+namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
 {
     // Persistent buff shown while a stance-toggle weapon is equipped.
     // Icon and HUD text are refreshed by IStanceWeapon.ShowCurrentStance().

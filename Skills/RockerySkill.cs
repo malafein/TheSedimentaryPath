@@ -2,8 +2,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
+using ValheimSkills = global::Skills;
 
-namespace malafein.Valheim.TheSedimentaryPath
+namespace malafein.Valheim.TheSedimentaryPath.Skills
 {
     public static class RockerySkill
     {
@@ -13,7 +14,7 @@ namespace malafein.Valheim.TheSedimentaryPath
         public static readonly int SkillId =
             (Plugin.ModGUID + ".rockery").GetStableHashCode() & 0x7FFFFFFF;
 
-        public static readonly Skills.SkillType SkillType = (Skills.SkillType)SkillId;
+        public static readonly ValheimSkills.SkillType SkillType = (ValheimSkills.SkillType)SkillId;
 
         // XP factors for pickables
         public const float StonePickupXP = 0.5f;
@@ -63,10 +64,10 @@ namespace malafein.Valheim.TheSedimentaryPath
                 || itemName == "$item_kaldmork";
         }
 
-        public static void RegisterSkill(Skills skills)
+        public static void RegisterSkill(ValheimSkills skills)
         {
             // Check if already registered
-            foreach (Skills.SkillDef def in skills.m_skills)
+            foreach (ValheimSkills.SkillDef def in skills.m_skills)
             {
                 if (def.m_skill == SkillType)
                 {
@@ -75,7 +76,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                 }
             }
 
-            Skills.SkillDef rockery = new Skills.SkillDef
+            ValheimSkills.SkillDef rockery = new ValheimSkills.SkillDef
             {
                 m_skill = SkillType,
                 m_increseStep = 1f,

@@ -14,8 +14,29 @@ The Sedimentary Path is a Valheim BepInEx mod.
 
 ## Installation
 
-Install via [r2modman](https://thunderstore.io/package/ebkr/r2modman/) or manually place the DLL in your BepInEx plugins folder.
+### Thunderstore / r2modman (Recommended)
+- Install via Thunderstore Mod Manager or r2modman.  
+-or-  
+- Download the mod from Thunderstore *(link coming soon)*, and follow the Manual Installation instructions below.
+
+### Nexus Mods / Vortex
+- Install via Vortex Mod Manager.  
+-or-  
+- Download the mod from Nexus Mods *(link coming soon)*, and follow the Manual Installation instructions below.
+
+### Manual Installation
+1. Install [BepInExPack Valheim](https://valheim.thunderstore.io/package/denikson/BepInExPack_Valheim/).
+2. Download the latest release of TheSedimentaryPath.
+3. Extract the `TheSedimentaryPath.dll` file into your `<Valheim Install Folder>\BepInEx\plugins` directory.
+
+## Bugs & Known Issues
+
+Feel free to log any issues you encounter while using this mod on [GitHub](https://github.com/malafein/TheSedimentaryPath/issues).
 
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).
+
+## Thank You
+
+kbutler73 and Jojenman - For all your help with testing, debugging, ideas, and inspiration!

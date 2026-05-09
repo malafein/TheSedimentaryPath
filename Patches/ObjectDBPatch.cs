@@ -2,6 +2,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
+using malafein.Valheim.TheSedimentaryPath.Items;
+using malafein.Valheim.TheSedimentaryPath.Skills;
+using malafein.Valheim.TheSedimentaryPath.StatusEffects;
+using malafein.Valheim.TheSedimentaryPath.World;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
 {

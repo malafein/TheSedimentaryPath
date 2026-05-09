@@ -1,6 +1,7 @@
 using UnityEngine;
+using ValheimSkills = global::Skills;
 
-namespace malafein.Valheim.TheSedimentaryPath
+namespace malafein.Valheim.TheSedimentaryPath.Skills
 {
     public static class VinerySkill
     {
@@ -8,7 +9,7 @@ namespace malafein.Valheim.TheSedimentaryPath
         public static readonly int SkillId =
             (Plugin.ModGUID + ".vinery").GetStableHashCode() & 0x7FFFFFFF;
 
-        public static readonly Skills.SkillType SkillType = (Skills.SkillType)SkillId;
+        public static readonly ValheimSkills.SkillType SkillType = (ValheimSkills.SkillType)SkillId;
 
         // XP awarded per RPC tick (every 10 seconds of active watching)
         public const float WatchXP = 0.5f;
@@ -62,11 +63,11 @@ namespace malafein.Valheim.TheSedimentaryPath
         }
 
         public static bool IsVineryWatchable(Pickable pickable) =>
-            pickable != null && pickable.m_pickRaiseSkill == Skills.SkillType.Farming;
+            pickable != null && pickable.m_pickRaiseSkill == ValheimSkills.SkillType.Farming;
 
-        public static void RegisterSkill(Skills skills)
+        public static void RegisterSkill(ValheimSkills skills)
         {
-            foreach (Skills.SkillDef def in skills.m_skills)
+            foreach (ValheimSkills.SkillDef def in skills.m_skills)
             {
                 if (def.m_skill == SkillType)
                 {
@@ -75,7 +76,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                 }
             }
 
-            Skills.SkillDef vinery = new Skills.SkillDef
+            ValheimSkills.SkillDef vinery = new ValheimSkills.SkillDef
             {
                 m_skill = SkillType,
                 m_increseStep = 1f,

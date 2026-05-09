@@ -1,6 +1,8 @@
 using UnityEngine;
+using ValheimSkills = global::Skills;
+using malafein.Valheim.TheSedimentaryPath.Skills;
 
-namespace malafein.Valheim.TheSedimentaryPath
+namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
 {
     public class SE_VineberryJuice : SE_DrunkMead
     {
@@ -8,7 +10,7 @@ namespace malafein.Valheim.TheSedimentaryPath
         public const float StaminaBonus  = 40f;
         public const float EitrBonus     = 30f;
 
-        public override Skills.SkillType AssociatedSkill => VinerySkill.SkillType;
+        public override ValheimSkills.SkillType AssociatedSkill => VinerySkill.SkillType;
 
         // Fraction of the buff remaining, using the same power curve as vanilla food.
         public float GetDecayFactor()

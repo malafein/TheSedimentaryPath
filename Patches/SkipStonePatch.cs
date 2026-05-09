@@ -1,5 +1,6 @@
 using HarmonyLib;
 using UnityEngine;
+using malafein.Valheim.TheSedimentaryPath.Skills;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
 {

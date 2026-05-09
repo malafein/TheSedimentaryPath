@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using malafein.Valheim.TheSedimentaryPath.Skills;
 
-namespace malafein.Valheim.TheSedimentaryPath
+namespace malafein.Valheim.TheSedimentaryPath.World
 {
     /// <summary>
     /// Attached to every Player. Only active for the local player.
@@ -315,7 +316,10 @@ namespace malafein.Valheim.TheSedimentaryPath
             foreach (ParticleSystem ps in pSystems)
             {
                 ParticleSystem.MainModule main = ps.main;
-                main.startSizeMultiplier *= 0.15f; // Scale down particles relative to their native tiny size!
+                main.startSizeMultiplier *= 0.12f;
+
+                ParticleSystem.EmissionModule emission = ps.emission;
+                emission.rateOverTimeMultiplier *= 0.75f;
 
                 ParticleSystemRenderer renderer = ps.GetComponent<ParticleSystemRenderer>();
                 if (renderer != null && renderer.sharedMaterial != null)
@@ -324,6 +328,16 @@ namespace malafein.Valheim.TheSedimentaryPath
                     renderer.material = new Material(renderer.sharedMaterial);
                 }
             }
+
+            // Soft ambient glow that pulses with the bond color
+            GameObject lightObj = new GameObject("BondLight");
+            lightObj.transform.SetParent(effectObj.transform, false);
+            Light bondLight = lightObj.AddComponent<Light>();
+            bondLight.type      = LightType.Point;
+            bondLight.range     = 2f;
+            bondLight.intensity = 0.4f;
+            bondLight.color     = new Color(0.0f, 1.0f, 0.4f, 1.0f);
+            bondLight.shadows   = LightShadows.None;
         }
 
         private void UpdateEffectInstance(GameObject effectObj, Color currentColor, float distance)
@@ -349,6 +363,10 @@ namespace malafein.Valheim.TheSedimentaryPath
                         renderer.material.SetColor("_Color", currentColor);
                 }
             }
+
+            Light bondLight = effectObj.GetComponentInChildren<Light>();
+            if (bondLight != null)
+                bondLight.color = currentColor;
         }
 
         private void StopBondEffect()

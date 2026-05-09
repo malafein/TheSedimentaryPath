@@ -4,8 +4,9 @@ using System.Reflection;
 using DateTime = System.DateTime;
 using HarmonyLib;
 using UnityEngine;
+using malafein.Valheim.TheSedimentaryPath.Skills;
 
-namespace malafein.Valheim.TheSedimentaryPath
+namespace malafein.Valheim.TheSedimentaryPath.World
 {
     // ── RockShrineComponent ──────────────────────────────────────────────────────
     // Added to every placed Placeable_HardRock instance (via RockPieceAwakePatch).

@@ -1,6 +1,8 @@
 using UnityEngine;
+using ValheimSkills = global::Skills;
+using malafein.Valheim.TheSedimentaryPath.StatusEffects;
 
-namespace malafein.Valheim.TheSedimentaryPath
+namespace malafein.Valheim.TheSedimentaryPath.Items
 {
     public class ObsidianDagger : IStanceWeapon
     {
@@ -49,7 +51,7 @@ namespace malafein.Valheim.TheSedimentaryPath
 
             shared.m_name        = "$item_kaldmork";
             shared.m_description = "$item_kaldmork_desc";
-            shared.m_skillType   = Skills.SkillType.Knives;
+            shared.m_skillType   = ValheimSkills.SkillType.Knives;
 
             shared.m_icons = VisualUtil.TintIcons(shared.m_icons, ObsidianIconTint);
 

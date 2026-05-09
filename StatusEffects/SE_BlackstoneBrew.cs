@@ -1,6 +1,8 @@
 using UnityEngine;
+using ValheimSkills = global::Skills;
+using malafein.Valheim.TheSedimentaryPath.Skills;
 
-namespace malafein.Valheim.TheSedimentaryPath
+namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
 {
     // Status effect applied when the player drinks Blackstone Brew.
     // Does not occupy a food slot. Clears existing food via SE_Puke,
@@ -12,7 +14,7 @@ namespace malafein.Valheim.TheSedimentaryPath
         public const float HealthBonus   = 40f;
         public const float StaminaBonus  = 10f;
 
-        public override Skills.SkillType AssociatedSkill => RockerySkill.SkillType;
+        public override ValheimSkills.SkillType AssociatedSkill => RockerySkill.SkillType;
 
         public override void Setup(Character character)
         {

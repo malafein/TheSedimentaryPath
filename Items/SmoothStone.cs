@@ -1,6 +1,7 @@
 using UnityEngine;
+using malafein.Valheim.TheSedimentaryPath.Skills;
 
-namespace malafein.Valheim.TheSedimentaryPath
+namespace malafein.Valheim.TheSedimentaryPath.Items
 {
     public static class SmoothStone
     {

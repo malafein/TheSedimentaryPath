@@ -3,6 +3,8 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using ServerSync;
 using UnityEngine;
+using ValheimSkills = global::Skills;
+using malafein.Valheim.TheSedimentaryPath.Items;
 
 namespace malafein.Valheim.TheSedimentaryPath
 {
@@ -11,7 +13,7 @@ namespace malafein.Valheim.TheSedimentaryPath
     {
         public const string ModGUID = "com.malafein.thesedimentarypath";
         public const string ModName = "The Sedimentary Path";
-        public const string ModVersion = "0.1.3";
+        public const string ModVersion = "0.1.4";
 
         public static GameObject HeftyStonePrefab;
         public static GameObject SmoothStonePrefab;
@@ -30,8 +32,8 @@ namespace malafein.Valheim.TheSedimentaryPath
         // derive their skill factor from a 50/50 blend of their native weapon skill
         // and the secondary skill, and split XP evenly between the two on each hit.
         // Add Rockery weapons at registration; Vinery weapons follow the same pattern.
-        public static readonly System.Collections.Generic.Dictionary<string, Skills.SkillType> SplitSkillWeapons
-            = new System.Collections.Generic.Dictionary<string, Skills.SkillType>();
+        public static readonly System.Collections.Generic.Dictionary<string, ValheimSkills.SkillType> SplitSkillWeapons
+            = new System.Collections.Generic.Dictionary<string, ValheimSkills.SkillType>();
         public static GameObject BlackstoneBrewPrefab;
         public static GameObject VineberryJuiceBasePrefab;
         public static GameObject VineberryJuicePrefab;

@@ -1,6 +1,8 @@
 using UnityEngine;
+using malafein.Valheim.TheSedimentaryPath.Skills;
+using malafein.Valheim.TheSedimentaryPath.StatusEffects;
 
-namespace malafein.Valheim.TheSedimentaryPath
+namespace malafein.Valheim.TheSedimentaryPath.Items
 {
     public static class VineberryJuice
     {
