@@ -114,6 +114,7 @@ namespace malafein.Valheim.TheSedimentaryPath
         private void Awake()
         {
             Instance = this;
+            Log.Init(Logger);
             Log.Info($"{ModName} {ModVersion} is loading...");
 
             ConfigEntry<bool> configLocked = Config.Bind("Server", "Lock Configuration", true,

@@ -41,7 +41,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     RegisterItem(__instance, heftyPrefab);
                     RegisterInZNetScene(heftyPrefab);
                     AddHeftyStoneRecipe(__instance);
-                    Log.Info("ObjectDB.Awake: Hefty Stone registered");
+                    Log.Debug("ObjectDB.Awake: Hefty Stone registered");
                 }
                 else
                 {
@@ -60,7 +60,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 if (brewSE != null)
                 {
                     __instance.m_StatusEffects.Add(brewSE);
-                    Log.Info("ObjectDB.Awake: SE_BlackstoneBrew registered");
+                    Log.Debug("ObjectDB.Awake: SE_BlackstoneBrew registered");
                 }
 
                 GameObject basePrefab = BlackstoneBrew.CreateBasePrefab();
@@ -69,7 +69,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     Plugin.BlackstoneBrewBasePrefab = basePrefab;
                     RegisterItem(__instance, basePrefab);
                     RegisterInZNetScene(basePrefab);
-                    Log.Info("ObjectDB.Awake: BlackstoneBrewBase registered");
+                    Log.Debug("ObjectDB.Awake: BlackstoneBrewBase registered");
                 }
 
                 GameObject brewPrefab = BlackstoneBrew.CreateBrewPrefab(brewSE);
@@ -79,7 +79,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     RegisterItem(__instance, brewPrefab);
                     RegisterInZNetScene(brewPrefab);
                     AddBlackstoneBrewBaseRecipe(__instance);
-                    Log.Info("ObjectDB.Awake: BlackstoneBrew registered");
+                    Log.Debug("ObjectDB.Awake: BlackstoneBrew registered");
                 }
             }
             else
@@ -94,7 +94,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 if (juiceSE != null)
                 {
                     __instance.m_StatusEffects.Add(juiceSE);
-                    Log.Info("ObjectDB.Awake: SE_VineberryJuice registered");
+                    Log.Debug("ObjectDB.Awake: SE_VineberryJuice registered");
                 }
 
                 GameObject juiceBasePrefab = VineberryJuice.CreateBasePrefab();
@@ -103,7 +103,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     Plugin.VineberryJuiceBasePrefab = juiceBasePrefab;
                     RegisterItem(__instance, juiceBasePrefab);
                     RegisterInZNetScene(juiceBasePrefab);
-                    Log.Info("ObjectDB.Awake: VineberryJuiceBase registered");
+                    Log.Debug("ObjectDB.Awake: VineberryJuiceBase registered");
                 }
 
                 GameObject juicePrefab = VineberryJuice.CreateJuicePrefab(juiceSE);
@@ -113,7 +113,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     RegisterItem(__instance, juicePrefab);
                     RegisterInZNetScene(juicePrefab);
                     AddVineberryJuiceBaseRecipe(__instance);
-                    Log.Info("ObjectDB.Awake: VineberryJuice registered");
+                    Log.Debug("ObjectDB.Awake: VineberryJuice registered");
                 }
             }
             else
@@ -129,7 +129,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 stanceSE.m_name = "$se_weaponstance";
                 stanceSE.m_ttl  = 3600f;
                 __instance.m_StatusEffects.Add(stanceSE);
-                Log.Info("ObjectDB.Awake: SE_WeaponStance registered");
+                Log.Debug("ObjectDB.Awake: SE_WeaponStance registered");
             }
 
             // Register Kaldmörk (obsidian frost dagger)
@@ -152,7 +152,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     Plugin.StanceWeapons["$item_kaldmork"]    = kaldmorkWeapon;
                     Plugin.SplitSkillWeapons["$item_kaldmork"] = RockerySkill.SkillType;
                     AddKaldmorkRecipe(__instance);
-                    Log.Info("ObjectDB.Awake: Kaldmörk registered");
+                    Log.Debug("ObjectDB.Awake: Kaldmörk registered");
                 }
                 else
                 {
@@ -178,7 +178,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     Plugin.StanceWeapons["$item_dokkblad"]    = dokkbladWeapon;
                     Plugin.SplitSkillWeapons["$item_dokkblad"] = RockerySkill.SkillType;
                     AddDokkbladRecipe(__instance);
-                    Log.Info("ObjectDB.Awake: Dökkblað registered");
+                    Log.Debug("ObjectDB.Awake: Dökkblað registered");
                 }
                 else
                 {
@@ -207,7 +207,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     }
 
                     AddSmoothStoneRecipe(__instance);
-                    Log.Info("ObjectDB.Awake: Smooth Stone registered");
+                    Log.Debug("ObjectDB.Awake: Smooth Stone registered");
                 }
                 else
                 {
@@ -359,7 +359,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             };
 
             db.m_recipes.Add(recipe);
-            Log.Info("AddVineberryJuiceBaseRecipe: 3 Vineberry + 2 FiddleheadFern + 4 Cloudberries → 1 VineberryJuiceBase");
+            Log.Debug("AddVineberryJuiceBaseRecipe: 3 Vineberry + 2 FiddleheadFern + 4 Cloudberries → 1 VineberryJuiceBase");
         }
 
         private static void AddBlackstoneBrewBaseRecipe(ObjectDB db)
@@ -392,7 +392,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             };
 
             db.m_recipes.Add(recipe);
-            Log.Info("AddBlackstoneBrewBaseRecipe: 2 Obsidian + 4 Pukeberries + 2 Barley → 1 BlackstoneBrewBase");
+            Log.Debug("AddBlackstoneBrewBaseRecipe: 2 Obsidian + 4 Pukeberries + 2 Barley → 1 BlackstoneBrewBase");
         }
 
         private static void AddHeftyStoneRecipe(ObjectDB db)
@@ -418,7 +418,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                         m_recover = true
                     }
                 };
-                Log.Info("AddHeftyStoneRecipe: 5x Stone → 10x Hefty Stone");
+                Log.Debug("AddHeftyStoneRecipe: 5x Stone → 10x Hefty Stone");
             }
             else
             {
@@ -515,7 +515,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                         m_recover = true
                     }
                 };
-                Log.Info("AddSmoothStoneRecipe: 3x Flint → 10x Smooth Stone");
+                Log.Debug("AddSmoothStoneRecipe: 3x Flint → 10x Smooth Stone");
             }
             else
             {

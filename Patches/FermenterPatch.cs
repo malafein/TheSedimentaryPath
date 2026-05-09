@@ -37,7 +37,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 m_producedItems = producedItems,
             });
 
-            Log.Info($"FermenterPatch: added {fromName} → {toName} ×{producedItems}");
+            Log.Debug($"FermenterPatch: added {fromName} → {toName} ×{producedItems}");
         }
     }
 }

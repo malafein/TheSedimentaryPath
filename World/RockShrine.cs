@@ -76,7 +76,7 @@ namespace malafein.Valheim.TheSedimentaryPath.World
 
                 if (elapsed >= baseInterval)
                 {
-                    Log.Info($"RockShrine: Rock at {transform.position} — processing ({elapsed:F0}s elapsed)");
+                    Log.Debug($"RockShrine: Rock at {transform.position} — processing ({elapsed:F0}s elapsed)");
                     RockShrine.ProcessShrineAt(m_nview);
                     m_nview.GetZDO().Set(ZdoKeyLastCheck, currentTime.Ticks);
 
@@ -152,7 +152,7 @@ namespace malafein.Valheim.TheSedimentaryPath.World
             float chance = Mathf.Lerp(MinChance, MaxChance, t);
             float roll   = Random.value;
 
-            Log.Info($"RockShrine: Rock at {rockPos} — score={score}, chance={chance:P0}, roll={roll:F3} → {(roll <= chance ? "CONVERT" : "skip")}");
+            Log.Debug($"RockShrine: Rock at {rockPos} — score={score}, chance={chance:P0}, roll={roll:F3} → {(roll <= chance ? "CONVERT" : "skip")}");
 
             if (roll > chance)
                 return;
