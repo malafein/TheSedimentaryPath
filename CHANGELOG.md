@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4
+- the vine's patience spreads, and the roots find one another
+- the bond casts a dim light upon the earth
+
 ## 0.1.3
 - stone does not wear from the hand
 - the stance holds until the hand is empty
