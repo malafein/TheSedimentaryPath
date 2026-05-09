@@ -65,7 +65,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                 {
                     // First-ever load — record baseline and wait a full interval.
                     m_nview.GetZDO().Set(ZdoKeyLastCheck, currentTime.Ticks);
-                    Plugin.DebugLog($"RockShrine: Rock at {transform.position} — first load, initial wait {baseInterval:F0}s");
+                    Log.Debug($"RockShrine: Rock at {transform.position} — first load, initial wait {baseInterval:F0}s");
                     yield return new WaitForSeconds(baseInterval + Random.Range(-jitter, jitter));
                     continue;
                 }
@@ -75,7 +75,7 @@ namespace malafein.Valheim.TheSedimentaryPath
 
                 if (elapsed >= baseInterval)
                 {
-                    ZLog.Log($"[TheSedimentaryPath] RockShrine: Rock at {transform.position} — processing ({elapsed:F0}s elapsed)");
+                    Log.Info($"RockShrine: Rock at {transform.position} — processing ({elapsed:F0}s elapsed)");
                     RockShrine.ProcessShrineAt(m_nview);
                     m_nview.GetZDO().Set(ZdoKeyLastCheck, currentTime.Ticks);
 
@@ -86,7 +86,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                 {
                     // Zone reloaded before the interval elapsed — wait out the remainder exactly.
                     float remaining = baseInterval - elapsed;
-                    Plugin.DebugLog($"RockShrine: Rock at {transform.position} — {remaining:F0}s remaining in interval");
+                    Log.Debug($"RockShrine: Rock at {transform.position} — {remaining:F0}s remaining in interval");
                     yield return new WaitForSeconds(Mathf.Max(remaining, 1f));
                 }
             }
@@ -132,7 +132,7 @@ namespace malafein.Valheim.TheSedimentaryPath
         public static void RegisterRPCs()
         {
             ZRoutedRpc.instance.Register<ZPackage>("TSP_ShrineConverted", OnShrineConvertedRPC);
-            ZLog.Log("[TheSedimentaryPath] RockShrine: registered TSP_ShrineConverted RPC");
+            Log.Info("RockShrine: registered TSP_ShrineConverted RPC");
         }
 
         // Called by RockShrineComponent when it is the ZDO owner and the timer fires.
@@ -143,7 +143,7 @@ namespace malafein.Valheim.TheSedimentaryPath
 
             if (score < MinScore)
             {
-                Plugin.DebugLog($"RockShrine: Rock at {rockPos} — score={score} (below min {MinScore}), skipping");
+                Log.Debug($"RockShrine: Rock at {rockPos} — score={score} (below min {MinScore}), skipping");
                 return;
             }
 
@@ -151,7 +151,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             float chance = Mathf.Lerp(MinChance, MaxChance, t);
             float roll   = Random.value;
 
-            ZLog.Log($"[TheSedimentaryPath] RockShrine: Rock at {rockPos} — score={score}, chance={chance:P0}, roll={roll:F3} → {(roll <= chance ? "CONVERT" : "skip")}");
+            Log.Info($"RockShrine: Rock at {rockPos} — score={score}, chance={chance:P0}, roll={roll:F3} → {(roll <= chance ? "CONVERT" : "skip")}");
 
             if (roll > chance)
                 return;
@@ -159,7 +159,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             Container chest = FindDonationChest(rockPos);
             if (chest == null)
             {
-                Plugin.DebugLog($"RockShrine: no eligible chest found near Rock at {rockPos}");
+                Log.Debug($"RockShrine: no eligible chest found near Rock at {rockPos}");
                 return;
             }
 
@@ -207,11 +207,11 @@ namespace malafein.Valheim.TheSedimentaryPath
                         continue;
                 }
 
-                Plugin.DebugLog($"RockShrine: +{pts}pt — {root.name} ({wnt.m_materialType})");
+                Log.Debug($"RockShrine: +{pts}pt — {root.name} ({wnt.m_materialType})");
                 score += pts;
             }
 
-            Plugin.DebugLog($"RockShrine: total score={score} at {center}");
+            Log.Debug($"RockShrine: total score={score} at {center}");
             return score;
         }
 
@@ -237,7 +237,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                 if (inv == null) continue;
 
                 int count = inv.CountItems(offeringName);
-                Plugin.DebugLog($"RockShrine: chest at {container.transform.position} — {count}x {offeringName}");
+                Log.Debug($"RockShrine: chest at {container.transform.position} — {count}x {offeringName}");
 
                 if (count >= BerriesPerBatch)
                     return container;
@@ -251,14 +251,14 @@ namespace malafein.Valheim.TheSedimentaryPath
             string offeringName = ResolveOfferingItemName();
             if (string.IsNullOrEmpty(offeringName))
             {
-                ZLog.LogError("[TheSedimentaryPath] RockShrine: offering item not in ObjectDB, aborting conversion");
+                Log.Error("RockShrine: offering item not in ObjectDB, aborting conversion");
                 return;
             }
 
             var inv = chest.GetInventory();
             if (inv.CountItems(offeringName) < BerriesPerBatch)
             {
-                Plugin.DebugLog("RockShrine: aborted — berries removed before conversion could fire");
+                Log.Debug("RockShrine: aborted — berries removed before conversion could fire");
                 return;
             }
 
@@ -268,7 +268,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             if (added == null)
             {
                 // Chest full — drop the gold as a ground item near the Rock instead
-                ZLog.LogWarning("[TheSedimentaryPath] RockShrine: chest full, dropping gold near shrine");
+                Log.Warn("RockShrine: chest full, dropping gold near shrine");
                 var coinPrefab = ObjectDB.instance?.GetItemPrefab(GoldPrefabName);
                 if (coinPrefab != null)
                     Object.Instantiate(coinPrefab, rockView.transform.position + Vector3.up, Quaternion.identity);
@@ -276,7 +276,7 @@ namespace malafein.Valheim.TheSedimentaryPath
 
             s_containerSave?.Invoke(chest, null);
 
-            ZLog.Log($"[TheSedimentaryPath] RockShrine: {BerriesPerBatch}x {OfferingPrefabName} → {GoldPerBatch}x {GoldPrefabName}" +
+            Log.Info($"RockShrine: {BerriesPerBatch}x {OfferingPrefabName} → {GoldPerBatch}x {GoldPrefabName}" +
                      $" | chest at {chest.transform.position} | added to chest: {added != null}");
 
             string speechLine = Random.value < SpeechChance
@@ -307,7 +307,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                 sent++;
             }
 
-            Plugin.DebugLog($"RockShrine: broadcast to {sent} peer(s), speech='{speechLine}'");
+            Log.Debug($"RockShrine: broadcast to {sent} peer(s), speech='{speechLine}'");
         }
 
         // ── Client-side RPC handler ──────────────────────────────────────────────
@@ -318,7 +318,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             Vector3 rockPos   = pkg.ReadVector3();
             string speechLine = pkg.ReadString();
 
-            Plugin.DebugLog($"RockShrine: client RPC — chestPos={chestPos}, speech='{speechLine}'");
+            Log.Debug($"RockShrine: client RPC — chestPos={chestPos}, speech='{speechLine}'");
             PlayShrineEffects(chestPos, rockPos, speechLine);
         }
 
@@ -330,14 +330,14 @@ namespace malafein.Valheim.TheSedimentaryPath
             if (vfx != null)
                 Object.Instantiate(vfx, chestPos + Vector3.up * 0.5f, Quaternion.identity);
             else
-                Plugin.DebugLog("RockShrine: no vfx prefab found, skipping VFX");
+                Log.Debug("RockShrine: no vfx prefab found, skipping VFX");
 
             // Sound at chest — best-effort against known prefab names; null-safe if unavailable
             var sfx = ZNetScene.instance?.GetPrefab("sfx_coins_placed") ?? ZNetScene.instance?.GetPrefab("sfx_build");
             if (sfx != null)
                 Object.Instantiate(sfx, chestPos, Quaternion.identity);
             else
-                Plugin.DebugLog("RockShrine: no sound prefab found for shrine conversion");
+                Log.Debug("RockShrine: no sound prefab found for shrine conversion");
 
             // Rock speaks (also fires MysteriousRockSpeakPatch → awards Rockery XP to nearby player)
             if (!string.IsNullOrEmpty(speechLine) && Chat.instance != null)
@@ -346,7 +346,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                 if (rock != null)
                     Chat.instance.SetNpcText(rock, Vector3.up * 1.5f, SpeechCullDist, 5f, "", speechLine, false);
                 else
-                    Plugin.DebugLog("RockShrine: could not find Rock GameObject for speech");
+                    Log.Debug("RockShrine: could not find Rock GameObject for speech");
             }
         }
 
@@ -358,7 +358,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             var name = ObjectDB.instance?.GetItemPrefab(OfferingPrefabName)
                 ?.GetComponent<ItemDrop>()?.m_itemData?.m_shared?.m_name ?? "";
             if (string.IsNullOrEmpty(name))
-                ZLog.LogWarning($"[TheSedimentaryPath] RockShrine: '{OfferingPrefabName}' not found in ObjectDB");
+                Log.Warn($"RockShrine: '{OfferingPrefabName}' not found in ObjectDB");
             return name;
         }
 

@@ -25,13 +25,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             if (xp <= 0f) return;
 
             player.RaiseSkill(RockerySkill.SkillType, xp);
-            ZLog.Log($"[TheSedimentaryPath] PickableRockeryPatch: raised Rockery by {xp} for picking {pickableName}");
+            Log.Debug($"PickableRockeryPatch: raised Rockery by {xp} for picking {pickableName}");
 
             float skillFactor = player.GetSkillFactor(RockerySkill.SkillType);
             if (Random.value < skillFactor * RockerySkill.PickupBonusChance)
             {
                 __state = RockerySkill.PickupBonusAmount;
-                ZLog.Log($"[TheSedimentaryPath] PickableRockeryPatch: bonus drop! +{__state} {pickableName} (skill={skillFactor:F2})");
+                Log.Debug($"PickableRockeryPatch: bonus drop! +{__state} {pickableName} (skill={skillFactor:F2})");
             }
         }
 

@@ -37,7 +37,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                 }
                 else
                 {
-                    ZLog.LogWarning($"[TheSedimentaryPath] {name}: SE_Puke not found in ObjectDB");
+                    Log.Warn($"{name}: SE_Puke not found in ObjectDB");
                 }
             }
 

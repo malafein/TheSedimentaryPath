@@ -11,7 +11,7 @@ namespace malafein.Valheim.TheSedimentaryPath
     {
         public const string ModGUID = "com.malafein.thesedimentarypath";
         public const string ModName = "The Sedimentary Path";
-        public const string ModVersion = "0.1.2";
+        public const string ModVersion = "0.1.3";
 
         public static GameObject HeftyStonePrefab;
         public static GameObject SmoothStonePrefab;
@@ -112,7 +112,7 @@ namespace malafein.Valheim.TheSedimentaryPath
         private void Awake()
         {
             Instance = this;
-            ZLog.Log($"{ModName} {ModVersion} is loading...");
+            Log.Info($"{ModName} {ModVersion} is loading...");
 
             ConfigEntry<bool> configLocked = Config.Bind("Server", "Lock Configuration", true,
                 "Configuration is locked and can only be changed by server admins.");
@@ -164,15 +164,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             DetectHerbs = ClientConfig("Vinery Categories", "DetectHerbs", true, "Sense wild herbs like Thistle and Dandelion.");
 
             harmony.PatchAll();
-            ZLog.Log($"{ModName} loaded!");
-        }
-
-        public static void DebugLog(string message)
-        {
-#if DEBUG
-            if (DebugMode.Value)
-                ZLog.Log($"[DEBUG] {message}");
-#endif
+            Log.Info($"{ModName} loaded");
         }
 
 #if DEBUG
@@ -185,7 +177,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             if (!section.StartsWith("Debug - HeftyStone"))
                 return;
 
-            ZLog.Log($"[TheSedimentaryPath] Config changed: {section}/{args.ChangedSetting.Definition.Key} — re-applying mesh transforms");
+            Log.Debug($"Config changed: {section}/{args.ChangedSetting.Definition.Key} — re-applying mesh transforms");
             HeftyStone.ApplyMeshTransforms(HeftyStonePrefab);
             SmoothStone.ApplyMeshTransforms(SmoothStonePrefab);
         }

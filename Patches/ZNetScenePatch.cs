@@ -10,14 +10,14 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
     {
         public static void Postfix(ZNetScene __instance)
         {
-            ZLog.Log("[TheSedimentaryPath] ZNetScene.Awake postfix fired");
+            Log.Debug("ZNetScene.Awake: postfix fired");
 
             RockShrine.RegisterRPCs();
 
             FieldInfo field = AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs");
             if (field == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] ZNetScene.Awake: m_namedPrefabs field not found");
+                Log.Error("ZNetScene.Awake: m_namedPrefabs field not found");
                 return;
             }
 
@@ -37,7 +37,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 namedPrefabs[hash] = prefab;
                 if (prefab.GetComponent<ZNetView>() != null)
                     scene.m_prefabs.Add(prefab);
-                ZLog.Log($"[TheSedimentaryPath] ZNetScene.Awake: registered {prefab.name} (hash={hash})");
+                Log.Debug($"ZNetScene.Awake: registered {prefab.name} (hash={hash})");
             }
         }
     }

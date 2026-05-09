@@ -29,9 +29,9 @@ namespace malafein.Valheim.TheSedimentaryPath
                                 ?.m_itemData?.m_shared?.m_equipStatusEffect as SE_Finder;
 
             if (_seFinder == null)
-                ZLog.LogWarning("[TheSedimentaryPath] WishboneEffects: SE_Finder not found on Wishbone — pulse effects unavailable");
+                Log.Warn("WishboneEffects: SE_Finder not found on Wishbone — pulse effects unavailable");
             else
-                ZLog.Log("[TheSedimentaryPath] WishboneEffects: cached SE_Finder successfully");
+                Log.Debug("WishboneEffects: cached SE_Finder successfully");
 
             return _seFinder;
         }
@@ -110,8 +110,8 @@ namespace malafein.Valheim.TheSedimentaryPath
 
             if (Plugin.IsDebugMode)
             {
-                Plugin.DebugLog($"[ProximityDetector:{GetType().Name}] Scan: skillFactor={skillFactor:F2} " +
-                                $"radius={radius:F1} nearest={NearestDistance:F1} cooldown={_messageCooldown:F1}");
+                Log.Debug($"ProximityDetector.{GetType().Name}: Scan: skillFactor={skillFactor:F2} " +
+                          $"radius={radius:F1} nearest={NearestDistance:F1} cooldown={_messageCooldown:F1}");
             }
 
             if (NearestDistance < radius)
@@ -122,7 +122,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                     _messageCooldown = MessageCooldown;
                     string msg = Messages[Random.Range(0, Messages.Length)];
 
-                    Plugin.DebugLog($"[ProximityDetector:{GetType().Name}] Firing HUD message (nearest={NearestDistance:F1}m, radius={radius:F1}m)");
+                    Log.Debug($"ProximityDetector.{GetType().Name}: firing HUD message (nearest={NearestDistance:F1}m, radius={radius:F1}m)");
 
                     MessageHud.instance?.ShowMessage(
                         MessageHud.MessageType.Center,
@@ -132,7 +132,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             else
             {
                 if (NearestDistance == float.MaxValue && _messageCooldown != 0f)
-                    Plugin.DebugLog($"[ProximityDetector:{GetType().Name}] Nothing in range — resetting cooldown (was {_messageCooldown:F1})");
+                    Log.Debug($"ProximityDetector.{GetType().Name}: nothing in range — resetting cooldown (was {_messageCooldown:F1})");
 
                 _messageCooldown = 0f; // reset so next entry fires immediately
                 _pingTimer       = 0f;
@@ -270,12 +270,12 @@ namespace malafein.Valheim.TheSedimentaryPath
                     {
                         ZNetView nv = pickable.GetComponent<ZNetView>();
                         ZDOID uid = nv != null && nv.IsValid() ? nv.GetZDO().m_uid : ZDOID.None;
-                        Plugin.DebugLog($"[RockeryProximityDetector] Nearest Pickable_StoneRock: dist={dist:F1}m ZDO={uid}");
+                        Log.Debug($"RockeryProximityDetector: nearest Pickable_StoneRock: dist={dist:F1}m ZDO={uid}");
                     }
                 }
             }
 
-            Plugin.DebugLog($"[RockeryProximityDetector] Scan r={radius:F1}: {found} valid StoneRock(s) in range.");
+            Log.Debug($"RockeryProximityDetector: scan r={radius:F1}: {found} valid StoneRock(s) in range");
 
             if (nearest == float.MaxValue) NearestPosition = Vector3.zero;
             return nearest;
@@ -436,12 +436,12 @@ namespace malafein.Valheim.TheSedimentaryPath
                         ZNetView nv = pickable.GetComponentInParent<ZNetView>()
                                    ?? pickable.GetComponent<ZNetView>();
                         ZDOID uid = nv != null && nv.IsValid() ? nv.GetZDO().m_uid : ZDOID.None;
-                        Plugin.DebugLog($"[VineryProximityDetector] Nearest: prefab={rawName} cat={cat} dist={dist:F1}m ZDO={uid}");
+                        Log.Debug($"VineryProximityDetector: nearest: prefab={rawName} cat={cat} dist={dist:F1}m ZDO={uid}");
                     }
                 }
             }
 
-            Plugin.DebugLog($"[VineryProximityDetector] Scan r={radius:F1}: {found} valid targets allowed by config.");
+            Log.Debug($"VineryProximityDetector: scan r={radius:F1}: {found} valid targets allowed by config");
 
             if (nearest == float.MaxValue) NearestPosition = Vector3.zero;
             return nearest;

@@ -70,7 +70,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             {
                 if (def.m_skill == SkillType)
                 {
-                    ZLog.Log("[TheSedimentaryPath] VinerySkill: already registered");
+                    Log.Debug("VinerySkill: already registered");
                     return;
                 }
             }
@@ -91,12 +91,12 @@ namespace malafein.Valheim.TheSedimentaryPath
                 if (itemDrop?.m_itemData?.m_shared?.m_icons != null && itemDrop.m_itemData.m_shared.m_icons.Length > 0)
                 {
                     vinery.m_icon = itemDrop.m_itemData.m_shared.m_icons[0];
-                    ZLog.Log($"[TheSedimentaryPath] VinerySkill: using icon from {iconSource.name}");
+                    Log.Debug($"VinerySkill: using icon from {iconSource.name}");
                 }
             }
 
             skills.m_skills.Add(vinery);
-            ZLog.Log("[TheSedimentaryPath] VinerySkill: registered");
+            Log.Info("VinerySkill: registered");
         }
     }
 }

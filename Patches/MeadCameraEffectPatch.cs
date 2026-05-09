@@ -88,7 +88,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     var p = _ppb.profile;
                     _ppb.profile = null;
                     _ppb.profile = p;
-                    ZLog.Log("[TheSedimentaryPath] MeadCameraEffect: reassigned profile to force chromaticAberration init");
+                    Log.Debug("MeadCameraEffect: reassigned profile to force chromaticAberration init");
                 }
             }
 
@@ -149,13 +149,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             if (!success)
             {
-                ZLog.LogWarning("[TheSedimentaryPath] MeadCameraEffect: PostProcessingBehaviour not found — " + path);
+                Log.Warn("MeadCameraEffect: PostProcessingBehaviour not found — " + path);
                 return;
             }
 
             bool hasProfile = ppb.profile != null;
             bool hasCA = hasProfile && ppb.profile.chromaticAberration != null;
-            ZLog.Log($"[TheSedimentaryPath] MeadCameraEffect: PostProcessingBehaviour found via {path} (profile={hasProfile}, chromaticAberration={hasCA})");
+            Log.Debug($"MeadCameraEffect: PostProcessingBehaviour found via {path} (profile={hasProfile}, chromaticAberration={hasCA})");
         }
 
         private static void RestoreChromaticAberration()

@@ -32,7 +32,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             if (icons != null && icons.Length > 0)
                 se.m_icon = VisualUtil.TintIcon(icons[0], Tint);
             else
-                ZLog.LogWarning("[TheSedimentaryPath] BlackstoneBrew: MeadHealthMinor icon not found");
+                Log.Warn("BlackstoneBrew: MeadHealthMinor icon not found");
 
             return se;
         }
@@ -43,7 +43,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             var sourcePrefab = ObjectDB.instance?.GetItemPrefab("MeadBaseHealthMinor");
             if (sourcePrefab == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] BlackstoneBrew.CreateBasePrefab: MeadBaseHealthMinor not found");
+                Log.Error("BlackstoneBrew.CreateBasePrefab: MeadBaseHealthMinor not found");
                 return null;
             }
 
@@ -59,7 +59,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             shared.m_icons = VisualUtil.TintIcons(shared.m_icons, Tint);
             VisualUtil.TintMaterials(prefab, Tint);
 
-            ZLog.Log("[TheSedimentaryPath] BlackstoneBrewBase prefab created");
+            Log.Debug("BlackstoneBrewBase: prefab created");
             return prefab;
         }
 
@@ -69,7 +69,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             var sourcePrefab = ObjectDB.instance?.GetItemPrefab("MeadHealthMinor");
             if (sourcePrefab == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] BlackstoneBrew.CreateBrewPrefab: MeadHealthMinor not found");
+                Log.Error("BlackstoneBrew.CreateBrewPrefab: MeadHealthMinor not found");
                 return null;
             }
 
@@ -94,7 +94,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             shared.m_icons = VisualUtil.TintIcons(shared.m_icons, Tint);
             VisualUtil.TintMaterials(prefab, Tint);
 
-            ZLog.Log("[TheSedimentaryPath] BlackstoneBrew prefab created");
+            Log.Debug("BlackstoneBrew: prefab created");
             return prefab;
         }
     }

@@ -25,13 +25,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             if (__instance.GetComponentInParent<Vine>() == null) return;
 
             player.RaiseSkill(VinerySkill.SkillType, VinerySkill.PickupXP);
-            ZLog.Log($"[TheSedimentaryPath] PickableVineryPatch: raised Vinery by {VinerySkill.PickupXP} for picking Vineberry");
+            Log.Debug($"PickableVineryPatch: raised Vinery by {VinerySkill.PickupXP} for picking Vineberry");
 
             float skillFactor = player.GetSkillFactor(VinerySkill.SkillType);
             if (Random.value < skillFactor * VinerySkill.PickupBonusChance)
             {
                 __state = VinerySkill.PickupBonusAmount;
-                ZLog.Log($"[TheSedimentaryPath] PickableVineryPatch: bonus drop! +{__state} (Vinery skill={skillFactor:F2})");
+                Log.Debug($"PickableVineryPatch: bonus drop! +{__state} (Vinery skill={skillFactor:F2})");
             }
         }
 

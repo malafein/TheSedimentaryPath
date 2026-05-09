@@ -25,7 +25,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             GameObject knifeChitinPrefab = ZNetScene.instance.GetPrefab("KnifeChitin");
             if (knifeChitinPrefab == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] ObsidianDagger.CreatePrefab: KnifeChitin not found");
+                Log.Error("ObsidianDagger.CreatePrefab: KnifeChitin not found");
                 return null;
             }
 
@@ -40,7 +40,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             ItemDrop itemDrop = prefab.GetComponent<ItemDrop>();
             if (itemDrop == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] ObsidianDagger.CreatePrefab: no ItemDrop on clone");
+                Log.Error("ObsidianDagger.CreatePrefab: no ItemDrop on clone");
                 return null;
             }
 
@@ -75,7 +75,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             }
             else
             {
-                ZLog.LogWarning("[TheSedimentaryPath] ObsidianDagger: vfx_Cold not found or no attach node — ambient effect skipped");
+                Log.Warn("ObsidianDagger: vfx_Cold not found or no attach node — ambient effect skipped");
             }
 
             // Stats sit between Abyssal Razor and Silver Knife; frost replaces spirit.
@@ -161,7 +161,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             GameObject baseProj = ZNetScene.instance.GetPrefab("Greydwarf_throw_projectile");
             if (baseProj == null)
             {
-                ZLog.LogWarning("[TheSedimentaryPath] ObsidianDagger: Greydwarf_throw_projectile not found — throw stance disabled");
+                Log.Warn("ObsidianDagger: Greydwarf_throw_projectile not found — throw stance disabled");
                 return null;
             }
 
@@ -172,11 +172,11 @@ namespace malafein.Valheim.TheSedimentaryPath
             if (attach != null)
             {
                 if (!VisualUtil.CopyMeshInto(projPrefab, attach.gameObject))
-                    ZLog.LogWarning("[TheSedimentaryPath] ObsidianDagger: CopyMeshInto projectile failed");
+                    Log.Warn("ObsidianDagger: CopyMeshInto projectile failed");
             }
             else
             {
-                ZLog.LogWarning("[TheSedimentaryPath] ObsidianDagger: no 'attach' node on weapon — projectile will use default mesh");
+                Log.Warn("ObsidianDagger: no 'attach' node on weapon — projectile will use default mesh");
             }
 
             Projectile proj = projPrefab.GetComponent<Projectile>();

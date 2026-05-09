@@ -34,13 +34,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             if (__instance.HaveUniqueKey(UniqueKey))
             {
-                ZLog.Log("[TheSedimentaryPath] PlaceMysteriousRock: already placed before, skipping XP");
+                Log.Debug("PlaceMysteriousRock: already placed before, skipping XP");
                 return;
             }
 
             __instance.AddUniqueKey(UniqueKey);
             __instance.RaiseSkill(RockerySkill.SkillType, 25f);
-            ZLog.Log("[TheSedimentaryPath] PlaceMysteriousRock: first placement! Awarded 25 XP");
+            Log.Info("PlaceMysteriousRock: first placement, awarded 25 XP");
         }
     }
 
@@ -58,7 +58,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 return;
 
             player.RaiseSkill(RockerySkill.SkillType, 0.25f);
-            ZLog.Log("[TheSedimentaryPath] PetMysteriousRock: petted the rock, awarded 0.25 XP");
+            Log.Info("PetMysteriousRock: petted the rock, awarded 0.25 XP");
         }
     }
 
@@ -79,7 +79,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 return;
 
             player.RaiseSkill(RockerySkill.SkillType, 25f);
-            ZLog.Log("[TheSedimentaryPath] MysteriousRockSpeak: the Rock has spoken! Awarded 25 XP");
+            Log.Info("MysteriousRockSpeak: the Rock has spoken, awarded 25 XP");
         }
     }
 
@@ -125,7 +125,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     sb.AppendLine("[RockDebug] No Animator found.");
                 }
 
-                Plugin.DebugLog(sb.ToString());
+                Log.Debug(sb.ToString());
             }
 
             int score = RockShrine.ComputeScore(__instance.transform.position, __instance.gameObject);

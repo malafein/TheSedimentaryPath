@@ -14,7 +14,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             Skills skills = (Skills)SkillsField?.GetValue(__instance);
             if (skills == null)
             {
-                ZLog.LogWarning("[TheSedimentaryPath] PlayerAwakePatch: m_skills is null");
+                Log.Warn("PlayerAwakePatch: m_skills is null");
                 return;
             }
 

@@ -30,7 +30,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             if (icons != null && icons.Length > 0)
                 se.m_icon = VisualUtil.TintIcon(icons[0], Tint);
             else
-                ZLog.LogWarning("[TheSedimentaryPath] VineberryJuice: MeadStaminaMinor icon not found");
+                Log.Warn("VineberryJuice: MeadStaminaMinor icon not found");
 
             return se;
         }
@@ -40,7 +40,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             var sourcePrefab = ObjectDB.instance?.GetItemPrefab("MeadBaseStaminaMinor");
             if (sourcePrefab == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] VineberryJuice.CreateBasePrefab: MeadBaseStaminaMinor not found");
+                Log.Error("VineberryJuice.CreateBasePrefab: MeadBaseStaminaMinor not found");
                 return null;
             }
 
@@ -56,7 +56,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             shared.m_icons = VisualUtil.TintIcons(shared.m_icons, Tint);
             VisualUtil.TintMaterials(prefab, Tint);
 
-            ZLog.Log("[TheSedimentaryPath] VineberryJuiceBase prefab created");
+            Log.Debug("VineberryJuiceBase: prefab created");
             return prefab;
         }
 
@@ -65,7 +65,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             var sourcePrefab = ObjectDB.instance?.GetItemPrefab("MeadStaminaMinor");
             if (sourcePrefab == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] VineberryJuice.CreateJuicePrefab: MeadStaminaMinor not found");
+                Log.Error("VineberryJuice.CreateJuicePrefab: MeadStaminaMinor not found");
                 return null;
             }
 
@@ -89,7 +89,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             shared.m_icons = VisualUtil.TintIcons(shared.m_icons, Tint);
             VisualUtil.TintMaterials(prefab, Tint);
 
-            ZLog.Log("[TheSedimentaryPath] VineberryJuice prefab created");
+            Log.Debug("VineberryJuice: prefab created");
             return prefab;
         }
     }

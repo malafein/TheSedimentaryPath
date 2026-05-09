@@ -222,7 +222,7 @@ namespace malafein.Valheim.TheSedimentaryPath
                     $"<color=yellow>{msg}</color>");
             }
 
-            ZLog.Log($"[TheSedimentaryPath] VineWatcher: watch tick — sent credit to {target.GetZDO()?.m_uid}, awarded {VinerySkill.WatchXP} Vinery XP");
+            Log.Debug($"VineWatcher: watch tick — sent credit to {target.GetZDO()?.m_uid}, awarded {VinerySkill.WatchXP} Vinery XP");
         }
 
         private float GetMaxGrowthTime(ZNetView target)

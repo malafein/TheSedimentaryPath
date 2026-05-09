@@ -132,7 +132,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             if (skill == null) return;
             skill.m_level = level;
             skill.m_accumulator = 0f;
-            ZLog.Log($"[TheSedimentaryPath] [Debug] Set {skillType} to {level}");
+            Log.Debug($"HotkeyInputPatch: set {skillType} to {level}");
         }
     }
 }

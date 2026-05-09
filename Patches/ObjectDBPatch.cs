@@ -13,14 +13,14 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
         public static void Postfix(ObjectDB __instance)
         {
-            ZLog.Log($"[TheSedimentaryPath] ObjectDB.Awake postfix: m_items.Count={__instance.m_items.Count}");
+            Log.Debug($"ObjectDB.Awake: m_items.Count={__instance.m_items.Count}");
 
             // Reset the Wishbone effect cache so it re-fetches from this ObjectDB instance.
             WishboneEffects.Reset();
 
             if (__instance.m_items.Count == 0)
             {
-                ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: skipping (title screen, no items)");
+                Log.Debug("ObjectDB.Awake: skipping (title screen, no items)");
                 return;
             }
 
@@ -37,16 +37,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     RegisterItem(__instance, heftyPrefab);
                     RegisterInZNetScene(heftyPrefab);
                     AddHeftyStoneRecipe(__instance);
-                    ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: Hefty Stone fully registered");
+                    Log.Info("ObjectDB.Awake: Hefty Stone registered");
                 }
                 else
                 {
-                    ZLog.LogError("[TheSedimentaryPath] ObjectDB.Awake: HeftyStone.CreatePrefab returned null");
+                    Log.Error("ObjectDB.Awake: HeftyStone.CreatePrefab returned null");
                 }
             }
             else
             {
-                ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: HeftyStone already registered, skipping");
+                Log.Debug("ObjectDB.Awake: HeftyStone already registered, skipping");
             }
 
             // Register Blackstone Brew (base + fermented) + SE
@@ -56,7 +56,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 if (brewSE != null)
                 {
                     __instance.m_StatusEffects.Add(brewSE);
-                    ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: SE_BlackstoneBrew registered");
+                    Log.Info("ObjectDB.Awake: SE_BlackstoneBrew registered");
                 }
 
                 GameObject basePrefab = BlackstoneBrew.CreateBasePrefab();
@@ -65,7 +65,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     Plugin.BlackstoneBrewBasePrefab = basePrefab;
                     RegisterItem(__instance, basePrefab);
                     RegisterInZNetScene(basePrefab);
-                    ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: BlackstoneBrewBase registered");
+                    Log.Info("ObjectDB.Awake: BlackstoneBrewBase registered");
                 }
 
                 GameObject brewPrefab = BlackstoneBrew.CreateBrewPrefab(brewSE);
@@ -75,12 +75,12 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     RegisterItem(__instance, brewPrefab);
                     RegisterInZNetScene(brewPrefab);
                     AddBlackstoneBrewBaseRecipe(__instance);
-                    ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: BlackstoneBrew registered");
+                    Log.Info("ObjectDB.Awake: BlackstoneBrew registered");
                 }
             }
             else
             {
-                ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: BlackstoneBrew already registered, skipping");
+                Log.Debug("ObjectDB.Awake: BlackstoneBrew already registered, skipping");
             }
 
             // Register Vineberry Juice (base + fermented) + SE
@@ -90,7 +90,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 if (juiceSE != null)
                 {
                     __instance.m_StatusEffects.Add(juiceSE);
-                    ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: SE_VineberryJuice registered");
+                    Log.Info("ObjectDB.Awake: SE_VineberryJuice registered");
                 }
 
                 GameObject juiceBasePrefab = VineberryJuice.CreateBasePrefab();
@@ -99,7 +99,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     Plugin.VineberryJuiceBasePrefab = juiceBasePrefab;
                     RegisterItem(__instance, juiceBasePrefab);
                     RegisterInZNetScene(juiceBasePrefab);
-                    ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: VineberryJuiceBase registered");
+                    Log.Info("ObjectDB.Awake: VineberryJuiceBase registered");
                 }
 
                 GameObject juicePrefab = VineberryJuice.CreateJuicePrefab(juiceSE);
@@ -109,12 +109,12 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     RegisterItem(__instance, juicePrefab);
                     RegisterInZNetScene(juicePrefab);
                     AddVineberryJuiceBaseRecipe(__instance);
-                    ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: VineberryJuice registered");
+                    Log.Info("ObjectDB.Awake: VineberryJuice registered");
                 }
             }
             else
             {
-                ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: VineberryJuice already registered, skipping");
+                Log.Debug("ObjectDB.Awake: VineberryJuice already registered, skipping");
             }
 
             // Register the stance status effect once (shared by all stance weapons)
@@ -125,7 +125,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 stanceSE.m_name = "$se_weaponstance";
                 stanceSE.m_ttl  = 3600f;
                 __instance.m_StatusEffects.Add(stanceSE);
-                Plugin.DebugLog("ObjectDB.Awake: SE_WeaponStance registered");
+                Log.Info("ObjectDB.Awake: SE_WeaponStance registered");
             }
 
             // Register Kaldmörk (obsidian frost dagger)
@@ -148,16 +148,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     Plugin.StanceWeapons["$item_kaldmork"]    = kaldmorkWeapon;
                     Plugin.SplitSkillWeapons["$item_kaldmork"] = RockerySkill.SkillType;
                     AddKaldmorkRecipe(__instance);
-                    Plugin.DebugLog("ObjectDB.Awake: obsidian dagger fully registered");
+                    Log.Info("ObjectDB.Awake: Kaldmörk registered");
                 }
                 else
                 {
-                    ZLog.LogError("[TheSedimentaryPath] ObjectDB.Awake: ObsidianDagger.CreatePrefab returned null");
+                    Log.Error("ObjectDB.Awake: ObsidianDagger.CreatePrefab returned null");
                 }
             }
             else
             {
-                Plugin.DebugLog("ObjectDB.Awake: obsidian dagger already registered, skipping");
+                Log.Debug("ObjectDB.Awake: Kaldmörk already registered, skipping");
             }
 
             // Register Dökkblað (obsidian frost sword) — must follow dagger registration (clones KaldmorkPrefab)
@@ -174,16 +174,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     Plugin.StanceWeapons["$item_dokkblad"]    = dokkbladWeapon;
                     Plugin.SplitSkillWeapons["$item_dokkblad"] = RockerySkill.SkillType;
                     AddDokkbladRecipe(__instance);
-                    Plugin.DebugLog("ObjectDB.Awake: obsidian sword fully registered");
+                    Log.Info("ObjectDB.Awake: Dökkblað registered");
                 }
                 else
                 {
-                    ZLog.LogError("[TheSedimentaryPath] ObjectDB.Awake: ObsidianSword.CreatePrefab returned null");
+                    Log.Error("ObjectDB.Awake: ObsidianSword.CreatePrefab returned null");
                 }
             }
             else
             {
-                Plugin.DebugLog("ObjectDB.Awake: obsidian sword already registered, skipping");
+                Log.Debug("ObjectDB.Awake: Dökkblað already registered, skipping");
             }
 
             // Register Smooth Stone
@@ -203,16 +203,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     }
 
                     AddSmoothStoneRecipe(__instance);
-                    ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: Smooth Stone fully registered");
+                    Log.Info("ObjectDB.Awake: Smooth Stone registered");
                 }
                 else
                 {
-                    ZLog.LogError("[TheSedimentaryPath] ObjectDB.Awake: SmoothStone.CreatePrefab returned null");
+                    Log.Error("ObjectDB.Awake: SmoothStone.CreatePrefab returned null");
                 }
             }
             else
             {
-                ZLog.Log("[TheSedimentaryPath] ObjectDB.Awake: SmoothStone already registered, skipping");
+                Log.Debug("ObjectDB.Awake: SmoothStone already registered, skipping");
             }
         }
 
@@ -224,11 +224,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 var itemByHash = (Dictionary<int, GameObject>)ItemByHashField.GetValue(db);
                 int hash = prefab.name.GetStableHashCode();
                 itemByHash[hash] = prefab;
-                ZLog.Log($"[TheSedimentaryPath] RegisterItem: registered {prefab.name} (hash={hash})");
+                Log.Debug($"RegisterItem: {prefab.name} (hash={hash})");
             }
             else
             {
-                ZLog.LogError($"[TheSedimentaryPath] RegisterItem: m_itemByHash field not found for {prefab.name}");
+                Log.Error($"RegisterItem: m_itemByHash field not found for {prefab.name}");
             }
         }
 
@@ -236,14 +236,14 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         {
             if (ZNetScene.instance == null)
             {
-                ZLog.LogWarning("[TheSedimentaryPath] RegisterInZNetScene: ZNetScene.instance is null");
+                Log.Warn("RegisterInZNetScene: ZNetScene.instance is null");
                 return;
             }
 
             FieldInfo field = AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs");
             if (field == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] RegisterInZNetScene: m_namedPrefabs field not found");
+                Log.Error("RegisterInZNetScene: m_namedPrefabs field not found");
                 return;
             }
 
@@ -257,16 +257,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 if (prefab.GetComponent<ZNetView>() != null)
                 {
                     ZNetScene.instance.m_prefabs.Add(prefab);
-                    ZLog.Log($"[TheSedimentaryPath] RegisterInZNetScene: registered prefab with ZNetView (hash={hash})");
+                    Log.Debug($"RegisterInZNetScene: {prefab.name} with ZNetView (hash={hash})");
                 }
                 else
                 {
-                    ZLog.Log($"[TheSedimentaryPath] RegisterInZNetScene: registered prefab without ZNetView (hash={hash})");
+                    Log.Debug($"RegisterInZNetScene: {prefab.name} without ZNetView (hash={hash})");
                 }
             }
             else
             {
-                ZLog.Log("[TheSedimentaryPath] RegisterInZNetScene: already registered");
+                Log.Debug($"RegisterInZNetScene: {prefab.name} already registered");
             }
         }
 
@@ -275,26 +275,26 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             Localization loc = Localization.instance;
             if (loc == null)
             {
-                ZLog.LogWarning("[TheSedimentaryPath] AddLocalization: Localization.instance is null");
+                Log.Warn("AddLocalization: Localization.instance is null");
                 return;
             }
 
             FieldInfo field = AccessTools.Field(typeof(Localization), "m_translations");
             if (field == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] AddLocalization: m_translations field not found");
+                Log.Error("AddLocalization: m_translations field not found");
                 return;
             }
 
             var translations = (Dictionary<string, string>)field.GetValue(loc);
             translations["item_heftystone"] = "Hefty Stone";
-            translations["item_heftystone_desc"] = "A carefully chosen stone, dense and well-balanced. Perfect for throwing \u2014 or for making a point.";
+            translations["item_heftystone_desc"] = "A carefully chosen stone, dense and well-balanced. Perfect for throwing — or for making a point.";
             translations["item_smoothstone"] = "Smooth Stone";
             translations["item_smoothstone_desc"] = "A flat, water-worn stone that fits perfectly between the fingers. Aerodynamic and precise.";
             translations["item_vineberryjuicebase"]       = "Vineberry Juice Base";
             translations["item_vineberryjuicebase_desc"]  = "A blend of vineberry, fiddlehead sprouts, and cloudberries. Sweet, strange, and not yet finished. The fermenter will decide the rest.";
             translations["item_vineberryjuice"]           = "Vineberry Juice";
-            translations["item_vineberryjuice_desc"]      = "Sweet, still, and faintly luminous. The taste of long afternoons. Cloudberry bright. Vineberry deep. Fiddlehead strange \u2014 something in the blend knows you.";
+            translations["item_vineberryjuice_desc"]      = "Sweet, still, and faintly luminous. The taste of long afternoons. Cloudberry bright. Vineberry deep. Fiddlehead strange — something in the blend knows you.";
             translations["se_vineberryjuice"]             = "Vineberry Juice";
             translations["se_vineberryjuice_tooltip"]     = "+40 stamina, +30 eitr. Something in the blend knows you.";
             translations["se_vineberryjuice_start"]       = "The vine is in your blood.";
@@ -322,7 +322,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             translations[$"skill_{VinerySkill.SkillId}"]               = "Vinery";
             translations[$"skill_{VinerySkill.SkillId}_description"]   = "The patient know: a watched vine does not wither.";
             translations["skill_vinery_desc"]                          = "The patient know: a watched vine does not wither.";
-            ZLog.Log($"[TheSedimentaryPath] AddLocalization: added {8} translation(s), total translations={translations.Count}");
+            Log.Debug($"AddLocalization: {translations.Count} total translations");
         }
 
         private static void AddVineberryJuiceBaseRecipe(ObjectDB db)
@@ -335,7 +335,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             if (vineberry == null || fiddlehead == null || cloudberry == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] AddVineberryJuiceBaseRecipe: one or more ingredient prefabs not found " +
+                Log.Error("AddVineberryJuiceBaseRecipe: one or more ingredient prefabs not found " +
                     $"(Vineberry={vineberry != null}, Fiddleheadfern={fiddlehead != null}, Cloudberry={cloudberry != null})");
                 return;
             }
@@ -355,7 +355,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             };
 
             db.m_recipes.Add(recipe);
-            ZLog.Log("[TheSedimentaryPath] AddVineberryJuiceBaseRecipe: 3 Vineberry + 2 FiddleheadFern + 4 Cloudberries → 1 VineberryJuiceBase");
+            Log.Info("AddVineberryJuiceBaseRecipe: 3 Vineberry + 2 FiddleheadFern + 4 Cloudberries → 1 VineberryJuiceBase");
         }
 
         private static void AddBlackstoneBrewBaseRecipe(ObjectDB db)
@@ -368,7 +368,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             if (obsidian == null || pukeberries == null || barley == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] AddBlackstoneBrewBaseRecipe: one or more ingredient prefabs not found " +
+                Log.Error("AddBlackstoneBrewBaseRecipe: one or more ingredient prefabs not found " +
                     $"(Obsidian={obsidian != null}, Pukeberries={pukeberries != null}, Barley={barley != null})");
                 return;
             }
@@ -388,7 +388,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             };
 
             db.m_recipes.Add(recipe);
-            ZLog.Log("[TheSedimentaryPath] AddBlackstoneBrewBaseRecipe: 2 Obsidian + 4 Pukeberries + 2 Barley → 1 BlackstoneBrewBase");
+            Log.Info("AddBlackstoneBrewBaseRecipe: 2 Obsidian + 4 Pukeberries + 2 Barley → 1 BlackstoneBrewBase");
         }
 
         private static void AddHeftyStoneRecipe(ObjectDB db)
@@ -414,11 +414,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                         m_recover = true
                     }
                 };
-                ZLog.Log("[TheSedimentaryPath] AddHeftyStoneRecipe: 5x Stone -> 10x Hefty Stone");
+                Log.Info("AddHeftyStoneRecipe: 5x Stone → 10x Hefty Stone");
             }
             else
             {
-                ZLog.LogError("[TheSedimentaryPath] AddHeftyStoneRecipe: could not find Stone prefab");
+                Log.Error("AddHeftyStoneRecipe: could not find Stone prefab");
             }
 
             db.m_recipes.Add(recipe);
@@ -433,7 +433,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             if (obsidianPrefab == null || freezeGlandPrefab == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] AddDokkbladRecipe: one or more ingredient prefabs not found " +
+                Log.Error("AddDokkbladRecipe: one or more ingredient prefabs not found " +
                     $"(Obsidian={obsidianPrefab != null}, FreezeGland={freezeGlandPrefab != null})");
                 return;
             }
@@ -453,7 +453,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             };
 
             db.m_recipes.Add(recipe);
-            Plugin.DebugLog("AddDokkbladRecipe: registered");
+            Log.Debug("AddDokkbladRecipe: registered");
         }
 
         private static void AddKaldmorkRecipe(ObjectDB db)
@@ -465,7 +465,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             if (obsidianPrefab == null || freezeGlandPrefab == null || leatherPrefab == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] AddKaldmorkRecipe: one or more ingredient prefabs not found " +
+                Log.Error("AddKaldmorkRecipe: one or more ingredient prefabs not found " +
                     $"(Obsidian={obsidianPrefab != null}, FreezeGland={freezeGlandPrefab != null}, LeatherScraps={leatherPrefab != null})");
                 return;
             }
@@ -485,7 +485,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             };
 
             db.m_recipes.Add(recipe);
-            Plugin.DebugLog("AddKaldmorkRecipe: registered");
+            Log.Debug("AddKaldmorkRecipe: registered");
         }
 
         private static void AddSmoothStoneRecipe(ObjectDB db)
@@ -511,11 +511,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                         m_recover = true
                     }
                 };
-                ZLog.Log("[TheSedimentaryPath] AddSmoothStoneRecipe: 3x Flint -> 10x Smooth Stone");
+                Log.Info("AddSmoothStoneRecipe: 3x Flint → 10x Smooth Stone");
             }
             else
             {
-                ZLog.LogError("[TheSedimentaryPath] AddSmoothStoneRecipe: could not find Flint prefab");
+                Log.Error("AddSmoothStoneRecipe: could not find Flint prefab");
             }
 
             db.m_recipes.Add(recipe);

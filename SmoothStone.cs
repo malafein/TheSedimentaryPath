@@ -11,32 +11,32 @@ namespace malafein.Valheim.TheSedimentaryPath
 
         public static GameObject CreatePrefab()
         {
-            ZLog.Log("[TheSedimentaryPath] SmoothStone.CreatePrefab: starting");
+            Log.Debug("SmoothStone.CreatePrefab: starting");
 
             GameObject clubPrefab = ZNetScene.instance.GetPrefab("Club");
             if (clubPrefab == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] SmoothStone.CreatePrefab: Could not find Club prefab");
+                Log.Error("SmoothStone.CreatePrefab: could not find Club prefab");
                 return null;
             }
 
             GameObject flintPrefab = ZNetScene.instance.GetPrefab("Flint");
             if (flintPrefab == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] SmoothStone.CreatePrefab: Could not find Flint prefab");
+                Log.Error("SmoothStone.CreatePrefab: could not find Flint prefab");
                 return null;
             }
 
             GameObject greydwarfProjectile = ZNetScene.instance.GetPrefab("Greydwarf_throw_projectile");
             if (greydwarfProjectile == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] SmoothStone.CreatePrefab: Could not find Greydwarf_throw_projectile prefab");
+                Log.Error("SmoothStone.CreatePrefab: could not find Greydwarf_throw_projectile prefab");
                 return null;
             }
 
             GameObject prefab = Object.Instantiate(clubPrefab, Plugin.PrefabContainer);
             prefab.name = "SmoothStone";
-            ZLog.Log("[TheSedimentaryPath] SmoothStone.CreatePrefab: cloned Club under inactive container");
+            Log.Debug("SmoothStone.CreatePrefab: cloned Club under inactive container");
 
             SwapMesh(prefab, flintPrefab);
             ProjectilePrefab = CreateProjectilePrefab(prefab, greydwarfProjectile);
@@ -44,7 +44,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             ItemDrop itemDrop = prefab.GetComponent<ItemDrop>();
             if (itemDrop == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] SmoothStone.CreatePrefab: cloned prefab has no ItemDrop component");
+                Log.Error("SmoothStone.CreatePrefab: cloned prefab has no ItemDrop component");
                 return null;
             }
 
@@ -58,17 +58,17 @@ namespace malafein.Valheim.TheSedimentaryPath
             shared.m_animationState = ItemDrop.ItemData.AnimationState.OneHanded;
             shared.m_skillType = RockerySkill.SkillType;
             shared.m_attachOverride = ItemDrop.ItemData.ItemType.Tool;
-            ZLog.Log("[TheSedimentaryPath] SmoothStone.CreatePrefab: set basic item info");
+            Log.Debug("SmoothStone.CreatePrefab: set basic item info");
 
             // Copy icon from Flint, shrunk so it reads as a smaller variant in the inventory slot
             if (flintItemDrop != null && flintItemDrop.m_itemData.m_shared.m_icons != null)
             {
                 shared.m_icons = VisualUtil.ShrinkIcons(flintItemDrop.m_itemData.m_shared.m_icons, 0.7f);
-                ZLog.Log($"[TheSedimentaryPath] SmoothStone.CreatePrefab: copied {shared.m_icons.Length} icon(s) from Flint (shrunk 0.7x)");
+                Log.Debug($"SmoothStone.CreatePrefab: copied {shared.m_icons.Length} icon(s) from Flint (shrunk 0.7x)");
             }
             else
             {
-                ZLog.LogWarning("[TheSedimentaryPath] SmoothStone.CreatePrefab: could not copy icons from Flint");
+                Log.Warn("SmoothStone.CreatePrefab: could not copy icons from Flint");
             }
 
             // Stats — lighter, sharper, better thrown, weaker melee
@@ -80,13 +80,12 @@ namespace malafein.Valheim.TheSedimentaryPath
             shared.m_damagesPerLevel = new HitData.DamageTypes();
             shared.m_attackForce = 15f;
             shared.m_backstabBonus = 4f;
-            shared.m_maxDurability = 100f;
-            shared.m_durabilityPerLevel = 0f;
+            shared.m_useDurability = false;
             shared.m_weight = 0.3f;
             shared.m_blockPower = 2f;
             shared.m_maxQuality = 1;
             shared.m_maxStackSize = 50;
-            ZLog.Log("[TheSedimentaryPath] SmoothStone.CreatePrefab: set weapon stats");
+            Log.Debug("SmoothStone.CreatePrefab: set weapon stats");
 
             // Primary attack — punch
             if (shared.m_attack == null)
@@ -96,7 +95,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             shared.m_attack.m_attackRange = 1.5f;
             shared.m_attack.m_attackChainLevels = 2;
             shared.m_attack.m_attackProjectile = null;
-            ZLog.Log("[TheSedimentaryPath] SmoothStone.CreatePrefab: configured primary attack (unarmed)");
+            Log.Debug("SmoothStone.CreatePrefab: configured primary attack (unarmed)");
 
             // Secondary attack — throw (consumed, faster and more accurate than Hefty Stone)
             if (shared.m_secondaryAttack == null)
@@ -112,9 +111,9 @@ namespace malafein.Valheim.TheSedimentaryPath
             shared.m_secondaryAttack.m_attackRange = 1.0f;
             shared.m_secondaryAttack.m_launchAngle = 0f;
             shared.m_secondaryAttack.m_damageMultiplier = 1.5f;
-            ZLog.Log("[TheSedimentaryPath] SmoothStone.CreatePrefab: configured secondary attack (throw)");
+            Log.Debug("SmoothStone.CreatePrefab: configured secondary attack (throw)");
 
-            ZLog.Log("[TheSedimentaryPath] SmoothStone.CreatePrefab: complete");
+            Log.Debug("SmoothStone.CreatePrefab: complete");
             return prefab;
         }
 
@@ -153,12 +152,12 @@ namespace malafein.Valheim.TheSedimentaryPath
                 }
                 else
                 {
-                    ZLog.LogWarning("[TheSedimentaryPath] SmoothStone: CopyMeshInto projectile failed");
+                    Log.Warn("SmoothStone: CopyMeshInto projectile failed");
                 }
             }
             else
             {
-                ZLog.LogWarning("[TheSedimentaryPath] SmoothStone: no 'attach' node on weapon — projectile will use default mesh");
+                Log.Warn("SmoothStone: no 'attach' node on weapon — projectile will use default mesh");
             }
 
             return projPrefab;
@@ -171,17 +170,17 @@ namespace malafein.Valheim.TheSedimentaryPath
 
             if (flintMeshFilter == null || flintMeshRenderer == null)
             {
-                ZLog.LogWarning("[TheSedimentaryPath] SmoothStone.SwapMesh: Flint mesh components missing");
+                Log.Warn("SmoothStone.SwapMesh: Flint mesh components missing");
                 return;
             }
 
             _flintBaseScale = flintMeshFilter.transform.localScale;
-            ZLog.Log($"[TheSedimentaryPath] SmoothStone.SwapMesh: found Flint mesh '{flintMeshFilter.sharedMesh?.name}', baseScale={_flintBaseScale}");
+            Log.Debug($"SmoothStone.SwapMesh: found Flint mesh '{flintMeshFilter.sharedMesh?.name}', baseScale={_flintBaseScale}");
 
             Transform attach = weaponPrefab.transform.Find("attach");
             if (attach == null)
             {
-                ZLog.LogWarning("[TheSedimentaryPath] SmoothStone.SwapMesh: no 'attach' child found");
+                Log.Warn("SmoothStone.SwapMesh: no 'attach' child found");
                 return;
             }
             attach.localRotation = Quaternion.Euler(0f, 90f, 0f);
@@ -191,14 +190,14 @@ namespace malafein.Valheim.TheSedimentaryPath
             MeshRenderer mr = attach.GetComponentInChildren<MeshRenderer>();
             if (mf == null || mr == null)
             {
-                ZLog.LogWarning("[TheSedimentaryPath] SmoothStone.SwapMesh: no MeshFilter/MeshRenderer in 'attach'");
+                Log.Warn("SmoothStone.SwapMesh: no MeshFilter/MeshRenderer in 'attach'");
                 return;
             }
 
             mf.sharedMesh = flintMeshFilter.sharedMesh;
             mr.sharedMaterials = flintMeshRenderer.sharedMaterials;
             _meshTransform = mf.transform;
-            ZLog.Log("[TheSedimentaryPath] SmoothStone.SwapMesh: mesh swapped in 'attach'");
+            Log.Debug("SmoothStone.SwapMesh: mesh swapped in 'attach'");
 
             ApplyMeshTransforms(weaponPrefab);
         }

@@ -39,7 +39,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 if (floatProjectile?.m_hitWaterEffects?.m_effectPrefabs?.Length > 0)
                 {
                     projectile.m_hitWaterEffects.m_effectPrefabs = floatProjectile.m_hitWaterEffects.m_effectPrefabs;
-                    Plugin.DebugLog($"[SkipStone] wired {floatProjectile.m_hitWaterEffects.m_effectPrefabs.Length} water effect(s) from FishingRodFloatProjectile.Projectile");
+                    Log.Debug($"SkipStonePatch: wired {floatProjectile.m_hitWaterEffects.m_effectPrefabs.Length} water effect(s) from FishingRodFloatProjectile.Projectile");
                     return;
                 }
 
@@ -47,21 +47,21 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 if (floating?.m_impactEffects?.m_effectPrefabs?.Length > 0)
                 {
                     projectile.m_hitWaterEffects.m_effectPrefabs = floating.m_impactEffects.m_effectPrefabs;
-                    Plugin.DebugLog($"[SkipStone] wired {floating.m_impactEffects.m_effectPrefabs.Length} water effect(s) from FishingRodFloatProjectile.Floating");
+                    Log.Debug($"SkipStonePatch: wired {floating.m_impactEffects.m_effectPrefabs.Length} water effect(s) from FishingRodFloatProjectile.Floating");
                     return;
                 }
 
                 if (Plugin.IsDebugMode)
                 {
-                    var sb = new System.Text.StringBuilder("[SkipStone] FishingRodFloatProjectile has no water effects; components:");
+                    var sb = new System.Text.StringBuilder("SkipStonePatch: FishingRodFloatProjectile has no water effects; components:");
                     foreach (Component c in floatPrefab.GetComponents<Component>())
                         sb.Append('\n').Append(c.GetType().Name);
-                    Plugin.DebugLog(sb.ToString());
+                    Log.Debug(sb.ToString());
                 }
             }
             else
             {
-                Plugin.DebugLog("[SkipStone] FishingRodFloatProjectile not found in ZNetScene");
+                Log.Debug("SkipStonePatch: FishingRodFloatProjectile not found in ZNetScene");
             }
         }
     }
@@ -117,7 +117,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             skip.SkipCount++;
 
-            Plugin.DebugLog($"[SkipStone] skip #{skip.SkipCount} vel={vel.magnitude:F1} at {hitPoint}");
+            Log.Debug($"SkipStonePatch: skip #{skip.SkipCount} vel={vel.magnitude:F1} at {hitPoint}");
 
             return false; // stone is still alive — suppress vanilla hit/destroy
         }
@@ -134,7 +134,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             float xp = skip.SkipCount * RockerySkill.SkipXPPerSkip;
             skip.Owner?.RaiseSkill(RockerySkill.SkillType, xp);
 
-            Plugin.DebugLog($"[SkipStone] final impact: {skip.SkipCount} skip(s), blunt={__instance.m_damage.m_blunt:F1}, XP +{xp:F1}");
+            Log.Debug($"SkipStonePatch: final impact: {skip.SkipCount} skip(s), blunt={__instance.m_damage.m_blunt:F1}, XP +{xp:F1}");
         }
     }
 }

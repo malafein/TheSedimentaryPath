@@ -20,14 +20,15 @@ namespace malafein.Valheim.TheSedimentaryPath
         // Shown as the small badge text on the buff icon in the HUD.
         public override string GetIconText() => _stanceDisplayName;
 
-        public override void UpdateStatusEffect(float dt)
+        public override bool IsDone()
         {
-            base.UpdateStatusEffect(dt);
-            if (!(m_character is Player player)) return;
-
-            string itemName = player.GetCurrentWeapon()?.m_shared?.m_name;
-            if (itemName == null || !Plugin.StanceWeapons.ContainsKey(itemName))
-                m_time = m_ttl; // force IsDone() → true
+            if (m_character is Player player)
+            {
+                string itemName = player.GetCurrentWeapon()?.m_shared?.m_name;
+                if (itemName == null || !Plugin.StanceWeapons.ContainsKey(itemName))
+                    return true;
+            }
+            return base.IsDone();
         }
     }
 }

@@ -41,7 +41,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             }
 
             player.RaiseSkill(craftSkill, craftXP);
-            ZLog.Log($"[TheSedimentaryPath] CraftingPatch: raised {craftSkill} by {craftXP} for crafting {itemName}");
+            Log.Debug($"CraftingPatch: raised {craftSkill} by {craftXP} for crafting {itemName}");
 
             // Bonus yield for stackable items
             if (recipe.m_item.m_itemData.m_shared.m_maxStackSize <= 1)
@@ -55,7 +55,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             {
                 Inventory inv = player.GetInventory();
                 inv.AddItem(recipe.m_item.gameObject, bonusAmount);
-                ZLog.Log($"[TheSedimentaryPath] CraftingPatch: bonus craft! +{bonusAmount} {itemName} (skill={skillFactor:F2})");
+                Log.Debug($"CraftingPatch: bonus craft! +{bonusAmount} {itemName} (skill={skillFactor:F2})");
 
                 // Show bonus text above player
                 DamageText.instance?.ShowText(DamageText.TextType.Bonus,

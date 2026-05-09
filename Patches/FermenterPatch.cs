@@ -20,7 +20,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             if (fromPrefab == null || toPrefab == null)
             {
-                ZLog.LogWarning($"[TheSedimentaryPath] FermenterPatch: skipping {fromName} → {toName} (prefabs not yet registered)");
+                Log.Warn($"FermenterPatch: skipping {fromName} → {toName} (prefabs not yet registered)");
                 return;
             }
 
@@ -37,7 +37,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 m_producedItems = producedItems,
             });
 
-            ZLog.Log($"[TheSedimentaryPath] FermenterPatch: added {fromName} → {toName} ×{producedItems}");
+            Log.Info($"FermenterPatch: added {fromName} → {toName} ×{producedItems}");
         }
     }
 }

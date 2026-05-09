@@ -54,7 +54,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     }
                 }
 
-                ZLog.Log($"[TheSedimentaryPath] Vine RPC_AddVineryCredit: advanced timer {creditReceived:F2}s (growStart-={creditTicks}), total={total + creditReceived:F1}s");
+                Log.Debug($"Vine RPC_AddVineryCredit: advanced timer {creditReceived:F2}s (growStart-={creditTicks}), total={total + creditReceived:F1}s");
             });
         }
     }
@@ -94,7 +94,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 float total = zdo.GetFloat(VinerySkill.ZdoCreditKey, 0f);
                 zdo.Set(VinerySkill.ZdoCreditKey, total + creditReceived);
 
-                ZLog.Log($"[TheSedimentaryPath] Plant RPC_AddVineryCredit: advanced timer {creditReceived:F2}s, total={total + creditReceived:F1}s");
+                Log.Debug($"Plant RPC_AddVineryCredit: advanced timer {creditReceived:F2}s, total={total + creditReceived:F1}s");
             });
         }
     }
@@ -142,7 +142,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 float total = zdo.GetFloat(VinerySkill.ZdoCreditKey, 0f);
                 zdo.Set(VinerySkill.ZdoCreditKey, total + creditReceived);
 
-                ZLog.Log($"[TheSedimentaryPath] Pickable RPC_AddVineryCredit: +{creditReceived:F2}s, total={total + creditReceived:F1}s");
+                Log.Debug($"Pickable RPC_AddVineryCredit: +{creditReceived:F2}s, total={total + creditReceived:F1}s");
             });
         }
     }

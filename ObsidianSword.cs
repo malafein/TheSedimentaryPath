@@ -16,7 +16,7 @@ namespace malafein.Valheim.TheSedimentaryPath
         {
             if (Plugin.KaldmorkPrefab == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] ObsidianSword.CreatePrefab: KaldmorkPrefab not yet registered");
+                Log.Error("ObsidianSword.CreatePrefab: KaldmorkPrefab not yet registered");
                 return null;
             }
 
@@ -29,7 +29,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             if (mf != null)
                 mf.transform.localScale = new Vector3(1f, 2.5f, 1f);
             else
-                ZLog.LogWarning("[TheSedimentaryPath] ObsidianSword: no MeshFilter found — blade stretch skipped");
+                Log.Warn("ObsidianSword: no MeshFilter found — blade stretch skipped");
 
             // The ambient VFX cloned from the dagger sits at z=0.25 — move it further along the longer blade.
             Transform ambientVfx = prefab.transform.Find("attach/vfx_frost_ambient");
@@ -39,7 +39,7 @@ namespace malafein.Valheim.TheSedimentaryPath
             ItemDrop itemDrop = prefab.GetComponent<ItemDrop>();
             if (itemDrop == null)
             {
-                ZLog.LogError("[TheSedimentaryPath] ObsidianSword.CreatePrefab: no ItemDrop on clone");
+                Log.Error("ObsidianSword.CreatePrefab: no ItemDrop on clone");
                 return null;
             }
 
@@ -71,13 +71,13 @@ namespace malafein.Valheim.TheSedimentaryPath
                 }
                 else
                 {
-                    ZLog.LogWarning("[TheSedimentaryPath] ObsidianSword: could not read SwordSilver SharedData — using knife attacks");
+                    Log.Warn("ObsidianSword: could not read SwordSilver SharedData — using knife attacks");
                     _thrustAttack = _leapAttack;
                 }
             }
             else
             {
-                ZLog.LogWarning("[TheSedimentaryPath] ObsidianSword: SwordSilver not found — using knife attacks");
+                Log.Warn("ObsidianSword: SwordSilver not found — using knife attacks");
                 _thrustAttack = _leapAttack;
             }
             shared.m_secondaryAttack = IsThrustStance ? _thrustAttack : _leapAttack;

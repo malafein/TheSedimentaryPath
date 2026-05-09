@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+- stone does not wear from the hand
+- the stance holds until the hand is empty
+
 ## 0.1.2
 - a longer darkness, a different edge
 - skill finds its own level
