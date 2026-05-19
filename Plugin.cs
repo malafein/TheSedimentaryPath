@@ -13,7 +13,7 @@ namespace malafein.Valheim.TheSedimentaryPath
     {
         public const string ModGUID = "com.malafein.thesedimentarypath";
         public const string ModName = "The Sedimentary Path";
-        public const string ModVersion = "0.1.4";
+        public const string ModVersion = "0.2.0";
 
         public static GameObject HeftyStonePrefab;
         public static GameObject SmoothStonePrefab;
@@ -167,6 +167,11 @@ namespace malafein.Valheim.TheSedimentaryPath
             DetectHerbs = ClientConfig("Vinery Categories", "DetectHerbs", true, "Sense wild herbs like Thistle and Dandelion.");
 
             harmony.PatchAll();
+
+            // Touch FeatRegistry to force its static constructor to run at startup
+            // (otherwise it lazy-loads on first patch hit, hiding load issues).
+            _ = malafein.Valheim.TheSedimentaryPath.Journal.FeatRegistry.Get("rocks_collected");
+
             Log.Info($"{ModName} loaded");
         }
 

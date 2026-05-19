@@ -56,12 +56,24 @@ namespace malafein.Valheim.TheSedimentaryPath.Skills
             return 0f;
         }
 
+        // All Rockery-skill craftable items (drives Rockery XP on craft).
         public static bool IsRockeryItem(string itemName)
         {
             return itemName == "$item_heftystone"
                 || itemName == "$item_smoothstone"
-                || itemName == "$item_blackstonebrewbase"
-                || itemName == "$item_kaldmork";
+                || itemName == "$item_kaldmork"
+                || itemName == "$item_dokkblad"
+                || itemName == "$item_blackstonebrewbase";
+        }
+
+        // True for TSP stone-family weapons only (excludes the brew base).
+        // Used by feat tracking and kill-attribution checks.
+        public static bool IsRockeryWeapon(string itemName)
+        {
+            return itemName == "$item_heftystone"
+                || itemName == "$item_smoothstone"
+                || itemName == "$item_kaldmork"
+                || itemName == "$item_dokkblad";
         }
 
         public static void RegisterSkill(ValheimSkills skills)

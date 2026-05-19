@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
+using malafein.Valheim.TheSedimentaryPath.Journal;
 using malafein.Valheim.TheSedimentaryPath.World;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
@@ -13,7 +14,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         {
             Log.Debug("ZNetScene.Awake: postfix fired");
 
+            // Clear transient per-session state before registering handlers, so
+            // any leftovers from a previous world don't survive into the new one.
+            AchievementSystem.ClearAll();
+
             RockShrine.RegisterRPCs();
+            VineMaturedRpc.Register();
+            CreatureDeathRpc.Register();
 
             FieldInfo field = AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs");
             if (field == null)

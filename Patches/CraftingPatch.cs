@@ -2,6 +2,7 @@ using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
 using ValheimSkills = global::Skills;
+using malafein.Valheim.TheSedimentaryPath.Journal;
 using malafein.Valheim.TheSedimentaryPath.Skills;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
@@ -23,6 +24,14 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             Player player = Player.m_localPlayer;
             if (player == null)
                 return;
+
+            // Journal: The Tilted Craft — any item crafted while drunk.
+            if (FeatTracker.IsDrunk(player))
+                FeatTracker.RecordEvent(player, Feats.DrunkCrafting);
+
+            // Journal: The Knapping — TSP stone weapon crafted (not the brew base).
+            if (RockerySkill.IsRockeryWeapon(itemName))
+                FeatTracker.RecordEvent(player, Feats.StoneWeaponsCrafted);
 
             ValheimSkills.SkillType craftSkill;
             float craftXP;

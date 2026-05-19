@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using malafein.Valheim.TheSedimentaryPath.Journal;
 
 namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
 {
@@ -13,6 +14,9 @@ namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
         }
 
         public List<DrunkInstance> Instances = new List<DrunkInstance>();
+
+        // Float accumulator for the Days in the Cup feat (storage is int seconds).
+        private float _featSecondsAccumulator;
 
         public void AddDrunkInstance(float duration, float toleranceMultiplier)
         {
@@ -39,7 +43,7 @@ namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
         public override void UpdateStatusEffect(float dt)
         {
             base.UpdateStatusEffect(dt);
-            
+
             bool changed = false;
             for (int i = Instances.Count - 1; i >= 0; i--)
             {
@@ -52,6 +56,18 @@ namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
             }
 
             if (changed) UpdateTTL();
+
+            // Journal: Days in the Cup — accumulate fractional dt, record whole seconds.
+            if (m_character is Player player && player == Player.m_localPlayer)
+            {
+                _featSecondsAccumulator += dt;
+                if (_featSecondsAccumulator >= 1f)
+                {
+                    int wholeSeconds = (int)_featSecondsAccumulator;
+                    FeatTracker.RecordEvent(player, Feats.DrunkSeconds, wholeSeconds);
+                    _featSecondsAccumulator -= wholeSeconds;
+                }
+            }
         }
 
         public void ReduceAllTimers(float amount)

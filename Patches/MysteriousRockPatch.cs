@@ -1,6 +1,7 @@
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
+using malafein.Valheim.TheSedimentaryPath.Journal;
 using malafein.Valheim.TheSedimentaryPath.Skills;
 using malafein.Valheim.TheSedimentaryPath.World;
 
@@ -20,11 +21,18 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         }
     }
 
-    // Award 25 XP the first time a player places a Mysterious Rock
+    // Award 25 XP the first time a player places a Mysterious Rock.
+    // Also stamps the placer's ID on the placed rock's ZDO and increments the
+    // They That Watch feat (Option A net counter — see also RemoveMysteriousRockPatch).
     [HarmonyPatch(typeof(Player), "TryPlacePiece")]
     public static class PlaceMysteriousRockPatch
     {
-        private const string UniqueKey = "TheSedimentaryPath_PlacedMysteriousRock";
+        private const string UniqueKey       = "TheSedimentaryPath_PlacedMysteriousRock";
+        public  const string PlacerIdZdoKey  = "TSP_placer_id";
+
+        // m_placed is a private static List<IPlaced> field populated by PlacePiece.
+        private static readonly FieldInfo PlacedField =
+            AccessTools.Field(typeof(Player), "m_placed");
 
         public static void Postfix(Player __instance, Piece piece, bool __result)
         {
@@ -33,6 +41,44 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             if (Utils.GetPrefabName(piece.gameObject) != "Placeable_HardRock")
                 return;
+
+            // Find the just-instantiated piece via the static m_placed list and
+            // stamp the placer's PlayerID on its ZDO. PlayerID is stable across
+            // sessions (unlike ZDOID, which is re-generated per spawn).
+            if (__instance == Player.m_localPlayer)
+            {
+                var placedList = PlacedField?.GetValue(null) as System.Collections.IEnumerable;
+                Piece placedInstance = null;
+                if (placedList != null)
+                {
+                    foreach (object p in placedList)
+                    {
+                        if (p is Piece pc && Utils.GetPrefabName(pc.gameObject) == "Placeable_HardRock")
+                        {
+                            placedInstance = pc;
+                            break;
+                        }
+                    }
+                }
+
+                ZNetView nview = placedInstance?.GetComponent<ZNetView>();
+                if (nview != null && nview.IsValid())
+                {
+                    nview.GetZDO().Set(PlacerIdZdoKey, __instance.GetPlayerID());
+                    FeatTracker.RecordEvent(__instance, Feats.MysteriousRocksPlaced);
+
+                    // The Far Placing — distinct biome a Mysterious Rock has
+                    // ever been placed in. Set semantic: a later removal of
+                    // the rock does not drop the biome from the set.
+                    Heightmap.Biome biome = Heightmap.FindBiome(placedInstance.transform.position);
+                    if (biome != Heightmap.Biome.None)
+                        FeatTracker.AddDistinct(__instance, Feats.RocksInDistantLands, ((int)biome).ToString());
+                }
+                else
+                {
+                    Log.Warn("PlaceMysteriousRock: could not find placed-piece ZNetView; feat not credited");
+                }
+            }
 
             if (__instance.HaveUniqueKey(UniqueKey))
             {
@@ -43,6 +89,54 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             __instance.AddUniqueKey(UniqueKey);
             __instance.RaiseSkill(RockerySkill.SkillType, 25f);
             Log.Info("PlaceMysteriousRock: first placement, awarded 25 XP");
+        }
+    }
+
+    // Decrements the They That Watch feat when the local player removes a
+    // Mysterious Rock they originally placed (matched by ZDO placer-ID stamp).
+    // Natural destruction (troll, decay) doesn't go through RemovePiece, so
+    // those don't decrement the counter.
+    [HarmonyPatch(typeof(Player), "RemovePiece")]
+    public static class RemoveMysteriousRockPatch
+    {
+        private static readonly AccessTools.FieldRef<Player, int> RemoveRayMaskRef =
+            AccessTools.FieldRefAccess<Player, int>("m_removeRayMask");
+
+        public static void Prefix(Player __instance, out Piece __state)
+        {
+            __state = null;
+            if (GameCamera.instance == null || __instance.m_eye == null) return;
+
+            int removeMask = RemoveRayMaskRef(__instance);
+
+            if (Physics.Raycast(GameCamera.instance.transform.position,
+                                GameCamera.instance.transform.forward,
+                                out RaycastHit hitInfo,
+                                50f,
+                                removeMask)
+                && Vector3.Distance(hitInfo.point, __instance.m_eye.position) < __instance.m_maxPlaceDistance)
+            {
+                Piece piece = hitInfo.collider.GetComponentInParent<Piece>();
+                if (piece == null && hitInfo.collider.GetComponent<Heightmap>() != null)
+                    piece = TerrainModifier.FindClosestModifierPieceInRange(hitInfo.point, 2.5f);
+
+                __state = piece;
+            }
+        }
+
+        public static void Postfix(Player __instance, bool __result, Piece __state)
+        {
+            if (!__result || __state == null) return;
+            if (Utils.GetPrefabName(__state.gameObject) != "Placeable_HardRock") return;
+            if (__instance != Player.m_localPlayer) return;
+
+            ZNetView nview = __state.GetComponent<ZNetView>();
+            if (nview == null || !nview.IsValid()) return;
+
+            long placerId = nview.GetZDO().GetLong(PlaceMysteriousRockPatch.PlacerIdZdoKey, 0L);
+            if (placerId != __instance.GetPlayerID()) return;
+
+            FeatTracker.RecordEvent(__instance, Feats.MysteriousRocksPlaced, -1);
         }
     }
 

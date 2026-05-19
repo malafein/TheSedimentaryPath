@@ -150,13 +150,16 @@ namespace malafein.Valheim.TheSedimentaryPath.World
             int cycle = playerZdo.GetInt(WatchCycleZdoKey) + 1;
             playerZdo.Set(WatchCycleZdoKey, cycle);
 
+            // Journal: The Verdant Vigil — accumulate watch time each credit cycle.
+            Journal.FeatTracker.AddSeconds(_player, Journal.Feats.VineWatchSeconds, RpcInterval);
+
             if (target.IsValid())
             {
                 float skillFactor   = _player.GetSkillFactor(VinerySkill.SkillType);
                 float maxGrowthTime = GetMaxGrowthTime(target);
                 float credit        = VinerySkill.CreditPerTick * skillFactor * maxGrowthTime;
 
-                target.InvokeRPC("RPC_AddVineryCredit", credit);
+                target.InvokeRPC("RPC_AddVineryCredit", credit, _player.GetPlayerID());
 
                 if (target.GetComponent<Vine>() != null)
                     PropagateToVineStructure(target, credit);
@@ -187,7 +190,7 @@ namespace malafein.Valheim.TheSedimentaryPath.World
 
                 float credit = VinerySkill.CreditPerTick * skillFactor
                     * GetMaxGrowthTime(secondary) * SecondaryCreditFactor;
-                secondary.InvokeRPC("RPC_AddVineryCredit", credit);
+                secondary.InvokeRPC("RPC_AddVineryCredit", credit, _player.GetPlayerID());
                 Log.Debug($"VineWatcher: secondary credit → {secondary.GetZDO()?.m_uid} ({credit:F2}s)");
             }
         }
@@ -536,7 +539,7 @@ namespace malafein.Valheim.TheSedimentaryPath.World
                     if (segView == null || !segView.IsValid() || visited.Contains(segView)) continue;
                     visited.Add(segView);
                     frontier.Enqueue(seg.transform.position);
-                    segView.InvokeRPC("RPC_AddVineryCredit", credit);
+                    segView.InvokeRPC("RPC_AddVineryCredit", credit, _player.GetPlayerID());
                 }
             }
         }

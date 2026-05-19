@@ -37,6 +37,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Skills
         // Accumulates forever; used only for hover text display.
         public static readonly int ZdoCreditKey = "vinery_credit".GetStableHashCode();
 
+        // Comma-separated list of PlayerIDs (longs) that have watched this Plant
+        // toward maturity. Read at Plant.Grow to credit the Patience in Bloom feat.
+        public const string ZdoWatchersKey = "TSP_watchers";
+
         /// <summary>
         /// Returns true if this Plant sapling grows into a vine (i.e., its grown
         /// prefab has a Vine component).

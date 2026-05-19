@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimSkills = global::Skills;
+using malafein.Valheim.TheSedimentaryPath.Journal;
 
 namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
 {
@@ -64,6 +65,10 @@ namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
             {
                 seDrunk.AddDrunkInstance(drunkDuration, tolerance);
             }
+
+            // Journal: The Iron Gut of the Earth — count TSP brews consumed.
+            if (player == Player.m_localPlayer)
+                FeatTracker.RecordEvent(player, Feats.BrewsConsumed);
         }
     }
 }

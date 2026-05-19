@@ -1,5 +1,6 @@
 using HarmonyLib;
 using UnityEngine;
+using malafein.Valheim.TheSedimentaryPath.Journal;
 using malafein.Valheim.TheSedimentaryPath.Skills;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
@@ -36,9 +37,24 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             }
         }
 
-        public static void Postfix(Pickable __instance, bool __result, int __state)
+        public static void Postfix(Pickable __instance, Humanoid character, bool __result, int __state)
         {
-            if (!__result || __state <= 0) return;
+            if (!__result) return;
+
+            // Journal: record Rockery-list pickups (rocks_collected, rocks_collected_drunk)
+            if (character is Player player)
+            {
+                string pickableName = Utils.GetPrefabName(__instance.gameObject);
+                if (RockerySkill.GetPickupXP(pickableName) > 0f)
+                {
+                    FeatTracker.RecordEvent(player, Feats.RocksCollected);
+                    if (FeatTracker.IsDrunk(player))
+                        FeatTracker.RecordEvent(player, Feats.RocksCollectedDrunk);
+                }
+            }
+
+            // Bonus drop spawn
+            if (__state <= 0) return;
 
             GameObject itemPrefab = __instance.m_itemPrefab;
             if (itemPrefab == null) return;

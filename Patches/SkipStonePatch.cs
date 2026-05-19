@@ -1,5 +1,6 @@
 using HarmonyLib;
 using UnityEngine;
+using malafein.Valheim.TheSedimentaryPath.Journal;
 using malafein.Valheim.TheSedimentaryPath.Skills;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
@@ -79,11 +80,27 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
         // Returns false on a successful skip — suppresses vanilla water-hit handling
         // so m_didHit stays false and the projectile lives on.
-        static bool Prefix(Projectile __instance, Vector3 hitPoint, bool water)
+        static bool Prefix(Projectile __instance, Collider collider, Vector3 hitPoint, bool water)
         {
             var skip = __instance.GetComponent<SkippingStone>();
             if (skip == null) return true; // not our stone
-            if (!water)       return true; // let vanilla handle terrain / creature hits
+
+            if (!water)
+            {
+                // Non-water hit (terrain or creature). If the stone has actually
+                // been skipping (SkipCount > 0) and lands on a Character, note
+                // the candidate before vanilla runs Damage() — OnDeath fires
+                // inside that, so the mark must already be in place when
+                // ResolveDeath consults it.
+                if (skip.SkipCount > 0 && collider != null
+                    && skip.Owner is Player localOwner && localOwner == Player.m_localPlayer)
+                {
+                    Character victim = collider.GetComponentInParent<Character>();
+                    if (victim != null && !(victim is Player))
+                        AchievementSystem.NoteSkippingStoneHit(victim);
+                }
+                return true; // let vanilla handle terrain / creature hits
+            }
 
             ref Vector3 vel = ref VelRef(__instance);
 
@@ -118,6 +135,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             skip.SkipCount++;
 
+            // Journal: Stones That Travel — count each successful skip by the local player.
+            if (skip.Owner is Player owner && owner == Player.m_localPlayer)
+                FeatTracker.RecordEvent(owner, Feats.SkipsAchieved);
+
             Log.Debug($"SkipStonePatch: skip #{skip.SkipCount} vel={vel.magnitude:F1} at {hitPoint}");
 
             return false; // stone is still alive — suppress vanilla hit/destroy
@@ -134,6 +155,14 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             skip.FinalImpactHandled = true;
             float xp = skip.SkipCount * RockerySkill.SkipXPPerSkip;
             skip.Owner?.RaiseSkill(RockerySkill.SkillType, xp);
+
+            // Journal: One Stone, Many Steps + The Full Travelling
+            if (skip.Owner is Player owner && owner == Player.m_localPlayer)
+            {
+                FeatTracker.RecordPersonalBest(owner, Feats.MaxSingleThrowSkips, skip.SkipCount);
+                if (skip.SkipCount == __instance.m_maxBounces)
+                    FeatTracker.RecordEvent(owner, Feats.PerfectSkips);
+            }
 
             Log.Debug($"SkipStonePatch: final impact: {skip.SkipCount} skip(s), blunt={__instance.m_damage.m_blunt:F1}, XP +{xp:F1}");
         }

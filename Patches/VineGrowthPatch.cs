@@ -25,7 +25,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             ZNetView nview = __instance.GetComponent<ZNetView>();
             if (nview == null) return;
 
-            nview.Register<float>("RPC_AddVineryCredit", (long sender, float creditReceived) =>
+            // Signature: (float credit, long watcherPlayerId). The watcher ID is
+            // ignored on Vine (vines spread rather than mature; no maturation event
+            // to credit). Included for signature uniformity with Plant/Pickable.
+            nview.Register<float, long>("RPC_AddVineryCredit", (long sender, float creditReceived, long watcherPlayerId) =>
             {
                 if (!nview.IsOwner()) return;
                 ZDO zdo = nview.GetZDO();
@@ -77,7 +80,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             ZNetView nview = __instance.GetComponent<ZNetView>();
             if (nview == null) return;
 
-            nview.Register<float>("RPC_AddVineryCredit", (long sender, float creditReceived) =>
+            // Signature: (float credit, long watcherPlayerId). watcherPlayerId is
+            // appended to the Plant's TSP_watchers ZDO list so PlantGrowPatch can
+            // credit Patience in Bloom feat on maturation.
+            nview.Register<float, long>("RPC_AddVineryCredit", (long sender, float creditReceived, long watcherPlayerId) =>
             {
                 if (!nview.IsOwner()) return;
                 ZDO zdo = nview.GetZDO();
@@ -95,7 +101,27 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 float total = zdo.GetFloat(VinerySkill.ZdoCreditKey, 0f);
                 zdo.Set(VinerySkill.ZdoCreditKey, total + creditReceived);
 
-                Log.Debug($"Plant RPC_AddVineryCredit: advanced timer {creditReceived:F2}s, total={total + creditReceived:F1}s");
+                // Append watcher's player ID to TSP_watchers if not already present.
+                if (watcherPlayerId != 0L)
+                {
+                    string watchers = zdo.GetString(VinerySkill.ZdoWatchersKey, "");
+                    string idStr = watcherPlayerId.ToString();
+                    bool present = false;
+                    if (!string.IsNullOrEmpty(watchers))
+                    {
+                        foreach (string existing in watchers.Split(','))
+                        {
+                            if (existing == idStr) { present = true; break; }
+                        }
+                    }
+                    if (!present)
+                    {
+                        zdo.Set(VinerySkill.ZdoWatchersKey,
+                            string.IsNullOrEmpty(watchers) ? idStr : watchers + "," + idStr);
+                    }
+                }
+
+                Log.Debug($"Plant RPC_AddVineryCredit: advanced timer {creditReceived:F2}s, total={total + creditReceived:F1}s, watcher={watcherPlayerId}");
             });
         }
     }
@@ -123,7 +149,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             ZNetView nview = __instance.GetComponent<ZNetView>();
             if (nview == null) return;
 
-            nview.Register<float>("RPC_AddVineryCredit", (long sender, float creditReceived) =>
+            // Signature: (float credit, long watcherPlayerId). The watcher ID is
+            // ignored on standalone Pickables (no maturation event). Included for
+            // signature uniformity with Plant/Vine.
+            nview.Register<float, long>("RPC_AddVineryCredit", (long sender, float creditReceived, long watcherPlayerId) =>
             {
                 if (!nview.IsOwner()) return;
                 ZDO zdo = nview.GetZDO();

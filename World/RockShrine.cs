@@ -128,12 +128,14 @@ namespace malafein.Valheim.TheSedimentaryPath.World
         private static readonly MethodInfo s_containerSave =
             AccessTools.Method(typeof(Container), "Save");
 
+        private const string ShrineConvertedRpcName = "TSP_ShrineConverted";
+
         // ── Public API ───────────────────────────────────────────────────────────
 
         public static void RegisterRPCs()
         {
-            ZRoutedRpc.instance.Register<ZPackage>("TSP_ShrineConverted", OnShrineConvertedRPC);
-            Log.Info("RockShrine: registered TSP_ShrineConverted RPC");
+            ZRoutedRpc.instance.Register<ZPackage>(ShrineConvertedRpcName, OnShrineConvertedRpc);
+            Log.Info($"RockShrine: registered {ShrineConvertedRpcName} RPC");
         }
 
         // Called by RockShrineComponent when it is the ZDO owner and the timer fires.
@@ -292,6 +294,15 @@ namespace malafein.Valheim.TheSedimentaryPath.World
             // Always play locally (handles solo and host).
             PlayShrineEffects(chestPos, rockPos, speechLine);
 
+            // Send to nearby peers.
+            BroadcastShrineConverted(chestPos, rockPos, speechLine);
+        }
+
+        // Pack the shrine-conversion payload and send the routed RPC to every
+        // connected peer within BroadcastRadius of the shrine. Mirrors the
+        // sender-wrapper pattern used by Journal.VineMaturedRpc.BroadcastMaturation.
+        private static void BroadcastShrineConverted(Vector3 chestPos, Vector3 rockPos, string speechLine)
+        {
             float sqrRange = BroadcastRadius * BroadcastRadius;
             int sent = 0;
 
@@ -304,7 +315,7 @@ namespace malafein.Valheim.TheSedimentaryPath.World
                 pkg.Write(chestPos);
                 pkg.Write(rockPos);
                 pkg.Write(speechLine);
-                ZRoutedRpc.instance.InvokeRoutedRPC(peer.m_uid, "TSP_ShrineConverted", pkg);
+                ZRoutedRpc.instance.InvokeRoutedRPC(peer.m_uid, ShrineConvertedRpcName, pkg);
                 sent++;
             }
 
@@ -313,7 +324,7 @@ namespace malafein.Valheim.TheSedimentaryPath.World
 
         // ── Client-side RPC handler ──────────────────────────────────────────────
 
-        private static void OnShrineConvertedRPC(long sender, ZPackage pkg)
+        private static void OnShrineConvertedRpc(long sender, ZPackage pkg)
         {
             Vector3 chestPos  = pkg.ReadVector3();
             Vector3 rockPos   = pkg.ReadVector3();
