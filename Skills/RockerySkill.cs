@@ -69,12 +69,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Skills
         // True for TSP stone-family weapons only (excludes the brew base).
         // Used by feat tracking and kill-attribution checks.
         public static bool IsRockeryWeapon(string itemName)
-        {
-            return itemName == "$item_heftystone"
-                || itemName == "$item_smoothstone"
-                || itemName == "$item_kaldmork"
-                || itemName == "$item_dokkblad";
-        }
+            => malafein.Valheim.TheSedimentaryPath.Items.TSPRockeryWeapons.MatchesItemName(itemName);
 
         public static void RegisterSkill(ValheimSkills skills)
         {

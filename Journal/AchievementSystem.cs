@@ -45,7 +45,6 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public static readonly int ZdoNonKinDmgHash    = "TSP_non_kin_dmg".GetStableHashCode();
         public static readonly int ZdoFightStartedHash = "TSP_fight_started".GetStableHashCode();
 
-        // ── TSP-weapon prefab hashes (for owner-side stone attribution) ─────
         // Belt-and-suspenders for melee: HitData.Serialize truncates m_skill
         // to a short, so custom-skill hashes get squeezed to 16 bits on the
         // wire with a (very small) collision risk against other custom-skill
@@ -56,10 +55,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         // already gone from the right hand by hit-resolution time, so those
         // still rely on the truncated skill match — the only weapon-shape
         // where the residual ~1/65536 risk applies.
-        private static readonly int HeftyStoneHash     = "HeftyStone".GetStableHashCode();
-        private static readonly int SmoothStoneHash    = "SmoothStone".GetStableHashCode();
-        private static readonly int KaldmorkHash       = "Kaldmork".GetStableHashCode();
-        private static readonly int DokkbladHash       = "Dokkblad".GetStableHashCode();
+        // Weapon prefab hashes live on Items/TSPRockeryWeapons.
 
         // ── Stone Golem prefab ──────────────────────────────────────────────
         private static readonly int StoneGolemPrefabHash = "StoneGolem".GetStableHashCode();
@@ -174,10 +170,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             ZDO zdo = attackerNv.GetZDO();
             if (zdo == null) return false;
             int rightHash = zdo.GetInt(ZDOVars.s_rightItem, 0);
-            return rightHash == HeftyStoneHash
-                || rightHash == SmoothStoneHash
-                || rightHash == KaldmorkHash
-                || rightHash == DokkbladHash;
+            return Items.TSPRockeryWeapons.MatchesHash(rightHash);
         }
 
         // True for thrown stone projectiles only (SmoothStone / HeftyStone
@@ -550,8 +543,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         }
 
         // bosses_unarmored rule: helmet + chest + legs empty (cape and utility
-        // allowed). Reused by Standing Before the Stone.
-        private static bool IsUnarmored(Player player)
+        // allowed). Reused by Standing Before the Stone — and by the
+        // Stone-Kin doctrine predicate via StoneKinPredicate.
+        public static bool IsUnarmored(Player player)
             => player != null
             && HelmetItemRef(player) == null
             && ChestItemRef(player)  == null

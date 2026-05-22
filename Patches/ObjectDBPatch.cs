@@ -132,6 +132,25 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 Log.Debug("ObjectDB.Awake: SE_WeaponStance registered");
             }
 
+            // Register the Stone-Kin status effect template. Tier-specific
+            // configuration (m_ttl, damage mods, KinFist damage) is set
+            // per-instance by SE_StoneKin.Initialize() after SEMan adds
+            // the clone.
+            if (!__instance.m_StatusEffects.Exists(se => se is SE_StoneKin))
+            {
+                SE_StoneKin stoneKinSE = ScriptableObject.CreateInstance<SE_StoneKin>();
+                stoneKinSE.name = "SE_StoneKin";
+                stoneKinSE.m_name = "Stone-Kin";
+                stoneKinSE.m_tooltip = "The Rock knows you as kin.";
+                __instance.m_StatusEffects.Add(stoneKinSE);
+                Log.Debug("ObjectDB.Awake: SE_StoneKin registered");
+            }
+
+            // Build KinFist (hidden ItemData, not in inventory).
+            // Tier-3 KinFist activation reads its damage from this
+            // shared instance via Humanoid.GetCurrentWeapon postfix.
+            KinFist.Build();
+
             // Register Kaldmörk (obsidian frost dagger)
             if (__instance.GetItemPrefab("Kaldmork") == null)
             {

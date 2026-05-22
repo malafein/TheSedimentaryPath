@@ -131,7 +131,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             int tier = BoonSystem.ComputeBoonTier(player, BoonRegistry.Get(TSPBoons.StoneKin));
             if (tier == 0)
             {
-                Notify.Center("the stone does not yet know them as kin", 0f);
+                Notify.Center("the stone does not yet know you as kin", 0f);
                 Log.Debug("StoneKinRitual: rejected — boon tier 0 (feats not yet earned)");
                 _state = RitualState.Completed;
                 return;
@@ -147,11 +147,19 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
         private static void Complete(Player player)
         {
-            int granted = BoonSystem.GrantBoon(player, TSPBoons.StoneKin);
-            if (granted > 0)
-                Notify.Center("the stone takes you as kin", 0f);
+            // Recompute tier at completion in case feats advanced during
+            // the hold (rare but possible). The pre-check at TryStart
+            // protects against the common "boon not earned" case.
+            BoonDef def = BoonRegistry.Get(TSPBoons.StoneKin);
+            int tier = BoonSystem.ComputeBoonTier(player, def);
 
-            Log.Info($"StoneKinRitual: completed — granted tier={granted} score={_cachedScore}");
+            if (tier > 0)
+            {
+                TSPBoons.ApplyStoneKin(player, tier, _cachedScore);
+                Notify.Center("the stone takes you as kin", 0f);
+            }
+
+            Log.Info($"StoneKinRitual: completed — granted tier={tier} score={_cachedScore}");
             _state = RitualState.Completed;
         }
 
