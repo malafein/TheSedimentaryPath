@@ -17,6 +17,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             // Clear transient per-session state before registering handlers, so
             // any leftovers from a previous world don't survive into the new one.
             AchievementSystem.ClearAll();
+            BoonSystem.ClearAll();
 
             RockShrine.RegisterRPCs();
             VineMaturedRpc.Register();

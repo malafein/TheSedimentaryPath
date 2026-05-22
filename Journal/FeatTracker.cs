@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -133,6 +132,25 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public static bool IsDrunk(Player player)
             => player?.GetSEMan()?.GetStatusEffect(DrunkSEHash) != null;
 
+        // Current tier reached for a tiered counter or completionist feat.
+        // 0 = below the first threshold; 1..N = thresholds crossed.
+        // For completionist feats the comparison is against set count, not raw value.
+        // For untiered records returns 0 (no tiers defined).
+        public static int GetCurrentTier(Player player, string featId)
+        {
+            FeatDef def = FeatRegistry.Get(featId);
+            if (def == null || def.Thresholds.Length == 0) return 0;
+
+            int value = def.Shape == FeatShape.CompletionistSet
+                ? JournalData.GetCompletionistCount(player, featId)
+                : JournalData.GetFeat(player, featId);
+
+            int tier = 0;
+            for (int i = 0; i < def.Thresholds.Length; i++)
+                if (value >= def.Thresholds[i]) tier = i + 1;
+            return tier;
+        }
+
         // Increment a tiered counter (or untiered record) by delta.
         // No-op for completionist feats — use AddDistinct for those.
         //
@@ -240,29 +258,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             }
         }
 
-        // Delay (seconds) before showing the tier-crossed banner. Long enough for
-        // the biome-entry / boss-intro / other center-screen banners to clear.
-        private const float NotifyDelay = 4f;
-
         private static void NotifyTierCrossed(Player player, FeatDef def, int tier)
         {
             string msg = $"{def.Name} — tier {tier}";
             Log.Info($"FeatTracker: tier crossed: {def.Id} tier={tier} ({def.Name})");
-
-            // Defer the on-screen message so it isn't clobbered by simultaneous
-            // center-screen events (biome banners, boss intros, etc.).
-            if (Plugin.Instance != null)
-                Plugin.Instance.StartCoroutine(ShowMessageDelayed(msg, NotifyDelay));
-            else
-                MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center, msg);
+            Notify.Center(msg);
 
             // TODO Phase 1: notify LoreChecker so lore entries can react to tier crossings.
-        }
-
-        private static IEnumerator ShowMessageDelayed(string msg, float delay)
-        {
-            yield return new WaitForSeconds(delay);
-            MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center, msg);
         }
     }
 }

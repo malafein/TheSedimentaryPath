@@ -172,6 +172,9 @@ namespace malafein.Valheim.TheSedimentaryPath
             // (otherwise it lazy-loads on first patch hit, hiding load issues).
             _ = malafein.Valheim.TheSedimentaryPath.Journal.FeatRegistry.Get("rocks_collected");
 
+            // Register boons + their rituals.
+            malafein.Valheim.TheSedimentaryPath.Journal.TSPBoons.RegisterAll();
+
             Log.Info($"{ModName} loaded");
         }
 

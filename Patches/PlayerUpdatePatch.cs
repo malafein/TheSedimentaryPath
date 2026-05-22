@@ -16,7 +16,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         public static void Postfix(Player __instance)
         {
             if (__instance != Player.m_localPlayer) return;
+            LocalEmoteTracker.Tick(__instance);
             AchievementSystem.Tick(__instance, Time.deltaTime);
+            BoonSystem.Tick(__instance, Time.deltaTime);
         }
     }
 }
