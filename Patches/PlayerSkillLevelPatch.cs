@@ -22,6 +22,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 FeatTracker.RecordPersonalBest(__instance, Feats.RockerySkillLevel, level);
             else if (skill == VinerySkill.SkillType)
                 FeatTracker.RecordPersonalBest(__instance, Feats.VinerySkillLevel, level);
+
+            LoreChecker.NotifySkill(__instance, skill);
         }
     }
 }

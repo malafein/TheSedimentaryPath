@@ -182,6 +182,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
             if (def.Shape == FeatShape.TieredCounter)
                 EvaluateTierCrossings(player, def, oldValue, newValue);
+
+            LoreChecker.NotifyFeatChanged(player, featId);
         }
 
         // Add a distinct entry to a completionist set. Returns true if newly added.
@@ -210,6 +212,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             Log.Debug($"FeatTracker: {featId} += '{entryId}' (count={newCount})");
 
             EvaluateTierCrossings(player, def, newCount - 1, newCount);
+            LoreChecker.NotifyFeatChanged(player, featId);
             return true;
         }
 
@@ -243,6 +246,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
             if (def.Shape == FeatShape.TieredCounter)
                 EvaluateTierCrossings(player, def, current, value);
+
+            LoreChecker.NotifyFeatChanged(player, featId);
         }
 
         private static void EvaluateTierCrossings(Player player, FeatDef def, int oldValue, int newValue)
@@ -263,8 +268,6 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             string msg = $"{def.Name} — tier {tier}";
             Log.Info($"FeatTracker: tier crossed: {def.Id} tier={tier} ({def.Name})");
             Notify.Center(msg);
-
-            // TODO Phase 1: notify LoreChecker so lore entries can react to tier crossings.
         }
     }
 }

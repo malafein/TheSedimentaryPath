@@ -19,6 +19,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             // the name string. Display layer can map back via enum.
             string biomeKey = ((int)biome).ToString();
             FeatTracker.AddDistinct(__instance, Feats.BiomesEntered, biomeKey);
+
+            LoreChecker.NotifyBiome(__instance, biome);
         }
     }
 }

@@ -58,6 +58,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
             se.Initialize(tier, duration, shrineScore);
             Log.Info($"TSPBoons: Stone-Kin applied — tier={tier} duration={duration}s score={shrineScore}");
+
+            // Ritual path bypasses BoonSystem.GrantBoon; record the
+            // tier and let lore react here.
+            BoonSystem.PersistBoonTier(player, StoneKin, tier);
         }
 
         // BoonDef.ApplyBoon delegate adapter — fallback for callers that

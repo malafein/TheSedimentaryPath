@@ -94,7 +94,22 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
             Log.Info($"BoonSystem: granting '{boonId}' tier={tier} to {player?.GetPlayerName()}");
             def.ApplyBoon?.Invoke(player, tier);
+            PersistBoonTier(player, boonId, tier);
             return tier;
+        }
+
+        // Record the highest tier the player has reached for a boon and
+        // notify lore. Called by GrantBoon for boons that use the generic
+        // ApplyBoon adapter, and called directly by ritual fast-paths
+        // (e.g. StoneKinRitual via TSPBoons.ApplyStoneKin) that bypass
+        // the generic path because they carry extra context like a
+        // shrine score. UpgradeBoonTier is monotonic, so re-grants at
+        // the same or lower tier are silent.
+        public static void PersistBoonTier(Player player, string boonId, int tier)
+        {
+            if (player == null || string.IsNullOrEmpty(boonId) || tier <= 0) return;
+            if (JournalData.UpgradeBoonTier(player, boonId, tier))
+                LoreChecker.NotifyBoonTier(player, boonId);
         }
     }
 }
