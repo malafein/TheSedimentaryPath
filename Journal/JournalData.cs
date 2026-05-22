@@ -80,9 +80,17 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public static bool HasFlag(Player player, string flag)
             => ContainsInList(player, FlagsKey, flag);
 
-        // Returns true if the flag was newly set.
+        // Sets the named flag and fires LoreChecker.NotifyFlag if this
+        // was the first time. Returns true on first set, false if the
+        // flag was already present. No-notify variant isn't exposed —
+        // every flag-set in the codebase wants lore dispatch, and a dict
+        // miss for un-indexed flags is cheap.
         public static bool SetFlag(Player player, string flag)
-            => AddToList(player, FlagsKey, flag);
+        {
+            if (!AddToList(player, FlagsKey, flag)) return false;
+            LoreChecker.NotifyFlag(player, flag);
+            return true;
+        }
 
         // ── Completionist sets ──────────────────────────────────────────
         // Each completionist feat (e.g. bosses_defeated, biomes_entered)

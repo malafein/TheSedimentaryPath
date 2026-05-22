@@ -1,5 +1,6 @@
 using UnityEngine;
 using ValheimSkills = global::Skills;
+using malafein.Valheim.TheSedimentaryPath.Journal;
 using malafein.Valheim.TheSedimentaryPath.Skills;
 
 namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
@@ -21,6 +22,9 @@ namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
             base.Setup(character);
             m_fallDamageModifier = -0.5f; // Halve fall damage
             m_noiseModifier = 0.8f;       // 80% noise penalty
+
+            if (character is Player player && player == Player.m_localPlayer)
+                JournalData.SetFlag(player, TSPLore.FirstBlackstoneBrew);
         }
 
         public override void ModifyJump(Vector3 baseJump, ref Vector3 jump)

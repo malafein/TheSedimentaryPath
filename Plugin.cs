@@ -175,6 +175,10 @@ namespace malafein.Valheim.TheSedimentaryPath
             // Register boons + their rituals.
             malafein.Valheim.TheSedimentaryPath.Journal.TSPBoons.RegisterAll();
 
+            // Register lore entries (depends on TSPBoons being registered
+            // first because BoonTierReached conditions reference boon IDs).
+            malafein.Valheim.TheSedimentaryPath.Journal.TSPLore.RegisterAll();
+
             Log.Info($"{ModName} loaded");
         }
 
