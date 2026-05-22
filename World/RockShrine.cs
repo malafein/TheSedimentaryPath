@@ -19,11 +19,52 @@ namespace malafein.Valheim.TheSedimentaryPath.World
     {
         private const string ZdoKeyLastCheck = "TSP_ShrineLastCheck";
 
+        // Self-registering list of every live RockShrineComponent in the
+        // scene. Replaces per-call Object.FindObjectsOfType scans in
+        // RockShrine.FindNearest / FindNearestQualifying. Same pattern as
+        // Character.GetAllCharacters.
+        internal static readonly List<RockShrineComponent> s_all = new List<RockShrineComponent>();
+
+        // Cached score with short TTL. Refreshed on first access and by
+        // the shrine loop tick; TTL keeps per-frame hover reads cheap
+        // without going stale when the player builds something nearby.
+        private const float ScoreCacheTtl = 1f;
+        private int   _cachedScore   = -1;
+        private float _cachedScoreAt;
+
+        // Total shrine score (building material around the shrine plus
+        // elevation bonus). Consumers downstream of this number include
+        // the berry-to-gold conversion roll, the boon-qualification gate,
+        // and the SE_StoneKin KinFist damage curve.
+        public int Score
+        {
+            get
+            {
+                if (_cachedScore < 0 || Time.unscaledTime - _cachedScoreAt > ScoreCacheTtl)
+                    RefreshScore();
+                return _cachedScore;
+            }
+        }
+
+        public bool IsQualifyingForBoon => Score >= RockShrine.MinBoonScore;
+
+        public void RefreshScore()
+        {
+            _cachedScore   = RockShrine.ComputeScore(transform.position, gameObject);
+            _cachedScoreAt = Time.unscaledTime;
+        }
+
         private ZNetView m_nview;
 
         private void Awake()
         {
             m_nview = GetComponent<ZNetView>();
+            s_all.Add(this);
+        }
+
+        private void OnDestroy()
+        {
+            s_all.Remove(this);
         }
 
         private void Start()
@@ -107,10 +148,29 @@ namespace malafein.Valheim.TheSedimentaryPath.World
         private const int    BerriesPerBatch    = 10;
         private const int    GoldPerBatch       = 5;
         private const float  ShrineRadius       = 10f;
-        public const int    MinScore           = 4;
-        public const int    MaxScoreCap        = 20;
-        public const float  MinChance          = 0.20f;
-        public const float  MaxChance          = 0.80f;
+        // Berry-to-gold conversion gating. A shrine needs at least
+        // MinConversionScore in surrounding building material to fire any
+        // conversion roll; once at MaxConversionScore it caps the roll
+        // chance at MaxConversionChance.
+        public const int    MinConversionScore  = 4;
+        public const int    MaxConversionScore  = 20;
+        public const float  MinConversionChance = 0.20f;
+        public const float  MaxConversionChance = 0.80f;
+
+        // Boon-ritual gating (separate from conversion gating). A shrine
+        // must reach MinBoonScore total (building score + elevation
+        // bonus) before any boon ritual at it can grant a tier. Working
+        // value pending balance.
+        public const int    MinBoonScore        = 30;
+
+        // Elevation contribution to shrine score, additive:
+        //   elevationBonus = MaxElevationScoreBonus × clamp01(y / WorldData.MaxMountainElevation)
+        // Sea-level rocks contribute 0; a rock at the world's peak
+        // contributes the full bonus. Currently only applied to the boon
+        // score, but the value itself is just "score from elevation" —
+        // available to any future scoring that wants to weigh altitude.
+        public const float  MaxElevationScoreBonus = 180f;
+
         private const float  SpeechChance       = 0.33f;
         private const float  SpeechCullDist     = 15f;
         private const float  BroadcastRadius    = 30f;
@@ -144,14 +204,14 @@ namespace malafein.Valheim.TheSedimentaryPath.World
             Vector3 rockPos = rockView.transform.position;
             int score = ComputeScore(rockPos, rockView.gameObject);
 
-            if (score < MinScore)
+            if (score < MinConversionScore)
             {
-                Log.Debug($"RockShrine: Rock at {rockPos} — score={score} (below min {MinScore}), skipping");
+                Log.Debug($"RockShrine: Rock at {rockPos} — score={score} (below min {MinConversionScore}), skipping");
                 return;
             }
 
-            float t      = Mathf.Clamp01((float)(score - MinScore) / (MaxScoreCap - MinScore));
-            float chance = Mathf.Lerp(MinChance, MaxChance, t);
+            float t      = Mathf.Clamp01((float)(score - MinConversionScore) / (MaxConversionScore - MinConversionScore));
+            float chance = Mathf.Lerp(MinConversionChance, MaxConversionChance, t);
             float roll   = Random.value;
 
             Log.Debug($"RockShrine: Rock at {rockPos} — score={score}, chance={chance:P0}, roll={roll:F3} → {(roll <= chance ? "CONVERT" : "skip")}");
@@ -169,6 +229,50 @@ namespace malafein.Valheim.TheSedimentaryPath.World
             PerformConversion(chest, rockView);
         }
 
+        // ── Shrine lookups ───────────────────────────────────────────────────────
+
+        // Nearest Mysterious Rock within `radius` of `pos`. Returns null
+        // if none. Iterates the live RockShrineComponent registry — no
+        // scene scan. Returns the component (not just the GameObject) so
+        // consumers can read the cached Score / IsQualifyingForBoon
+        // without a second lookup.
+        public static RockShrineComponent FindNearest(Vector3 pos, float radius)
+        {
+            RockShrineComponent best = null;
+            float bestSqr = radius * radius;
+            foreach (var comp in RockShrineComponent.s_all)
+            {
+                if (comp == null) continue;
+                float sqr = (comp.transform.position - pos).sqrMagnitude;
+                if (sqr < bestSqr)
+                {
+                    bestSqr = sqr;
+                    best = comp;
+                }
+            }
+            return best;
+        }
+
+        // Nearest Mysterious Rock within `radius` that meets the boon
+        // score threshold. Returns null if none qualify. For consumers
+        // that only care about boon-eligible shrines (lore checks,
+        // future "where can I perform the ritual?" hints).
+        public static RockShrineComponent FindNearestQualifying(Vector3 pos, float radius)
+        {
+            RockShrineComponent best = null;
+            float bestSqr = radius * radius;
+            foreach (var comp in RockShrineComponent.s_all)
+            {
+                if (comp == null) continue;
+                float sqr = (comp.transform.position - pos).sqrMagnitude;
+                if (sqr >= bestSqr) continue;
+                if (!comp.IsQualifyingForBoon) continue;
+                bestSqr = sqr;
+                best = comp;
+            }
+            return best;
+        }
+
         // ── Server-side logic ────────────────────────────────────────────────────
 
         public static int ComputeScore(Vector3 center, GameObject excludeRock)
@@ -176,9 +280,9 @@ namespace malafein.Valheim.TheSedimentaryPath.World
             if (s_pieceMask == 0)
                 s_pieceMask = LayerMask.GetMask("piece", "piece_nonsolid");
 
-            int score   = 0;
-            var visited = new HashSet<int>();
-            var cols    = Physics.OverlapSphere(center, ShrineRadius, s_pieceMask);
+            int buildingScore = 0;
+            var visited       = new HashSet<int>();
+            var cols          = Physics.OverlapSphere(center, ShrineRadius, s_pieceMask);
 
             foreach (var col in cols)
             {
@@ -211,11 +315,19 @@ namespace malafein.Valheim.TheSedimentaryPath.World
                 }
 
                 Log.Debug($"RockShrine: +{pts}pt — {root.name} ({wnt.m_materialType})");
-                score += pts;
+                buildingScore += pts;
             }
 
-            Log.Debug($"RockShrine: total score={score} at {center}");
-            return score;
+            int elevationBonus = 0;
+            if (WorldData.ScanComplete && WorldData.MaxMountainElevation > 0f)
+            {
+                float t = Mathf.Clamp01(center.y / WorldData.MaxMountainElevation);
+                elevationBonus = Mathf.RoundToInt(MaxElevationScoreBonus * t);
+            }
+
+            int total = buildingScore + elevationBonus;
+            Log.Debug($"RockShrine: total score={total} (building={buildingScore}, elevation={elevationBonus}) at {center}");
+            return total;
         }
 
         private static Container FindDonationChest(Vector3 center)

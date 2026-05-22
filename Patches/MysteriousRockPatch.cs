@@ -225,10 +225,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             }
 
             int score = RockShrine.ComputeScore(__instance.transform.position, __instance.gameObject);
-            float t      = Mathf.Clamp01((float)(score - RockShrine.MinScore) / (RockShrine.MaxScoreCap - RockShrine.MinScore));
-            float chance = Mathf.Lerp(RockShrine.MinChance, RockShrine.MaxChance, t);
+            float t      = Mathf.Clamp01((float)(score - RockShrine.MinConversionScore) / (RockShrine.MaxConversionScore - RockShrine.MinConversionScore));
+            float chance = Mathf.Lerp(RockShrine.MinConversionChance, RockShrine.MaxConversionChance, t);
 
-            string scoreColor = score >= RockShrine.MinScore ? "#0F0" : "#F80";
+            string scoreColor = score >= RockShrine.MinConversionScore ? "#0F0" : "#F80";
             __result += $"<size=12>\n<color={scoreColor}>[Shrine] score={score} | chance={chance:P0}</color>";
 
             var nview = __instance.GetComponent<ZNetView>();
