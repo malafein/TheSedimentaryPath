@@ -4,6 +4,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using ValheimSkills = global::Skills;
+using malafein.Valheim.TheSedimentaryPath.Journal;
 using malafein.Valheim.TheSedimentaryPath.Skills;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
@@ -53,6 +54,15 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 string itemName = __instance.GetCurrentWeapon()?.m_shared?.m_name;
                 if (itemName != null && Plugin.StanceWeapons.TryGetValue(itemName, out IStanceWeapon weapon))
                     weapon.ToggleStance();
+            });
+
+            // Open the journal. Re-press to close + ESC close are owned
+            // by JournalUI itself — once the panel is up, TakeInput goes
+            // false and this Prefix early-exits, so the journal needs to
+            // handle its own close path.
+            HandleHotkey(Plugin.JournalHotkey, () =>
+            {
+                if (!JournalUI.IsOpen) JournalUI.Open();
             });
 
 #if DEBUG

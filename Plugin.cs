@@ -104,6 +104,7 @@ namespace malafein.Valheim.TheSedimentaryPath
         public static ConfigEntry<KeyboardShortcut> ToggleRockeryProximity;
         public static ConfigEntry<KeyboardShortcut> ToggleVineryProximity;
         public static ConfigEntry<KeyboardShortcut> ToggleWeaponStance;
+        public static ConfigEntry<KeyboardShortcut> JournalHotkey;
 
         public static ConfigEntry<bool> DetectVines;
         public static ConfigEntry<bool> DetectBerries;
@@ -159,6 +160,9 @@ namespace malafein.Valheim.TheSedimentaryPath
 
             ToggleWeaponStance = ClientConfig("Combat", "WeaponStanceHotkey", new KeyboardShortcut(KeyCode.G),
                 "Hotkey to toggle the stance of weapons that support it (e.g. throw / leap). Only fires when such a weapon is equipped.");
+
+            JournalHotkey = ClientConfig("Journal", "ToggleHotkey", new KeyboardShortcut(KeyCode.J),
+                "Hotkey to open and close the in-game journal.");
 
             DetectVines = ClientConfig("Vinery Categories", "DetectVines", true, "Sense Vines and Vineberries.");
             DetectBerries = ClientConfig("Vinery Categories", "DetectBerries", true, "Sense Raspberries, Blueberries, and Cloudberries.");

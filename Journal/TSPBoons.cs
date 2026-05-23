@@ -17,7 +17,15 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 name: "Stone-Kin",
                 gatingFeatIds: new[] { Feats.KinOnlyGolemKills, Feats.GolemUnarmedSurvived },
                 durationByTier: new[] { 600f, 1200f, 1800f },   // 10 / 20 / 30 min
-                applyBoon: ApplyStoneKinDefault
+                applyBoon: ApplyStoneKinDefault,
+                description: "The Rock takes you as kin. While unarmored and bare-handed (or holding a kin-weapon), the stone's defenses are yours.",
+                ritualText: "Kneel at a Mysterious Rock of worth and hold for five seconds.",
+                effectsByTier: new[]
+                {
+                    "Resistant (50%) to Fire, Frost, Poison, Pierce, Slash.\nKnockback reduced to 70%.",
+                    "Immune to Fire, Frost, Poison.\nResistant (50%) to Pierce, Slash.\nKnockback reduced to 50%.",
+                    "Immune to Fire, Frost, Poison.\nResistant (50%) to Pierce, Slash.\nKnockback reduced to 25%.\nBare fists strike with the stone's weight.",
+                }
             ));
 
             BoonSystem.RegisterRitual(StoneKinRitual.Tick, StoneKinRitual.ClearAll);

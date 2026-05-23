@@ -39,5 +39,13 @@
       <HintPath>/home/malafein/.local/share/Steam/steamapps/common/Valheim/valheim_Data/Managed/assembly_postprocessing.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>/home/malafein/.local/share/Steam/steamapps/common/Valheim/valheim_Data/Managed/Unity.TextMeshPro.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>/home/malafein/.local/share/Steam/steamapps/common/Valheim/valheim_Data/Managed/UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 </Project>

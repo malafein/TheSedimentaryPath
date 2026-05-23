@@ -17,14 +17,32 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public float[] DurationByTier { get; }
         public Action<Player, int> ApplyBoon { get; }
 
-        public BoonDef(string id, string name, string[] gatingFeatIds,
-                       float[] durationByTier, Action<Player, int> applyBoon)
+        // Player-facing copy for the journal Boons tab. Description is a
+        // short flavor blurb shown once per boon; RitualText explains how
+        // to acquire/refresh the boon; EffectsByTier[tier-1] is shown for
+        // the player's current tier so they can see what's active now.
+        public string Description { get; }
+        public string RitualText { get; }
+        public string[] EffectsByTier { get; }
+
+        public BoonDef(
+            string id,
+            string name,
+            string[] gatingFeatIds,
+            float[] durationByTier,
+            Action<Player, int> applyBoon,
+            string description,
+            string ritualText,
+            string[] effectsByTier)
         {
             Id              = id;
             Name            = name;
             GatingFeatIds   = gatingFeatIds   ?? new string[0];
             DurationByTier  = durationByTier  ?? new float[0];
             ApplyBoon       = applyBoon;
+            Description     = description     ?? "";
+            RitualText      = ritualText      ?? "";
+            EffectsByTier   = effectsByTier   ?? new string[0];
         }
 
         public int MaxTier => DurationByTier.Length;
