@@ -142,6 +142,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 stoneKinSE.name = "SE_StoneKin";
                 stoneKinSE.m_name = "Stone-Kin";
                 stoneKinSE.m_tooltip = "The Rock knows you as kin.";
+                // HUD status-bar icon. Without an m_icon the effect is active
+                // but invisible in the status list. Borrow the Stone Golem
+                // trophy icon (placeholder until a custom kin icon lands —
+                // see dev/journal-ui-styling-pass.md).
+                stoneKinSE.m_icon = GetItemIcon(__instance, "TrophySGolem");
+                if (stoneKinSE.m_icon == null)
+                    Log.Warn("ObjectDB.Awake: TrophySGolem icon not found; SE_StoneKin will have no HUD icon");
                 __instance.m_StatusEffects.Add(stoneKinSE);
                 Log.Debug("ObjectDB.Awake: SE_StoneKin registered");
             }
@@ -237,6 +244,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             {
                 Log.Debug("ObjectDB.Awake: SmoothStone already registered, skipping");
             }
+        }
+
+        // First inventory icon of a vanilla item prefab, or null if the
+        // prefab / its ItemDrop / icons are missing.
+        private static Sprite GetItemIcon(ObjectDB db, string prefabName)
+        {
+            GameObject prefab = db.GetItemPrefab(prefabName);
+            ItemDrop itemDrop = prefab != null ? prefab.GetComponent<ItemDrop>() : null;
+            Sprite[] icons = itemDrop?.m_itemData?.m_shared?.m_icons;
+            return (icons != null && icons.Length > 0) ? icons[0] : null;
         }
 
         private static void RegisterItem(ObjectDB db, GameObject prefab)

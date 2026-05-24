@@ -19,6 +19,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         CompletionistSet
     }
 
+    // How a feat's stored value is rendered in the journal.
+    //   Number   — the raw integer (default)
+    //   GameTime — the value is real-seconds; show humanized in-game time
+    //              (e.g. "3 days, 12 hours"). Used by drunk_seconds.
+    public enum DisplayFormat
+    {
+        Number,
+        GameTime
+    }
+
     public class FeatDef
     {
         public string Id { get; }
@@ -27,9 +37,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public FeatShape Shape { get; }
         public int[] Thresholds { get; }
         public string TriggerDescription { get; }
+        public DisplayFormat Display { get; }
 
         public FeatDef(string id, string name, FeatCategory category, FeatShape shape,
-                       int[] thresholds, string triggerDescription)
+                       int[] thresholds, string triggerDescription,
+                       DisplayFormat display = DisplayFormat.Number)
         {
             Id = id;
             Name = name;
@@ -37,6 +49,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             Shape = shape;
             Thresholds = thresholds ?? new int[0];
             TriggerDescription = triggerDescription;
+            Display = display;
         }
     }
 
@@ -72,7 +85,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             Add(Feats.FishCaughtDrunk,       "The Listing Cast",          FeatCategory.Ferment,   FeatShape.TieredCounter,    new[] { 5, 25, 100 },        "Fish caught while drunk");
             Add(Feats.EnemiesKilledDrunk,    "The Unsteady Hand",         FeatCategory.Ferment,   FeatShape.TieredCounter,    new[] { 25, 100, 500 },      "Creature killed while drunk");
             Add(Feats.RocksCollectedDrunk,   "The Reeling Haul",          FeatCategory.Ferment,   FeatShape.TieredCounter,    new[] { 10, 100, 1000 },     "Rockery-list pickup while drunk");
-            Add(Feats.DrunkSeconds,          "Days in the Cup",           FeatCategory.Ferment,   FeatShape.UntieredRecord,   new int[0],                  "Time spent drunk");
+            Add(Feats.DrunkSeconds,          "Days in the Cup",           FeatCategory.Ferment,   FeatShape.UntieredRecord,   new int[0],                  "Time spent drunk",                       DisplayFormat.GameTime);
             Add(Feats.DrunkCrafting,         "The Tilted Craft",          FeatCategory.Ferment,   FeatShape.TieredCounter,    new[] { 1, 25, 100 },        "Item crafted while drunk");
             Add(Feats.DrunkSleeps,           "Spirits' Respite",          FeatCategory.Ferment,   FeatShape.TieredCounter,    new[] { 1, 10, 50 },         "Sleep cycle completed while drunk");
             Add(Feats.VineJuiceFermented,    "The Vine's Cup",            FeatCategory.Ferment,   FeatShape.TieredCounter,    new[] { 5, 25, 100 },        "Vineberry Juice batch collected");
@@ -104,8 +117,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         }
 
         private static void Add(string id, string name, FeatCategory category, FeatShape shape,
-                                int[] thresholds, string triggerDescription)
-            => _byId[id] = new FeatDef(id, name, category, shape, thresholds, triggerDescription);
+                                int[] thresholds, string triggerDescription,
+                                DisplayFormat display = DisplayFormat.Number)
+            => _byId[id] = new FeatDef(id, name, category, shape, thresholds, triggerDescription, display);
 
         public static FeatDef Get(string id)
         {

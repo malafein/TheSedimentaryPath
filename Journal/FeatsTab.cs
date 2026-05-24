@@ -228,7 +228,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             int value = ValueFor(def, player);
 
             if (def.Thresholds.Length == 0)
-                return value.ToString();
+                return def.Display == DisplayFormat.GameTime
+                    ? FormatGameDuration(value)
+                    : value.ToString();
 
             int reached = 0;
             int next = -1;
@@ -244,5 +246,25 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 return $"{value}  (max · {reached}/{def.Thresholds.Length})";
             return $"{value} / {next}  ·  T{reached}/{def.Thresholds.Length}";
         }
+
+        // Render real-seconds as humanized in-game time. Valheim runs
+        // 75 real seconds per in-game hour, so 1800 real seconds = one
+        // in-game day. Magnitude-appropriate: days+hours, then hours+
+        // minutes, then minutes.
+        private static string FormatGameDuration(int realSeconds)
+        {
+            double gameHours = realSeconds / 75.0;
+            int days    = (int)(gameHours / 24);
+            int hours   = (int)(gameHours % 24);
+            int minutes = (int)((gameHours - System.Math.Floor(gameHours)) * 60);
+
+            if (days >= 1)    return $"{Plural(days, "day")}, {Plural(hours, "hour")}";
+            if (hours >= 1)   return $"{Plural(hours, "hour")}, {Plural(minutes, "minute")}";
+            if (minutes >= 1) return Plural(minutes, "minute");
+            return "less than a minute";
+        }
+
+        private static string Plural(int n, string unit)
+            => $"{n} {unit}{(n == 1 ? "" : "s")}";
     }
 }

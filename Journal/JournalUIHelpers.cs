@@ -57,9 +57,18 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             scrollRect.horizontal   = false;
             scrollRect.vertical     = true;
             scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            // Unity's default scrollSensitivity (1) makes the mouse wheel
+            // move the list one pixel per notch — effectively dead. Bump it
+            // so the wheel scrolls usably (click-drag worked already).
+            scrollRect.scrollSensitivity = 30f;
 
-            // Viewport masks the content. Needs a Graphic on the same GO
-            // for Mask to function.
+            // Viewport clips the content. Use RectMask2D (rect-based
+            // clipping) rather than Mask: stencil-based Mask + a zero-alpha
+            // mask graphic culls TextMeshPro content instead of clipping it,
+            // which left the whole list invisible even though rows were built.
+            // RectMask2D needs no graphic and clips Image + TMP alike. A
+            // transparent raycast-target Image stays so drags over empty
+            // space still scroll the list.
             var viewportRt = MakeChildRect(rootRt, "Viewport");
             viewportRt.anchorMin = Vector2.zero;
             viewportRt.anchorMax = Vector2.one;
@@ -67,8 +76,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             viewportRt.offsetMax = Vector2.zero;
             var viewportImage = viewportRt.gameObject.AddComponent<Image>();
             viewportImage.color = new Color(0, 0, 0, 0);
-            var mask = viewportRt.gameObject.AddComponent<Mask>();
-            mask.showMaskGraphic = false;
+            viewportRt.gameObject.AddComponent<RectMask2D>();
 
             // Content — list rows stack vertically; height fits content.
             var content = MakeChildRect(viewportRt, "Content");

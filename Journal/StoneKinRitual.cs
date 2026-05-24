@@ -87,7 +87,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
             if (!shrine.IsQualifyingForBoon)
             {
-                Notify.Center("this stone is not yet worthy", 0f);
+                Notify.Center("this place is not yet worthy of the stone", 0f);
                 Log.Debug($"StoneKinRitual: rejected — score={shrine.Score} below MinBoonScore={RockShrine.MinBoonScore}");
                 _state = RitualState.Completed;  // hold here until kneel ends to avoid spamming
                 return;
