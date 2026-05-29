@@ -51,8 +51,15 @@ namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
         {
             Tier         = tier;
             m_ttl        = durationSeconds;
+            // Reset elapsed time so re-performing the ritual refreshes the full
+            // duration. SEMan reuses the existing instance on a re-ritual, so its
+            // Setup (which would zero m_time) doesn't run again — we do it here.
+            m_time       = 0f;
             _tierMods    = BuildModsForTier(tier);
             _initialized = true;
+            // Re-baseline active/dormant tracking so a re-ritual doesn't fire a
+            // spurious "knows you again" / "no longer kin" transition next tick.
+            _firstTick   = true;
 
             if (tier >= 3 && KinFist.IsReady)
             {

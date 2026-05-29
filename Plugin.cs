@@ -40,8 +40,6 @@ namespace malafein.Valheim.TheSedimentaryPath
 
 #if DEBUG
         public static ConfigEntry<bool> DebugMode;
-        public static ConfigEntry<KeyboardShortcut> DebugSkillSet25;
-        public static ConfigEntry<KeyboardShortcut> DebugSkillSet50;
         public static ConfigEntry<float> ShrineIntervalDebug;
         public static ConfigEntry<float> HeldOffsetX;
         public static ConfigEntry<float> HeldOffsetY;
@@ -125,10 +123,6 @@ namespace malafein.Valheim.TheSedimentaryPath
 #if DEBUG
             DebugMode = ClientConfig("Debug", "DebugMode", false,
                 "When enabled, shows ZDO IDs and raw credit/skill-factor values in vine and plant hover text.");
-            DebugSkillSet25 = ClientConfig("Debug", "SkillSet25Hotkey", KeyboardShortcut.Empty,
-                "Debug: set Rockery and Vinery skills to 25. Only fires when DebugMode is on.");
-            DebugSkillSet50 = ClientConfig("Debug", "SkillSet50Hotkey", KeyboardShortcut.Empty,
-                "Debug: set Rockery and Vinery skills to 50. Only fires when DebugMode is on.");
             ShrineIntervalDebug = ClientConfig("Debug", "ShrineIntervalSeconds", 0f,
                 "Debug: override rock shrine conversion check interval in seconds. 0 = default (1800s / one Valheim day).");
 
@@ -182,6 +176,10 @@ namespace malafein.Valheim.TheSedimentaryPath
             // Register lore entries (depends on TSPBoons being registered
             // first because BoonTierReached conditions reference boon IDs).
             malafein.Valheim.TheSedimentaryPath.Journal.TSPLore.RegisterAll();
+
+#if DEBUG
+            DebugCommands.Register();
+#endif
 
             Log.Info($"{ModName} loaded");
         }

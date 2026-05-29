@@ -3,9 +3,7 @@ using System.Reflection;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
-using ValheimSkills = global::Skills;
 using malafein.Valheim.TheSedimentaryPath.Journal;
-using malafein.Valheim.TheSedimentaryPath.Skills;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
 {
@@ -20,11 +18,6 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             = new Dictionary<KeyCode, List<string>>();
         private static MethodInfo _keyCodeToPathMethod;
         private static MethodInfo _takeInputMethod;
-
-        private static readonly FieldInfo _skillsField =
-            AccessTools.Field(typeof(Player), "m_skills");
-        private static readonly MethodInfo _getSkillMethod =
-            AccessTools.Method(typeof(ValheimSkills), "GetSkill", new[] { typeof(ValheimSkills.SkillType) });
 
         [HarmonyPrefix]
         public static void Prefix(Player __instance)
@@ -64,24 +57,6 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             {
                 if (!JournalUI.IsOpen) JournalUI.Open();
             });
-
-#if DEBUG
-            if (Plugin.IsDebugMode)
-            {
-                if (Plugin.DebugSkillSet50.Value.IsDown())
-                {
-                    SetDebugSkillLevel(__instance, RockerySkill.SkillType, 50f);
-                    SetDebugSkillLevel(__instance, VinerySkill.SkillType, 50f);
-                    MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center, "[Debug] Skills set to 50");
-                }
-                else if (Plugin.DebugSkillSet25.Value.IsDown())
-                {
-                    SetDebugSkillLevel(__instance, RockerySkill.SkillType, 25f);
-                    SetDebugSkillLevel(__instance, VinerySkill.SkillType, 25f);
-                    MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center, "[Debug] Skills set to 25");
-                }
-            }
-#endif
         }
 
         private static void HandleHotkey(ConfigEntry<KeyboardShortcut> config, System.Action onFired)
@@ -134,17 +109,6 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 _keyCodeToPathMethod = AccessTools.Method(typeof(ZInput), "KeyCodeToPath",
                     new[] { typeof(KeyCode), typeof(bool) });
             return _keyCodeToPathMethod?.Invoke(null, new object[] { key, false }) as string;
-        }
-
-        private static void SetDebugSkillLevel(Player player, ValheimSkills.SkillType skillType, float level)
-        {
-            var skills = (ValheimSkills)_skillsField?.GetValue(player);
-            if (skills == null) return;
-            var skill = (ValheimSkills.Skill)_getSkillMethod?.Invoke(skills, new object[] { skillType });
-            if (skill == null) return;
-            skill.m_level = level;
-            skill.m_accumulator = 0f;
-            Log.Debug($"HotkeyInputPatch: set {skillType} to {level}");
         }
     }
 }
