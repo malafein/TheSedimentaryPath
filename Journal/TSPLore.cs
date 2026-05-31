@@ -23,6 +23,12 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public const string BlackForestFirst     = "black_forest_first";
         public const string StoneKin             = "stone_kin";
 
+        // The Vine Path — parallel to the Stone Path firsts + apprentice,
+        // wired to the vine feats already credited by the Vinery patches.
+        public const string FirstVinePlanted     = "first_vine_planted";
+        public const string FirstVineMatured     = "first_vine_matured";
+        public const string VineryApprentice     = "vinery_apprentice";
+
         // Flag IDs consumed by FirstTimeFlag conditions live in a
         // different customData list than entry IDs (TSP_journal_flags
         // vs TSP_journal_lore_unlocked), so reusing the entry-id string
@@ -74,6 +80,33 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 new LoreStage(
                     text: "Where they lie close, the body now knows before the eye does.",
                     condition: new SkillLevel(RockerySkill.SkillType, 25)
+                )
+            ));
+
+            LoreRegistry.Register(new LoreEntry(
+                id: FirstVinePlanted,
+                title: "The First Sowing",
+                new LoreStage(
+                    text: "A seed pressed into the earth, and the waiting begins. The vine keeps its own slow counsel.",
+                    condition: new FeatThreshold(Feats.VinesPlanted, 1)
+                )
+            ));
+
+            LoreRegistry.Register(new LoreEntry(
+                id: FirstVineMatured,
+                title: "The Vine Answers",
+                new LoreStage(
+                    text: "You watched, and the vine answered — leaf by leaf, in its own time. Patience is the only tending it asks.",
+                    condition: new FeatThreshold(Feats.VinesGrown, 1)
+                )
+            ));
+
+            LoreRegistry.Register(new LoreEntry(
+                id: VineryApprentice,
+                title: "The Vine Grows Near",
+                new LoreStage(
+                    text: "Where the green things gather close, the body now feels them before the eye can find them.",
+                    condition: new SkillLevel(VinerySkill.SkillType, 25)
                 )
             ));
 
