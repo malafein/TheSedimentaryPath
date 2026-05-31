@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.0
+- the path keeps a record now
+- the rock takes its own as kin
+
 ## 0.1.4
 - the vine's patience spreads, and the roots find one another
 - the bond casts a dim light upon the earth
