@@ -103,6 +103,7 @@ namespace malafein.Valheim.TheSedimentaryPath
         public static ConfigEntry<KeyboardShortcut> ToggleVineryProximity;
         public static ConfigEntry<KeyboardShortcut> ToggleWeaponStance;
         public static ConfigEntry<KeyboardShortcut> JournalHotkey;
+        public static ConfigEntry<float> JournalScrollSensitivity;
 
         public static ConfigEntry<bool> DetectVines;
         public static ConfigEntry<bool> DetectBerries;
@@ -157,6 +158,8 @@ namespace malafein.Valheim.TheSedimentaryPath
 
             JournalHotkey = ClientConfig("Journal", "ToggleHotkey", new KeyboardShortcut(KeyCode.J),
                 "Hotkey to open and close the in-game journal.");
+            JournalScrollSensitivity = ClientConfig("Journal", "ScrollSensitivity", 300f,
+                "Mouse-wheel scroll speed in the journal's lists. Higher scrolls faster. Re-applied each time the journal is opened.");
 
             DetectVines = ClientConfig("Vinery Categories", "DetectVines", true, "Sense Vines and Vineberries.");
             DetectBerries = ClientConfig("Vinery Categories", "DetectBerries", true, "Sense Raspberries, Blueberries, and Cloudberries.");

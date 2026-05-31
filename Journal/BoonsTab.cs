@@ -17,7 +17,6 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
     {
         public override string Label => "Boons";
 
-        private static readonly Color CardColor   = new Color(0.15f, 0.15f, 0.15f, 0.6f);
         private static readonly Color EmptyColor  = new Color(0.70f, 0.70f, 0.70f, 1f);
 
         // Single tall row per boon. Generous height so wrapped text has
@@ -55,7 +54,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 typeof(Image),
                 typeof(LayoutElement));
             card.transform.SetParent(ListContent, false);
-            card.GetComponent<Image>().color = CardColor;
+            // Text-on-wood, no box — mirrors the Compendium detail pane. The
+            // Image stays (transparent) as a raycast target so drags over a
+            // card still scroll the list.
+            card.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f);
             card.GetComponent<LayoutElement>().preferredHeight = CardHeight;
 
             var bodyRt = JournalUIHelpers.MakeChildRect(card.transform, "Body");
@@ -105,18 +107,20 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 : "(no effects)";
 
             var sb = new StringBuilder();
-            sb.Append("<b>").Append(def.Name).Append("</b>")
-              .Append("   <size=12>Tier ").Append(currentTier).Append(" / ").Append(def.MaxTier).Append("</size>")
+            sb.Append("<size=20>").Append(JournalUIHelpers.Header(def.Name)).Append("</size>")
+              .Append("   <size=14>")
+              .Append(JournalUIHelpers.Colored(JournalUIHelpers.ValueColorTag, $"Tier {currentTier} / {def.MaxTier}"))
+              .Append("</size>")
               .AppendLine().AppendLine();
 
             if (!string.IsNullOrEmpty(def.Description))
                 sb.AppendLine(def.Description).AppendLine();
 
-            sb.AppendLine("<b>Current effects:</b>")
-              .AppendLine(effects);
+            sb.AppendLine(JournalUIHelpers.Label("Current effects:"))
+              .AppendLine(JournalUIHelpers.HighlightValues(effects));
 
             if (!string.IsNullOrEmpty(def.RitualText))
-                sb.AppendLine().Append("<b>Ritual:</b>  ").Append(def.RitualText);
+                sb.AppendLine().Append(JournalUIHelpers.Label("Ritual:")).Append("  ").Append(def.RitualText);
 
             return sb.ToString();
         }

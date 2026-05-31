@@ -1,34 +1,55 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace malafein.Valheim.TheSedimentaryPath.Journal
 {
-    // Lore tab — list / detail.
+    // Lore tab — master / detail (Compendium-style).
     //
-    // Default view is a scrollable list of unlocked entry titles
-    // (LoreRegistry filtered by IsLoreUnlocked). Clicking a title swaps
-    // the view to a detail pane showing the entry's title and the text
-    // of the player's currently-unlocked stage. A back button returns
-    // to the list.
+    // Left pane: a scrollable list of unlocked entry titles (LoreRegistry
+    // filtered by IsLoreUnlocked). Right pane: the selected entry's title
+    // and the text of the player's currently-unlocked stage. Both panes are
+    // visible at once; selecting a list row updates the detail in place (no
+    // back button). The selected row is highlighted gold like the vanilla
+    // Compendium.
     //
-    // OnActivated rebuilds the list, so unlocks that fire while the
-    // panel is closed (or while another tab is showing) appear next
-    // time Lore becomes the active tab.
+    // OnActivated rebuilds the list, so unlocks that fire while the panel is
+    // closed (or while another tab is showing) appear next time Lore becomes
+    // the active tab. Selection is preserved across rebuilds by entry id;
+    // otherwise the first entry is selected.
     public class LoreTab : JournalTab
     {
         public override string Label => "Lore";
 
-        private GameObject       _listView;
-        private GameObject       _detailView;
+        private GameObject       _detailBodyScroll;
         private TextMeshProUGUI  _detailTitle;
         private TextMeshProUGUI  _detailBody;
 
-        private static readonly Color ListItemColor       = new Color(0.13f, 0.13f, 0.13f, 0.6f);
-        private static readonly Color BackButtonColor     = new Color(0.20f, 0.20f, 0.20f, 1f);
-        private const float ListItemHeight    = 36f;
-        private const float BackButtonHeight  = 28f;
+        // Selection state. Tracked by id so it survives list rebuilds.
+        private string           _selectedId;
+        private Image            _selectedBg;
+        private TextMeshProUGUI  _selectedLabel;
+        private readonly List<ItemView> _items = new List<ItemView>();
+
+        private const float LeftPaneFraction = 0.34f;
+        private const float PaneGap          = 10f;
+        private const float ListItemHeight   = 36f;
         private const float DetailTitleHeight = 40f;
+
+        private static readonly Color NormalItemColor   = new Color(0f, 0f, 0f, 0f);
+        private static readonly Color SelectedItemColor = new Color(1f, 0.718f, 0.36f, 0.22f);
+
+        // One list row's clickable handle + the bits SelectEntry recolors.
+        private class ItemView
+        {
+            public LoreEntry        Entry;
+            public int              StageIdx;
+            public Image            Bg;
+            public TextMeshProUGUI  Label;
+        }
+
+        // ── Build ────────────────────────────────────────────────────────
 
         protected override void BuildContent(Transform parent)
         {
@@ -39,41 +60,104 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             rootRt.offsetMax = Vector2.zero;
             Root = rootRt.gameObject;
 
-            BuildListView(rootRt);
-            BuildDetailView(rootRt);
-            ShowList();
+            // Left: entry list.
+            var listPaneRt = JournalUIHelpers.MakeChildRect(rootRt, "ListPane");
+            listPaneRt.anchorMin = new Vector2(0, 0);
+            listPaneRt.anchorMax = new Vector2(LeftPaneFraction, 1);
+            listPaneRt.offsetMin = Vector2.zero;
+            listPaneRt.offsetMax = Vector2.zero;
+            ListContent = JournalUIHelpers.BuildScrollableList(listPaneRt, "ListView", out _);
+
+            // Thin divider between the panes.
+            var divRt = JournalUIHelpers.MakeChildRect(rootRt, "Divider");
+            divRt.anchorMin        = new Vector2(LeftPaneFraction, 0);
+            divRt.anchorMax        = new Vector2(LeftPaneFraction, 1);
+            divRt.pivot            = new Vector2(0.5f, 0.5f);
+            divRt.sizeDelta        = new Vector2(2, -16);
+            divRt.anchoredPosition = new Vector2(PaneGap * 0.5f, 0);
+            var divImg = divRt.gameObject.AddComponent<Image>();
+            divImg.color         = new Color(1f, 1f, 1f, 0.12f);
+            divImg.raycastTarget = false;
+
+            // Right: selected entry detail.
+            var detailPaneRt = JournalUIHelpers.MakeChildRect(rootRt, "DetailPane");
+            detailPaneRt.anchorMin = new Vector2(LeftPaneFraction, 0);
+            detailPaneRt.anchorMax = new Vector2(1, 1);
+            detailPaneRt.offsetMin = new Vector2(PaneGap, 0);
+            detailPaneRt.offsetMax = Vector2.zero;
+            BuildDetailPane(detailPaneRt);
         }
 
-        public override void OnActivated(Player player)
+        private void BuildDetailPane(RectTransform parent)
         {
-            ShowList();
-            RebuildList(player);
+            // Topic title — fixed at the top, gold like the Compendium topic.
+            var titleRt = JournalUIHelpers.MakeChildRect(parent, "DetailTitle");
+            titleRt.anchorMin        = new Vector2(0, 1);
+            titleRt.anchorMax        = new Vector2(1, 1);
+            titleRt.pivot            = new Vector2(0.5f, 1);
+            titleRt.sizeDelta        = new Vector2(0, DetailTitleHeight);
+            titleRt.anchoredPosition = new Vector2(0, -4);
+            _detailTitle = JournalUIHelpers.AddText(
+                titleRt,
+                "",
+                Font,
+                fontSize: 22,
+                alignment: TextAlignmentOptions.TopLeft);
+            _detailTitle.fontStyle = FontStyles.Bold;
+            _detailTitle.color     = JournalUIHelpers.AccentGold;
+
+            // Body — scrollable, fills the area under the title.
+            var bodyPaneRt = JournalUIHelpers.MakeChildRect(parent, "DetailBodyPane");
+            bodyPaneRt.anchorMin = new Vector2(0, 0);
+            bodyPaneRt.anchorMax = new Vector2(1, 1);
+            bodyPaneRt.offsetMin = Vector2.zero;
+            bodyPaneRt.offsetMax = new Vector2(0, -(DetailTitleHeight + 8));
+
+            var bodyContent = JournalUIHelpers.BuildScrollableList(bodyPaneRt, "DetailBody", out _detailBodyScroll);
+            var bodyRowRt = JournalUIHelpers.MakeChildRect(bodyContent, "Text");
+            _detailBody = JournalUIHelpers.AddText(
+                bodyRowRt,
+                "",
+                Font,
+                fontSize: 16,
+                alignment: TextAlignmentOptions.TopLeft);
+            _detailBody.textWrappingMode = TextWrappingModes.Normal;
         }
 
-        // ── List view ────────────────────────────────────────────────────
+        // ── Activation / list ──────────────────────────────────────────────
 
-        private void BuildListView(RectTransform parent)
-        {
-            ListContent = JournalUIHelpers.BuildScrollableList(parent, "ListView", out _listView);
-        }
+        public override void OnActivated(Player player) => RebuildList(player);
 
         private void RebuildList(Player player)
         {
             ClearContent(ListContent);
-            int unlocked = 0;
+            _items.Clear();
+            _selectedBg    = null; // destroyed by ClearContent
+            _selectedLabel = null;
+
             foreach (var entry in LoreRegistry.All())
             {
                 if (player == null || !JournalData.IsLoreUnlocked(player, entry.Id)) continue;
                 int stageIdx = JournalData.GetLoreStage(player, entry.Id);
-                BuildListItem(entry, stageIdx);
-                unlocked++;
+                _items.Add(BuildListItem(entry, stageIdx));
             }
 
-            if (unlocked == 0)
+            if (_items.Count == 0)
+            {
+                _selectedId = null;
                 BuildEmptyMessage();
+                ShowDetail(null, 0);
+                return;
+            }
+
+            // Reselect the previously-shown entry if it's still present.
+            ItemView target = _selectedId != null
+                ? _items.Find(v => v.Entry.Id == _selectedId)
+                : null;
+            SelectEntry(target ?? _items[0]);
         }
 
-        private void BuildListItem(LoreEntry entry, int stageIdx)
+        private ItemView BuildListItem(LoreEntry entry, int stageIdx)
         {
             var itemGo = new GameObject(
                 $"LoreItem_{entry.Id}",
@@ -84,26 +168,29 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             itemGo.transform.SetParent(ListContent, false);
 
             var img = itemGo.GetComponent<Image>();
-            img.color = ListItemColor;
+            img.color = NormalItemColor;
 
             var btn = itemGo.GetComponent<Button>();
             btn.targetGraphic = img;
-            btn.onClick.AddListener(() => ShowDetail(entry, stageIdx));
+            btn.transition    = Selectable.Transition.None;
 
-            var layoutEl = itemGo.GetComponent<LayoutElement>();
-            layoutEl.preferredHeight = ListItemHeight;
+            itemGo.GetComponent<LayoutElement>().preferredHeight = ListItemHeight;
 
             var labelRt = JournalUIHelpers.MakeChildRect(itemGo.transform, "Label");
             labelRt.anchorMin = Vector2.zero;
             labelRt.anchorMax = Vector2.one;
             labelRt.offsetMin = new Vector2(12, 0);
             labelRt.offsetMax = new Vector2(-8, 0);
-            JournalUIHelpers.AddText(
+            var label = JournalUIHelpers.AddText(
                 labelRt,
                 entry.Title,
                 Font,
                 fontSize: 16,
                 alignment: TextAlignmentOptions.MidlineLeft);
+
+            var view = new ItemView { Entry = entry, StageIdx = stageIdx, Bg = img, Label = label };
+            btn.onClick.AddListener(() => SelectEntry(view));
+            return view;
         }
 
         private void BuildEmptyMessage()
@@ -122,96 +209,36 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 alignment: TextAlignmentOptions.Center);
         }
 
-        // ── Detail view ──────────────────────────────────────────────────
+        // ── Selection / detail ──────────────────────────────────────────────
 
-        private void BuildDetailView(RectTransform parent)
+        private void SelectEntry(ItemView view)
         {
-            var rt = JournalUIHelpers.MakeChildRect(parent, "DetailView");
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.one;
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = Vector2.zero;
-            _detailView = rt.gameObject;
+            if (view == null) return;
+            _selectedId = view.Entry.Id;
 
-            // Back button — top-left.
-            var backGo = new GameObject(
-                "BackButton",
-                typeof(RectTransform),
-                typeof(Image),
-                typeof(Button));
-            backGo.transform.SetParent(rt, false);
-            var backRt = (RectTransform)backGo.transform;
-            backRt.anchorMin        = new Vector2(0, 1);
-            backRt.anchorMax        = new Vector2(0, 1);
-            backRt.pivot            = new Vector2(0, 1);
-            backRt.sizeDelta        = new Vector2(90, BackButtonHeight);
-            backRt.anchoredPosition = Vector2.zero;
+            if (_selectedBg != null)    _selectedBg.color    = NormalItemColor;
+            if (_selectedLabel != null) _selectedLabel.color = JournalUIHelpers.BodyTextColor;
 
-            var backImg = backGo.GetComponent<Image>();
-            backImg.color = BackButtonColor;
-            var backBtn = backGo.GetComponent<Button>();
-            backBtn.targetGraphic = backImg;
-            backBtn.onClick.AddListener(ShowList);
+            _selectedBg    = view.Bg;
+            _selectedLabel = view.Label;
+            if (_selectedBg != null)    _selectedBg.color    = SelectedItemColor;
+            if (_selectedLabel != null) _selectedLabel.color = JournalUIHelpers.AccentGold;
 
-            var backLabelRt = JournalUIHelpers.MakeChildRect(backRt, "Label");
-            backLabelRt.anchorMin = Vector2.zero;
-            backLabelRt.anchorMax = Vector2.one;
-            backLabelRt.offsetMin = Vector2.zero;
-            backLabelRt.offsetMax = Vector2.zero;
-            JournalUIHelpers.AddText(
-                backLabelRt,
-                "Back",
-                Font,
-                fontSize: 14,
-                alignment: TextAlignmentOptions.Center);
-
-            // Title — centered, below the back button.
-            var titleRt = JournalUIHelpers.MakeChildRect(rt, "Title");
-            titleRt.anchorMin        = new Vector2(0, 1);
-            titleRt.anchorMax        = new Vector2(1, 1);
-            titleRt.pivot            = new Vector2(0.5f, 1);
-            titleRt.sizeDelta        = new Vector2(0, DetailTitleHeight);
-            titleRt.anchoredPosition = new Vector2(0, -(BackButtonHeight + 4));
-            _detailTitle = JournalUIHelpers.AddText(
-                titleRt,
-                "",
-                Font,
-                fontSize: 22,
-                alignment: TextAlignmentOptions.Center);
-
-            // Body — fills remaining area below the title.
-            float bodyTopOffset = BackButtonHeight + 4 + DetailTitleHeight + 8;
-            var bodyRt = JournalUIHelpers.MakeChildRect(rt, "Body");
-            bodyRt.anchorMin = new Vector2(0, 0);
-            bodyRt.anchorMax = new Vector2(1, 1);
-            bodyRt.offsetMin = new Vector2(20, 20);
-            bodyRt.offsetMax = new Vector2(-20, -bodyTopOffset);
-            _detailBody = JournalUIHelpers.AddText(
-                bodyRt,
-                "",
-                Font,
-                fontSize: 16,
-                alignment: TextAlignmentOptions.TopLeft);
-            _detailBody.textWrappingMode = TextWrappingModes.Normal;
-        }
-
-        private void ShowList()
-        {
-            if (_listView != null)   _listView.SetActive(true);
-            if (_detailView != null) _detailView.SetActive(false);
+            ShowDetail(view.Entry, view.StageIdx);
         }
 
         private void ShowDetail(LoreEntry entry, int stageIdx)
         {
-            if (entry == null || entry.Stages.Count == 0) return;
+            if (entry == null || entry.Stages.Count == 0)
+            {
+                _detailTitle.text = "";
+                _detailBody.text  = "";
+                return;
+            }
             // Clamp in case stored stage is somehow out of bounds.
             stageIdx = Mathf.Clamp(stageIdx, 0, entry.Stages.Count - 1);
-
             _detailTitle.text = entry.Title;
             _detailBody.text  = entry.Stages[stageIdx].Text;
-
-            if (_listView != null)   _listView.SetActive(false);
-            if (_detailView != null) _detailView.SetActive(true);
         }
     }
 }

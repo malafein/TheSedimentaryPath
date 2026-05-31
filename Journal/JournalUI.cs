@@ -50,11 +50,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public bool IsOpen => gameObject.activeSelf;
 
         private List<JournalTab> _tabs;
-        private Image[]          _tabButtonBgs;
+        private Button[]         _tabButtons;
         private int              _activeTabIndex;
-
-        private static readonly Color TabActiveColor   = new Color(0.25f, 0.25f, 0.25f, 1f);
-        private static readonly Color TabInactiveColor = new Color(0.12f, 0.12f, 0.12f, 1f);
 
         private const float TitleHeight   = 60f;
         private const float TabBarHeight  = 50f;
@@ -66,7 +63,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         // the JournalUIController on it. Panel starts hidden.
         public static JournalUIController Build(Transform parent)
         {
-            TMP_FontAsset font = ResolveFont();
+            TMP_FontAsset bodyFont = VanillaUI.BodyFont;
 
             var go = new GameObject(
                 "TSP_JournalPanel",
@@ -82,15 +79,19 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             rt.sizeDelta        = new Vector2(800, 600);
             rt.anchoredPosition = Vector2.zero;
 
+            // Borrow the Trophy-window frame (sprite + tint); fall back to a
+            // flat dark fill if it can't be resolved.
             var bg = go.GetComponent<Image>();
-            bg.color = new Color(0.05f, 0.05f, 0.05f, 0.95f);
+            bool gotPanel = VanillaUI.ApplyPanelBackground(bg);
+            if (!gotPanel)
+                bg.color = new Color(0.05f, 0.05f, 0.05f, 0.95f);
 
             var controller = go.GetComponent<JournalUIController>();
-            controller.BuildLayout(font);
+            controller.BuildLayout(bodyFont);
 
             go.SetActive(false);
             JournalUI.Bind(controller);
-            Log.Info($"JournalUIController: built (font={(font != null ? font.name : "<none>")})");
+            Log.Info($"JournalUIController: built (panel={(gotPanel ? "vanilla" : "<flat>")}, body={(bodyFont != null ? bodyFont.name : "<none>")})");
             return controller;
         }
 
@@ -103,12 +104,15 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             titleRt.pivot            = new Vector2(0.5f, 1);
             titleRt.sizeDelta        = new Vector2(0, TitleHeight);
             titleRt.anchoredPosition = new Vector2(0, -10);
-            JournalUIHelpers.AddText(
+            var titleText = JournalUIHelpers.AddText(
                 titleRt,
                 "Journal",
                 font,
                 fontSize: 32,
                 alignment: TextAlignmentOptions.Center);
+            // Borrow the vanilla header font + material + style (Compendium
+            // topic look) so the title reads like a real window heading.
+            VanillaUI.ApplyTitleStyle(titleText);
 
             // Tabs catalog — order here is left-to-right in the tab bar.
             _tabs = new List<JournalTab>
@@ -126,11 +130,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             tabBarRt.sizeDelta        = new Vector2(0, TabBarHeight);
             tabBarRt.anchoredPosition = new Vector2(0, -(TitleHeight + 10));
 
-            _tabButtonBgs = new Image[_tabs.Count];
+            _tabButtons = new Button[_tabs.Count];
             for (int i = 0; i < _tabs.Count; i++)
             {
                 int captured = i; // closure capture for click handler
-                _tabButtonBgs[i] = BuildTabButton(
+                _tabButtons[i] = BuildTabButton(
                     parent: tabBarRt,
                     label: _tabs[i].Label,
                     index: i,
@@ -146,6 +150,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             contentAreaRt.anchorMax = new Vector2(1, 1);
             contentAreaRt.offsetMin = new Vector2(ContentMargin, ContentMargin);
             contentAreaRt.offsetMax = new Vector2(-ContentMargin, -contentTopOffset);
+
+            // Darkened backing behind the text region (like the Compendium's
+            // inset panels) so orange/white copy reads clearly over the busy
+            // wood texture. Decorative only — let drags pass to the scroll list.
+            var contentBg = contentAreaRt.gameObject.AddComponent<Image>();
+            contentBg.color         = new Color(0f, 0f, 0f, 0.4f);
+            contentBg.raycastTarget = false;
 
             // Each tab builds its content under the shared content area.
             foreach (var tab in _tabs)
@@ -163,7 +174,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             for (int i = 0; i < _tabs.Count; i++)
             {
                 _tabs[i].Root?.SetActive(i == index);
-                _tabButtonBgs[i].color = (i == index) ? TabActiveColor : TabInactiveColor;
+                VanillaUI.SetButtonActive(_tabButtons[i], i == index);
             }
             _tabs[index].OnActivated(Player.m_localPlayer);
         }
@@ -173,6 +184,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public void Open()
         {
             gameObject.SetActive(true);
+            // Re-apply scroll sensitivity across all lists (incl. inactive tabs)
+            // so config changes take effect on reopen without a relog.
+            float sensitivity = Plugin.JournalScrollSensitivity.Value;
+            foreach (var sr in GetComponentsInChildren<ScrollRect>(true))
+                sr.scrollSensitivity = sensitivity;
             // Refresh the active tab — content may have changed while
             // the panel was closed (e.g. lore unlocked between sessions).
             if (_tabs != null && _activeTabIndex >= 0 && _activeTabIndex < _tabs.Count)
@@ -198,27 +214,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
         // ── Helpers ──────────────────────────────────────────────────────
 
-        // Clone a TMP font asset off an existing vanilla TMP_Text — most
-        // robust against asset renames. Falls back to the first Averia*
-        // asset, then the first loaded TMP_FontAsset of any kind, then null.
-        private static TMP_FontAsset ResolveFont()
-        {
-            if (Hud.instance != null && Hud.instance.m_healthText != null)
-            {
-                var f = Hud.instance.m_healthText.font;
-                if (f != null) return f;
-            }
-            var loaded = Resources.FindObjectsOfTypeAll<TMP_FontAsset>();
-            foreach (var f in loaded)
-                if (f != null && f.name.Contains("Averia"))
-                    return f;
-            return loaded.Length > 0 ? loaded[0] : null;
-        }
-
         // Build a tab button in the tab bar. `index` is 0..tabCount-1; we
         // lay the buttons out evenly across the bar width using anchor
         // stretch. Returns the background Image so SwitchTab can recolor.
-        private static Image BuildTabButton(
+        private static Button BuildTabButton(
             RectTransform parent,
             string label,
             int index,
@@ -241,9 +240,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             rt.offsetMax = new Vector2(-10, -5);
 
             var img = go.GetComponent<Image>();
-            img.color = TabInactiveColor;
-
             var btn = go.GetComponent<Button>();
+            // Borrow the full vanilla button look + state behaviour (hover /
+            // pressed); SwitchTab toggles the persistent active highlight.
+            VanillaUI.StyleButton(btn, img);
+
             btn.onClick.AddListener(onClick);
 
             // Label fills the button.
@@ -252,14 +253,15 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             labelRt.anchorMax = Vector2.one;
             labelRt.offsetMin = Vector2.zero;
             labelRt.offsetMax = Vector2.zero;
-            JournalUIHelpers.AddText(
+            var labelText = JournalUIHelpers.AddText(
                 labelRt,
                 label,
                 font,
                 fontSize: 18,
                 alignment: TextAlignmentOptions.Center);
+            VanillaUI.ApplyButtonLabelStyle(labelText);
 
-            return img;
+            return btn;
         }
     }
 }
