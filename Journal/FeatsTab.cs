@@ -13,6 +13,12 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
     // header toggles the children's visibility. Expanded state persists
     // for the controller's lifetime in `_expanded`.
     //
+    // Each feat row shows its name, trigger description, a progress bar with
+    // the value rendered over it, and the tier reached. Completionist feats
+    // are additionally expandable: clicking the row reveals the specific set
+    // members the player has completed (unfinished members stay hidden so the
+    // journal never spoils what's left).
+    //
     // A single footer at the bottom shows the total count of feats the
     // player hasn't yet discovered — one number, not per-category, per
     // the cult-flavored "mystery not roadmap" spec.
@@ -28,9 +34,17 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         private static readonly Color FeatRowColor        = new Color(0.13f, 0.13f, 0.13f, 0.5f);
         private static readonly Color FooterColor         = new Color(0.70f, 0.70f, 0.70f, 1f);
 
+        private static readonly Color DescColor     = new Color(0.62f, 0.62f, 0.62f, 1f);
+        private static readonly Color BarTrackColor = new Color(0f, 0f, 0f, 0.55f);
+        private static readonly Color BarFillColor  = new Color(0.55f, 0.45f, 0.27f, 0.9f);
+        private static readonly Color BarTextColor  = new Color(0.96f, 0.96f, 0.96f, 1f);
+        private static readonly Color MemberColor   = new Color(0.82f, 0.82f, 0.82f, 1f);
+
         private const float CategoryHeaderHeight = 32f;
-        private const float FeatRowHeight        = 30f;
-        private const float ProgressColumnWidth  = 200f;
+        private const float HeaderLineHeight     = 22f;
+        private const float BarHeight            = 18f;
+        private const float MemberLineHeight     = 20f;
+        private const float TierColumnWidth      = 110f;
 
         protected override void BuildContent(Transform parent)
         {
@@ -110,46 +124,177 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             btn.onClick.AddListener(() => ToggleCategory(cat));
         }
 
+        // A feat row is a self-sizing vertical stack: header line (name + tier),
+        // description, progress bar, and — for completionist feats — a
+        // collapsible list of completed members. Height is driven by the
+        // VerticalLayoutGroup so toggling the member list reflows the list.
         private GameObject BuildFeatRow(FeatDef def, Player player)
         {
-            var go = new GameObject(
+            var row = new GameObject(
                 $"Feat_{def.Id}",
                 typeof(RectTransform),
-                typeof(Image),
-                typeof(LayoutElement));
-            go.transform.SetParent(ListContent, false);
+                typeof(Image));
+            row.transform.SetParent(ListContent, false);
 
-            go.GetComponent<Image>().color = FeatRowColor;
-            go.GetComponent<LayoutElement>().preferredHeight = FeatRowHeight;
+            var rowImg = row.GetComponent<Image>();
+            rowImg.color = FeatRowColor;
 
-            // Name on the left, stretches to the start of the progress column.
-            var nameRt = JournalUIHelpers.MakeChildRect(go.transform, "Name");
+            var vlg = row.AddComponent<VerticalLayoutGroup>();
+            vlg.spacing                = 3;
+            vlg.padding                = new RectOffset(10, 10, 6, 6);
+            vlg.childAlignment         = TextAnchor.UpperLeft;
+            vlg.childControlWidth      = true;
+            vlg.childControlHeight     = true;
+            vlg.childForceExpandWidth  = true;
+            vlg.childForceExpandHeight = false;
+
+            ProgressInfo info = ComputeProgress(def, player);
+
+            List<string> members = CollectMembers(def, player);
+            bool expandable = def.Shape == FeatShape.CompletionistSet && members.Count > 0;
+
+            // ── Header line: name (left, indented for the caret) + tier (right)
+            var header = JournalUIHelpers.MakeChildRect(row.transform, "Header");
+            header.gameObject.AddComponent<LayoutElement>().preferredHeight = HeaderLineHeight;
+
+            TextMeshProUGUI caret = null;
+            if (expandable)
+            {
+                var caretRt = JournalUIHelpers.MakeChildRect(header, "Caret");
+                caretRt.anchorMin = new Vector2(0, 0);
+                caretRt.anchorMax = new Vector2(0, 1);
+                caretRt.pivot     = new Vector2(0, 0.5f);
+                caretRt.sizeDelta = new Vector2(16, 0);
+                // Use the same large triangles as the category headers (▼/▶);
+                // the small variants (▸/▾) aren't in Valheim's font and render
+                // as a missing-glyph box.
+                caret = JournalUIHelpers.AddText(
+                    caretRt, "▶", Font, 11, TextAlignmentOptions.MidlineLeft);
+                caret.color = JournalUIHelpers.AccentGold;
+            }
+
+            var nameRt = JournalUIHelpers.MakeChildRect(header, "Name");
             nameRt.anchorMin = Vector2.zero;
             nameRt.anchorMax = Vector2.one;
-            nameRt.offsetMin = new Vector2(18, 0);
-            nameRt.offsetMax = new Vector2(-(ProgressColumnWidth + 8), 0);
-            JournalUIHelpers.AddText(
-                nameRt,
-                def.Name,
-                Font,
-                fontSize: 14,
-                alignment: TextAlignmentOptions.MidlineLeft);
+            nameRt.offsetMin = new Vector2(expandable ? 16 : 0, 0);
+            nameRt.offsetMax = new Vector2(-(TierColumnWidth + 6), 0);
+            // Feat name as a bold gold header, matching the journal's title /
+            // selected-row treatment.
+            var nameTmp = JournalUIHelpers.AddText(
+                nameRt, def.Name, Font, 15, TextAlignmentOptions.MidlineLeft);
+            nameTmp.color     = JournalUIHelpers.AccentGold;
+            nameTmp.fontStyle = FontStyles.Bold;
 
-            // Progress on the right, fixed width.
-            var progRt = JournalUIHelpers.MakeChildRect(go.transform, "Progress");
-            progRt.anchorMin        = new Vector2(1, 0);
-            progRt.anchorMax        = new Vector2(1, 1);
-            progRt.pivot            = new Vector2(1, 0.5f);
-            progRt.sizeDelta        = new Vector2(ProgressColumnWidth, 0);
-            progRt.anchoredPosition = new Vector2(-8, 0);
-            JournalUIHelpers.AddText(
-                progRt,
-                FormatProgress(def, player),
-                Font,
-                fontSize: 13,
-                alignment: TextAlignmentOptions.MidlineRight);
+            if (!string.IsNullOrEmpty(info.Tier))
+            {
+                var tierRt = JournalUIHelpers.MakeChildRect(header, "Tier");
+                tierRt.anchorMin = new Vector2(1, 0);
+                tierRt.anchorMax = new Vector2(1, 1);
+                tierRt.pivot     = new Vector2(1, 0.5f);
+                tierRt.sizeDelta = new Vector2(TierColumnWidth, 0);
+                // "Tier" as a yellow label, the count/state as an orange value.
+                JournalUIHelpers.AddText(
+                    tierRt, ColorizeTier(info.Tier), Font, 12, TextAlignmentOptions.MidlineRight);
+            }
 
-            return go;
+            // ── Description (the feat's trigger text) ──
+            if (!string.IsNullOrEmpty(def.TriggerDescription))
+            {
+                var descRt = JournalUIHelpers.MakeChildRect(row.transform, "Desc");
+                var desc = JournalUIHelpers.AddText(
+                    descRt, def.TriggerDescription, Font, 12, TextAlignmentOptions.TopLeft);
+                desc.color             = DescColor;
+                desc.fontStyle         = FontStyles.Italic;
+                desc.textWrappingMode  = TextWrappingModes.Normal;
+            }
+
+            // ── Progress bar with the value rendered over it ──
+            BuildProgressBar(row.transform, info);
+
+            // ── Completionist detail (collapsed by default) ──
+            if (expandable)
+            {
+                GameObject detail = BuildMemberList(row.transform, members);
+                detail.SetActive(false);
+
+                var btn = row.AddComponent<Button>();
+                btn.targetGraphic = rowImg;
+                btn.transition    = Selectable.Transition.None;
+
+                var localCaret = caret;
+                btn.onClick.AddListener(() =>
+                {
+                    bool show = !detail.activeSelf;
+                    detail.SetActive(show);
+                    if (localCaret != null) localCaret.text = show ? "▼" : "▶";
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(ListContent);
+                });
+            }
+
+            return row;
+        }
+
+        // Track + proportional fill + centered number. For untiered records
+        // (no thresholds) there's no bar to fill, so the value is shown alone.
+        private void BuildProgressBar(Transform parent, ProgressInfo info)
+        {
+            var barRt = JournalUIHelpers.MakeChildRect(parent, "Bar");
+            barRt.gameObject.AddComponent<LayoutElement>().preferredHeight = BarHeight;
+
+            if (info.HasBar)
+            {
+                barRt.gameObject.AddComponent<Image>().color = BarTrackColor;
+
+                var fillRt = JournalUIHelpers.MakeChildRect(barRt, "Fill");
+                fillRt.anchorMin = Vector2.zero;
+                fillRt.anchorMax = new Vector2(Mathf.Clamp01(info.Fill), 1f);
+                fillRt.offsetMin = Vector2.zero;
+                fillRt.offsetMax = Vector2.zero;
+                fillRt.gameObject.AddComponent<Image>().color = BarFillColor;
+            }
+
+            // Added last so it draws above the fill.
+            var numRt = JournalUIHelpers.MakeChildRect(barRt, "Num");
+            numRt.anchorMin = Vector2.zero;
+            numRt.anchorMax = Vector2.one;
+            numRt.offsetMin = new Vector2(8, 0);
+            numRt.offsetMax = new Vector2(-8, 0);
+            // Over a filled bar, keep the number bright for legibility against
+            // the fill; a bare untiered value sits on the dark panel, so give
+            // it the orange "value" colour from the palette.
+            var num = JournalUIHelpers.AddText(
+                numRt,
+                info.HasBar ? info.Number : JournalUIHelpers.Colored(JournalUIHelpers.ValueColorTag, info.Number),
+                Font,
+                fontSize: 12,
+                alignment: info.HasBar ? TextAlignmentOptions.Center : TextAlignmentOptions.MidlineRight);
+            num.color = info.HasBar ? BarTextColor : JournalUIHelpers.BodyTextColor;
+        }
+
+        private GameObject BuildMemberList(Transform parent, List<string> members)
+        {
+            var detail = new GameObject("Detail", typeof(RectTransform));
+            detail.transform.SetParent(parent, false);
+
+            var dvlg = detail.AddComponent<VerticalLayoutGroup>();
+            dvlg.spacing                = 1;
+            dvlg.padding                = new RectOffset(18, 4, 2, 4);
+            dvlg.childAlignment         = TextAnchor.UpperLeft;
+            dvlg.childControlWidth      = true;
+            dvlg.childControlHeight     = true;
+            dvlg.childForceExpandWidth  = true;
+            dvlg.childForceExpandHeight = false;
+
+            foreach (string m in members)
+            {
+                var mRt = JournalUIHelpers.MakeChildRect(detail.transform, "Member");
+                mRt.gameObject.AddComponent<LayoutElement>().preferredHeight = MemberLineHeight;
+                var tmp = JournalUIHelpers.AddText(
+                    mRt, "·  " + m, Font, 12, TextAlignmentOptions.MidlineLeft);
+                tmp.color = MemberColor;
+            }
+
+            return detail;
         }
 
         private void BuildUndiscoveredFooter(int count)
@@ -193,7 +338,21 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         {
             bool isExpanded = !_expanded.TryGetValue(cat, out bool e) || e;
             string arrow = isExpanded ? "▼" : "▶";
-            return $"{arrow}  {CategoryLabel(cat)}";
+            // Category as a yellow label, matching the palette used across tabs.
+            return JournalUIHelpers.Colored(
+                JournalUIHelpers.LabelColorTag, $"{arrow}  {CategoryLabel(cat)}");
+        }
+
+        // "Tier 2/3" → yellow "Tier" label + orange "2/3" value. The state suffix
+        // (e.g. "3/3 · max") rides along in the orange value span.
+        private static string ColorizeTier(string tier)
+        {
+            int sp = tier.IndexOf(' ');
+            if (sp < 0) return JournalUIHelpers.Label(tier);
+            string word = tier.Substring(0, sp);
+            string rest = tier.Substring(sp + 1);
+            return JournalUIHelpers.Label(word) + " "
+                 + JournalUIHelpers.Colored(JournalUIHelpers.ValueColorTag, rest);
         }
 
         private static string CategoryLabel(FeatCategory cat)
@@ -217,34 +376,75 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 : JournalData.GetFeat(player, def.Id);
         }
 
-        // Progress string per shape:
-        //   TieredCounter / CompletionistSet with thresholds:
-        //     "<value> / <nextThreshold>  ·  T<reached>/<max>"
-        //     or "<value>  (max · <max>/<max>)" when all tiers cleared.
-        //   No thresholds (UntieredRecord, or completionist not yet tiered):
-        //     just "<value>".
-        private static string FormatProgress(FeatDef def, Player player)
+        // Humanized, completed-only members of a completionist set (for the
+        // expandable detail). Empty for non-completionist feats.
+        private static List<string> CollectMembers(FeatDef def, Player player)
+        {
+            var list = new List<string>();
+            if (def.Shape != FeatShape.CompletionistSet || player == null)
+                return list;
+
+            foreach (string entryId in JournalData.GetCompletionistEntries(player, def.Id))
+            {
+                string name = CompletionistDisplay.ResolveMemberName(def.Id, entryId);
+                if (!string.IsNullOrEmpty(name)) list.Add(name);
+            }
+            list.Sort(System.StringComparer.CurrentCultureIgnoreCase);
+            return list;
+        }
+
+        // Progress rendering inputs, computed once per row.
+        private struct ProgressInfo
+        {
+            public bool   HasBar;  // false for untiered records (no target)
+            public float  Fill;    // 0..1 within the current tier segment
+            public string Number;  // text drawn over the bar (or the lone value)
+            public string Tier;    // "Tier 2/3" / "Tier 3/3 · max" / ""
+        }
+
+        private static ProgressInfo ComputeProgress(FeatDef def, Player player)
         {
             int value = ValueFor(def, player);
+            var info = new ProgressInfo();
 
+            // Untiered record: no threshold to fill toward — just the value.
             if (def.Thresholds.Length == 0)
-                return def.Display == DisplayFormat.GameTime
+            {
+                info.HasBar = false;
+                info.Number = def.Display == DisplayFormat.GameTime
                     ? FormatGameDuration(value)
                     : value.ToString();
-
-            int reached = 0;
-            int next = -1;
-            for (int i = 0; i < def.Thresholds.Length; i++)
-            {
-                if (value >= def.Thresholds[i])
-                    reached = i + 1;
-                else if (next < 0)
-                    next = def.Thresholds[i];
+                info.Tier = "";
+                return info;
             }
 
+            int reached = 0;
+            int next    = -1;
+            for (int i = 0; i < def.Thresholds.Length; i++)
+            {
+                if (value >= def.Thresholds[i]) reached = i + 1;
+                else if (next < 0)              next = def.Thresholds[i];
+            }
+
+            int max = def.Thresholds.Length;
+            info.HasBar = true;
+
             if (next < 0)
-                return $"{value}  (max · {reached}/{def.Thresholds.Length})";
-            return $"{value} / {next}  ·  T{reached}/{def.Thresholds.Length}";
+            {
+                // Every tier cleared.
+                info.Fill   = 1f;
+                info.Number = value.ToString();
+                info.Tier   = $"Tier {reached}/{max} · max";
+            }
+            else
+            {
+                int segMin = reached > 0 ? def.Thresholds[reached - 1] : 0;
+                info.Fill   = Mathf.Clamp01((float)(value - segMin) / (next - segMin));
+                info.Number = $"{value} / {next}";
+                info.Tier   = $"Tier {reached}/{max}";
+            }
+
+            return info;
         }
 
         // Render real-seconds as humanized in-game time. Valheim runs

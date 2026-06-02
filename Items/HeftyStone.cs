@@ -131,6 +131,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             shared.m_secondaryAttack.m_attackHeight = 1.2f;
             shared.m_secondaryAttack.m_attackRange = 1.0f;
             shared.m_secondaryAttack.m_launchAngle = 0f;
+            // Throwing a rock shouldn't wind you — the Club clone inherits a
+            // 15-stamina secondary; a thrown stone is far cheaper.
+            shared.m_secondaryAttack.m_attackStamina = 6f;
             Log.Debug("HeftyStone.CreatePrefab: configured secondary attack (throw)");
 
             Log.Debug("HeftyStone.CreatePrefab: complete");

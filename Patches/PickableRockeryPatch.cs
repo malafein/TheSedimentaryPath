@@ -50,6 +50,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     FeatTracker.RecordEvent(player, Feats.RocksCollected);
                     if (FeatTracker.IsDrunk(player))
                         FeatTracker.RecordEvent(player, Feats.RocksCollectedDrunk);
+
+                    // The Watcher Found — picking up the Mysterious Rock, the
+                    // beginning of the Stone Path. Unlocks its milestone lore.
+                    if (RockerySkill.IsMysteriousRockPickable(pickableName))
+                        FeatTracker.RecordEvent(player, Feats.MysteriousRockFound);
                 }
             }
 

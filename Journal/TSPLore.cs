@@ -15,6 +15,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
     // to land.
     public static class TSPLore
     {
+        public const string FirstMysteriousRock  = "first_mysterious_rock";
         public const string FirstRockPlaced      = "first_rock_placed";
         public const string FirstBlackstoneBrew  = "first_blackstone_brew";
         public const string FirstStoneWeapon     = "first_stone_weapon";
@@ -38,6 +39,15 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
         public static void RegisterAll()
         {
+            LoreRegistry.Register(new LoreEntry(
+                id: FirstMysteriousRock,
+                title: "One Among the Stones",
+                new LoreStage(
+                    text: "Among the field-stones, one sat heavier than its size, and did not look away. The others are only stone. This one waits. Carry it to where it can stand, and it will keep watch over you.",
+                    condition: new FeatThreshold(Feats.MysteriousRockFound, 1)
+                )
+            ));
+
             LoreRegistry.Register(new LoreEntry(
                 id: FirstRockPlaced,
                 title: "The First Watcher",

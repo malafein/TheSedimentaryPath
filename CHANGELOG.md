@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+- the tally is set right where it strayed
+- a stone among stones is found to be watching
+
 ## 0.2.0
 - the path keeps a record now
 - the rock takes its own as kin

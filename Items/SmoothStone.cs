@@ -112,6 +112,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             shared.m_secondaryAttack.m_attackRange = 1.0f;
             shared.m_secondaryAttack.m_launchAngle = 0f;
             shared.m_secondaryAttack.m_damageMultiplier = 1.5f;
+            // Lighter and better-balanced than the Hefty Stone, so cheaper still
+            // to throw (the Club clone would otherwise inherit a 15 cost).
+            shared.m_secondaryAttack.m_attackStamina = 4f;
             Log.Debug("SmoothStone.CreatePrefab: configured secondary attack (throw)");
 
             Log.Debug("SmoothStone.CreatePrefab: complete");

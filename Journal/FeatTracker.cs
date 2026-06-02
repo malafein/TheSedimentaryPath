@@ -68,6 +68,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             Add(Feats.MaxSingleThrowSkips,   "One Stone, Many Steps",     FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 1, 2, 3 },           "Personal best skips on single throw");
             Add(Feats.EnemiesKilledBySkip,   "Met While Travelling",      FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 1, 10, 50 },         "Creature killed mid-skip");
             Add(Feats.StoneWeaponsCrafted,   "The Knapping",              FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 1, 10, 50 },         "TSP stone weapon crafted");
+            Add(Feats.MysteriousRockFound,   "A Stone Looks Back",        FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 1, 10, 50 },         "Mysterious Rock found");
             Add(Feats.RockerySkillLevel,     "The Stone Grows Familiar",  FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 25, 50, 75, 100 },   "Rockery skill milestone");
             Add(Feats.MysteriousRocksPlaced, "They That Watch",           FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 1, 5, 10 },          "Mysterious Rock net-placed");
 

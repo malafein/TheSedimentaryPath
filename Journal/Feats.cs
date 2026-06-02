@@ -11,6 +11,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public const string EnemiesKilledBySkip    = "enemies_killed_by_skip";
         public const string StoneWeaponsCrafted    = "stone_weapons_crafted";
         public const string RockerySkillLevel      = "rockery_skill_level";
+        public const string MysteriousRockFound    = "mysterious_rock_found";
         public const string MysteriousRocksPlaced  = "mysterious_rocks_placed";
 
         // ── The Vine Path ──────────────────────────────────────────────

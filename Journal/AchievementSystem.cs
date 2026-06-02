@@ -201,25 +201,35 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
         // ── Public API ──────────────────────────────────────────────────────
 
-        // Called from CharacterDamagePatch (Character.RPC_Damage Postfix) on
-        // every client where the method ran:
-        //   - On the attacker-local client, records "I damaged this boss" so
-        //     participation feats can credit later even after Character
-        //     destruction.
-        //   - On the ZDO owner, accumulates damage facts on the creature's
-        //     ZDO so the death broadcast can include them.
+        // Called from CharacterDamageLocalPatch (Character.Damage Postfix),
+        // which runs on the ATTACKER's own client for every hit it simulates —
+        // regardless of who owns the victim's ZDO. Records "my local player
+        // damaged this creature" so participation feats can credit later even
+        // after the Character is destroyed.
         //
-        // The caller is responsible for filtering to player-attributed damage
-        // before invoking — this avoids the cost of resolving hit.GetAttacker()
-        // twice (the patch needs it for the attackerIsLocal decision).
-        public static void RecordDamage(Character victim, HitData hit, bool isOwner, bool attackerIsLocal)
+        // This must NOT live in the RPC_Damage path: ZNetView.InvokeRPC routes
+        // RPC_Damage only to the victim's ZDO owner, so a non-owner attacker
+        // never runs it. Recording contribution there credited only whoever
+        // owned the creature (typically the closest / initiating player),
+        // dropping every other participant in a group fight.
+        public static void RecordLocalContribution(Character victim)
+        {
+            if (victim == null) return;
+            ZDOID id = victim.GetZDOID();
+            if (id.IsNone()) return;
+            _localContributions[id] = Time.time;
+        }
+
+        // Called from CharacterDamagePatch (Character.RPC_Damage Postfix) on
+        // the victim's ZDO owner only — the one client that actually applies
+        // the hit. Accumulates damage facts on the creature's ZDO so the death
+        // broadcast can include them. ZDO replication makes these visible to
+        // all loaded clients.
+        //
+        // The caller filters to player-attributed damage before invoking.
+        public static void RecordOwnerDamage(Character victim, HitData hit)
         {
             if (victim == null || hit == null) return;
-
-            if (attackerIsLocal)
-                _localContributions[victim.GetZDOID()] = Time.time;
-
-            if (!isOwner) return;
 
             ZNetView nv = NviewRef(victim);
             if (nv == null) return;

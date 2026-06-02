@@ -41,10 +41,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Skills
             "Pickable_HardRockOffspring"
         };
 
+        // The rare "Mysterious Rock" pickable — the large-XP find that becomes a
+        // standing Watcher when placed. This specific prefab marks the beginning
+        // of the Stone Path (milestone feat + lore), distinct from the broader
+        // large-XP category below.
+        public const string MysteriousRockPickable = "Pickable_StoneRock";
+
         // Pickable prefab names that grant large XP
         private static readonly HashSet<string> LargeXPPickables = new HashSet<string>
         {
-            "Pickable_StoneRock"
+            MysteriousRockPickable
         };
 
         public static float GetPickupXP(string pickablePrefabName)
@@ -55,6 +61,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Skills
                 return StonePickupXP;
             return 0f;
         }
+
+        // True only for the specific Mysterious Rock pickable. Drives the
+        // milestone feat / lore that mark the beginning of the Stone Path —
+        // deliberately not the whole large-XP category, which may gain other
+        // entries later that aren't the Watcher-to-be.
+        public static bool IsMysteriousRockPickable(string pickablePrefabName)
+            => pickablePrefabName == MysteriousRockPickable;
 
         // All Rockery-skill craftable items (drives Rockery XP on craft).
         public static bool IsRockeryItem(string itemName)

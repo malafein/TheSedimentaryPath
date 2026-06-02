@@ -3,20 +3,17 @@ using malafein.Valheim.TheSedimentaryPath.Journal;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
 {
-    // Character.RPC_Damage Postfix.
+    // Character.RPC_Damage Postfix — owner-side ZDO accumulation.
     //
-    // Two clients see this method run for any given damage event:
-    //   1. The attacker's client (briefly — vanilla sets m_localPlayerHasHit
-    //      before its IsOwner early-exit). We use this run to record the
-    //      local player's boss-fight contribution.
-    //   2. The ZDO owner's client (full pass — actual damage application).
-    //      We use this run to accumulate damage facts on the creature's ZDO.
+    // ZNetView.InvokeRPC("RPC_Damage", ...) targets the victim's ZDO owner, so
+    // this method runs ONLY on the owner's client (plus the attacker's client
+    // in the case where the attacker is also the owner). The owner is the only
+    // client that actually applies the hit, so it's the right place to
+    // accumulate the per-fight damage facts that live on the creature's ZDO.
     //
-    // Bystander clients (not attacker, not owner) never see RPC_Damage fire.
-    //
-    // Filter env / mob-on-mob damage and resolve attacker / owner / local
-    // flags once here, then pass into AchievementSystem.RecordDamage so it
-    // doesn't have to repeat the GetAttacker() lookup.
+    // The attacker-side contribution (which credits non-owner participants) is
+    // recorded separately in CharacterDamageLocalPatch (Character.Damage),
+    // because RPC_Damage never runs on a non-owner attacker's client.
     [HarmonyPatch(typeof(Character), "RPC_Damage")]
     public static class CharacterDamagePatch
     {
@@ -27,20 +24,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         {
             if (__instance == null || hit == null || __instance is Player) return;
 
-            Character attacker = hit.GetAttacker();
-            if (!(attacker is Player playerAttacker)) return;
-
-            Player local = Player.m_localPlayer;
-            bool attackerIsLocal = local != null && playerAttacker == local;
-
             ZNetView nv = NviewRef(__instance);
-            bool isOwner = nv != null && nv.IsOwner();
+            if (nv == null || !nv.IsOwner()) return;
 
-            // Nothing for us to do on a bystander instance (shouldn't happen
-            // given RPC routing, but guard cheaply).
-            if (!attackerIsLocal && !isOwner) return;
+            // Only player-attributed damage shapes the per-fight invariants.
+            if (!(hit.GetAttacker() is Player)) return;
 
-            AchievementSystem.RecordDamage(__instance, hit, isOwner, attackerIsLocal);
+            AchievementSystem.RecordOwnerDamage(__instance, hit);
         }
     }
 }
