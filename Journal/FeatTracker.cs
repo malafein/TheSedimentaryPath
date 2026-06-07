@@ -23,10 +23,14 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
     //   Number   — the raw integer (default)
     //   GameTime — the value is real-seconds; show humanized in-game time
     //              (e.g. "3 days, 12 hours"). Used by drunk_seconds.
+    //   Distance — the value is whole meters; show m / km (e.g. "1.2 km").
+    //              Used by the travel feats (sailed / walked-as-distance /
+    //              ridden) and altitude.
     public enum DisplayFormat
     {
         Number,
-        GameTime
+        GameTime,
+        Distance
     }
 
     public class FeatDef
@@ -65,15 +69,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             Add(Feats.RocksCollected,        "Stones at Hand",            FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 50, 500, 5000 },     "Rockery-list Pickable pickup");
             Add(Feats.StoneKills,            "Stone's Answer",            FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 50, 250, 2500 },     "Creature killed by TSP Rockery weapon");
             Add(Feats.SkipsAchieved,         "Stones That Travel",        FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 50, 250, 1000 },     "Total skip count summed across throws");
-            Add(Feats.MaxSingleThrowSkips,   "One Stone, Many Steps",     FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 1, 2, 3 },           "Personal best skips on single throw");
+            Add(Feats.MaxSingleThrowSkips,   "One Stone, Many Steps",     FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 1, 3, 5 },           "Personal best skips on single throw");
             Add(Feats.EnemiesKilledBySkip,   "Met While Travelling",      FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 1, 10, 50 },         "Creature killed mid-skip");
             Add(Feats.StoneWeaponsCrafted,   "The Knapping",              FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 1, 10, 50 },         "TSP stone weapon crafted");
-            Add(Feats.MysteriousRockFound,   "A Stone Looks Back",        FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 1, 10, 50 },         "Mysterious Rock found");
+            Add(Feats.MysteriousRockFound,   "A Stone Looks Back",        FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 1, 5, 12 },          "Mysterious Rock found");
+            Add(Feats.DistinctRockTypes,     "The Many Stones",           FeatCategory.StonePath, FeatShape.CompletionistSet, new[] { 1, 3, 6 },           "Distinct rock type picked up");
             Add(Feats.RockerySkillLevel,     "The Stone Grows Familiar",  FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 25, 50, 75, 100 },   "Rockery skill milestone");
             Add(Feats.MysteriousRocksPlaced, "They That Watch",           FeatCategory.StonePath, FeatShape.TieredCounter,    new[] { 1, 5, 10 },          "Mysterious Rock net-placed");
 
             // ── The Vine Path ──────────────────────────────────────────
-            Add(Feats.VineWatchSeconds,      "The Verdant Vigil",         FeatCategory.VinePath,  FeatShape.UntieredRecord,   new int[0],                  "Time spent watching vines");
+            Add(Feats.VineWatchSeconds,      "The Verdant Vigil",         FeatCategory.VinePath,  FeatShape.UntieredRecord,   new int[0],                  "Time spent watching vines",              DisplayFormat.GameTime);
             Add(Feats.VinesGrown,            "Patience in Bloom",         FeatCategory.VinePath,  FeatShape.TieredCounter,    new[] { 5, 25, 100 },        "Vine matured under your watch");
             Add(Feats.VineberriesHarvested,  "The Vine's Gift",           FeatCategory.VinePath,  FeatShape.TieredCounter,    new[] { 50, 250, 1000 },     "Vineberry picked");
             Add(Feats.VinerySkillLevel,      "The Vine Grows Familiar",   FeatCategory.VinePath,  FeatShape.TieredCounter,    new[] { 25, 50, 75, 100 },   "Vinery skill milestone");
@@ -101,13 +106,19 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             Add(Feats.RunestonesRead,        "Stones That Speak",         FeatCategory.Pilgrimages, FeatShape.CompletionistSet, new[] { 1, 15, 34 },        "Distinct runestone read");
             Add(Feats.RocksInDistantLands,   "The Far Placing",           FeatCategory.Pilgrimages, FeatShape.CompletionistSet, new[] { 1, 5, 9 },          "Mysterious Rock placed in distinct biome");
             Add(Feats.TradersVisited,        "Strangers Met",             FeatCategory.Pilgrimages, FeatShape.CompletionistSet, new[] { 1, 2, 3 },          "Distinct trader interacted");
-            Add(Feats.SeaDistanceSailed,     "The Salt Path",             FeatCategory.Pilgrimages, FeatShape.TieredCounter,    new[] { 1000, 10000, 100000 }, "Cumulative distance sailed (m)");
+            Add(Feats.SeaDistanceSailed,     "The Salt Path",             FeatCategory.Pilgrimages, FeatShape.TieredCounter,    new[] { 1000, 10000, 100000 }, "Cumulative distance sailed (m)",          DisplayFormat.Distance);
+            Add(Feats.DistanceWalked,        "The Trodden Path",          FeatCategory.Pilgrimages, FeatShape.TieredCounter,    new[] { 1000, 25000, 150000 }, "Cumulative distance walked on foot (m)", DisplayFormat.Distance);
+            Add(Feats.DistanceRidden,        "Borne by Beasts",           FeatCategory.Pilgrimages, FeatShape.TieredCounter,    new[] { 500, 5000, 25000 },    "Cumulative distance ridden on a mount",  DisplayFormat.Distance);
+            Add(Feats.SwimDistance,          "The Long Swim",             FeatCategory.Pilgrimages, FeatShape.TieredCounter,    new[] { 500, 5000, 25000 },    "Cumulative distance swum (m)",           DisplayFormat.Distance);
+            Add(Feats.HighestAltitude,       "Nearer the Sky",            FeatCategory.Pilgrimages, FeatShape.TieredCounter,    new[] { 50, 120, 200 },        "Highest ground reached (m above the sea)", DisplayFormat.Distance);
 
             // ── Trials ─────────────────────────────────────────────────
             // stone_only_creatures_felled "all" threshold is a placeholder of 50; TODO: revise once curated creature list is finalized.
             Add(Feats.StoneOnlyCreaturesFelled, "Stone, And Stone Alone",    FeatCategory.Trials, FeatShape.CompletionistSet, new[] { 1, 10, 50 },       "Distinct creature killed stone-only");
             Add(Feats.KinOnlyGolemKills,        "Brother Felled by Brother", FeatCategory.Trials, FeatShape.TieredCounter,    new[] { 1, 5, 20 },        "Stone Golem killed using only kin damage — stone or bare-fist (boon)");
             Add(Feats.PerfectSkips,             "The Full Travelling",       FeatCategory.Trials, FeatShape.TieredCounter,    new[] { 1, 10, 50 },       "Max-bounce skip on single throw");
+            Add(Feats.PeakReached,              "Nothing Stood Higher",      FeatCategory.Trials, FeatShape.TieredCounter,    new[] { 1 },               "Stood atop the world's highest peak");
+            Add(Feats.WatcherAtPeak,            "It Rests Easy",             FeatCategory.Trials, FeatShape.TieredCounter,    new[] { 1 },               "Placed a Watcher atop the world's highest peak");
             Add(Feats.DrunkPilgrimBosses,       "The Pilgrim's Cup",         FeatCategory.Trials, FeatShape.CompletionistSet, new[] { 1, 4, 8 },         "Boss defeated continuously drunk");
             Add(Feats.OneShotKills,             "One Stone, One Death",      FeatCategory.Trials, FeatShape.TieredCounter,    new[] { 1, 25, 100 },      "Creature killed by single thrown stone");
             Add(Feats.BossesUnarmored,          "Bared to the Forsaken",     FeatCategory.Trials, FeatShape.CompletionistSet, new[] { 1, 4, 8 },         "Boss defeated with empty armor slots");

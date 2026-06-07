@@ -30,6 +30,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Skills
         // Rock-skipping XP and damage per successful water skip
         public const float SkipXPPerSkip     = 0.5f;
         public const float SkipDamagePerSkip = 1f;
+        // Max water skips a single thrown SmoothStone can make (the skip cap, set
+        // on the projectile's m_maxBounces). A "perfect skip" hits this count.
+        public const int   MaxSkips          = 5;
 
         // Pickable prefab names that grant small XP
         private static readonly HashSet<string> SmallXPPickables = new HashSet<string>

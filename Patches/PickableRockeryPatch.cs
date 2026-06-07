@@ -51,6 +51,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     if (FeatTracker.IsDrunk(player))
                         FeatTracker.RecordEvent(player, Feats.RocksCollectedDrunk);
 
+                    // Stones of Many Kinds — completionist set keyed by pickable
+                    // prefab, so each distinct rock type counts once.
+                    FeatTracker.AddDistinct(player, Feats.DistinctRockTypes, pickableName);
+
                     // The Watcher Found — picking up the Mysterious Rock, the
                     // beginning of the Stone Path. Unlocks its milestone lore.
                     if (RockerySkill.IsMysteriousRockPickable(pickableName))

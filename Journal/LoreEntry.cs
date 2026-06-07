@@ -22,19 +22,36 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         }
     }
 
+    // How a stage's text combines with the stages before it when the detail
+    // view renders all unlocked stages in order:
+    //   Replace — supersedes everything before it (clean slate). The default,
+    //             matching the original "show only the latest stage" model, so
+    //             existing entries keep their behavior with no edits.
+    //   Append  — accretes below the prior text (with a divider). Opt-in for
+    //             entries written to grow as a record; the journal literally
+    //             builds up. Existing multi-stage entries get opted in one at a
+    //             time as they're rewritten for accretion.
+    public enum LoreStageMode
+    {
+        Replace,
+        Append
+    }
+
     // ── LoreStage ────────────────────────────────────────────────────
-    // One revelation in an entry. The condition gates whether this
-    // stage unlocks; the text is shown in the journal detail view
-    // when this is the highest unlocked stage for the entry.
+    // One revelation in an entry. The condition gates whether this stage
+    // unlocks; Mode controls how its text combines with earlier unlocked
+    // stages in the detail view (see LoreStageMode). Defaults to Replace.
     public class LoreStage
     {
         public string        Text      { get; }
         public LoreCondition Condition { get; }
+        public LoreStageMode Mode      { get; }
 
-        public LoreStage(string text, LoreCondition condition)
+        public LoreStage(string text, LoreCondition condition, LoreStageMode mode = LoreStageMode.Replace)
         {
             Text      = text;
             Condition = condition;
+            Mode      = mode;
         }
     }
 

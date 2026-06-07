@@ -48,6 +48,64 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             return (RectTransform)go.transform;
         }
 
+        // ── Watermark ────────────────────────────────────────────────────
+        // Lazy-loads the Mysterious Rock motif (Assets/watermark.png, compiled
+        // in as an embedded resource — see the .csproj LogicalName) as a Sprite,
+        // cached after the first call. Drawn faintly behind the journal content
+        // as a wood-burn motif. Returns null (and logs) if it can't be loaded;
+        // _watermarkTried prevents re-attempting a failed load every Open.
+        private const string WatermarkResource = "TheSedimentaryPath.Assets.watermark.png";
+        private static Sprite _watermarkSprite;
+        private static bool   _watermarkTried;
+
+        public static Sprite GetWatermarkSprite()
+        {
+            if (_watermarkSprite != null || _watermarkTried) return _watermarkSprite;
+            _watermarkTried = true;
+
+            try
+            {
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                using (var stream = assembly.GetManifestResourceStream(WatermarkResource))
+                {
+                    if (stream == null)
+                    {
+                        Log.Error($"GetWatermarkSprite: embedded resource '{WatermarkResource}' not found. " +
+                                  $"Available: {string.Join(", ", assembly.GetManifestResourceNames())}");
+                        return null;
+                    }
+
+                    byte[] data;
+                    using (var ms = new System.IO.MemoryStream())
+                    {
+                        stream.CopyTo(ms);
+                        data = ms.ToArray();
+                    }
+
+                    var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+                    if (!tex.LoadImage(data))
+                    {
+                        Log.Error("GetWatermarkSprite: LoadImage failed to decode watermark.png");
+                        Object.Destroy(tex);
+                        return null;
+                    }
+
+                    _watermarkSprite = Sprite.Create(
+                        tex,
+                        new Rect(0, 0, tex.width, tex.height),
+                        new Vector2(0.5f, 0.5f),
+                        100f);
+                    Log.Debug($"GetWatermarkSprite: loaded watermark ({tex.width}x{tex.height})");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Log.Error($"GetWatermarkSprite: failed to load embedded watermark: {ex}");
+            }
+
+            return _watermarkSprite;
+        }
+
         public static TextMeshProUGUI AddText(
             RectTransform rt,
             string text,

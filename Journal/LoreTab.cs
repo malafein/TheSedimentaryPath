@@ -227,6 +227,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             ShowDetail(view.Entry, view.StageIdx);
         }
 
+        // Divider drawn between accreted (Append) stages — a thin centred rule.
+        private const string StageDivider = "\n\n<align=\"center\"><color=#9b8b6a>─── · ───</color></align>\n\n";
+
         private void ShowDetail(LoreEntry entry, int stageIdx)
         {
             if (entry == null || entry.Stages.Count == 0)
@@ -238,7 +241,24 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             // Clamp in case stored stage is somehow out of bounds.
             stageIdx = Mathf.Clamp(stageIdx, 0, entry.Stages.Count - 1);
             _detailTitle.text = entry.Title;
-            _detailBody.text  = entry.Stages[stageIdx].Text;
+            _detailBody.text  = BuildBody(entry, stageIdx);
+        }
+
+        // Build the visible body by walking every unlocked stage (0..stageIdx) in
+        // order: an Append stage accretes below the prior text with a divider; a
+        // Replace stage (the default) supersedes everything before it.
+        private static string BuildBody(LoreEntry entry, int stageIdx)
+        {
+            string body = "";
+            for (int i = 0; i <= stageIdx; i++)
+            {
+                LoreStage stage = entry.Stages[i];
+                if (body.Length == 0 || stage.Mode == LoreStageMode.Replace)
+                    body = stage.Text;
+                else
+                    body += StageDivider + stage.Text;
+            }
+            return body;
         }
     }
 }

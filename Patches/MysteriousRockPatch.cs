@@ -73,6 +73,12 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     Heightmap.Biome biome = Heightmap.FindBiome(placedInstance.transform.position);
                     if (biome != Heightmap.Biome.None)
                         FeatTracker.AddDistinct(__instance, Feats.RocksInDistantLands, ((int)biome).ToString());
+
+                    // It Rests Easy — placing a Watcher atop the world's highest
+                    // peak (same tight 4 m threshold as the pilgrimage).
+                    // RecordPersonalBest(..., 1) fires the feat + lore once.
+                    if (PeakArrival.IsAtPeak(placedInstance.transform.position))
+                        FeatTracker.RecordPersonalBest(__instance, Feats.WatcherAtPeak, 1);
                 }
                 else
                 {
@@ -144,7 +150,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
     [HarmonyPatch(typeof(Pet), nameof(Pet.Interact))]
     public static class PetMysteriousRockPatch
     {
-        public static void Postfix(Pet __instance, Humanoid user, bool hold, bool __result)
+        public static void Postfix(Pet __instance, Humanoid user, bool hold, bool alt, bool __result)
         {
             if (!__result || hold)
                 return;
@@ -155,6 +161,14 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             player.RaiseSkill(RockerySkill.SkillType, 0.25f);
             Log.Info("PetMysteriousRock: petted the rock, awarded 0.25 XP");
+
+            // Shrine pilgrimage hint: only the Mysterious Rock leans the view
+            // toward the world's highest peak (and unlocks the tease lore), and
+            // only on the regular pet interaction — NOT the alt interaction
+            // (Shift+E), which removes items attached to the rock. Sweeping the
+            // camera on Shift+E pointed the crosshair away and broke removal.
+            if (!alt && Utils.GetPrefabName(__instance.gameObject) == RockShrine.RockPrefabName)
+                PeakGuide.Offer(player, __instance.transform.position);
         }
     }
 

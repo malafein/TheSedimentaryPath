@@ -411,9 +411,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             if (def.Thresholds.Length == 0)
             {
                 info.HasBar = false;
-                info.Number = def.Display == DisplayFormat.GameTime
-                    ? FormatGameDuration(value)
-                    : value.ToString();
+                info.Number = FormatValue(def, value);
                 info.Tier = "";
                 return info;
             }
@@ -433,18 +431,37 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             {
                 // Every tier cleared.
                 info.Fill   = 1f;
-                info.Number = value.ToString();
+                info.Number = FormatValue(def, value);
                 info.Tier   = $"Tier {reached}/{max} · max";
             }
             else
             {
                 int segMin = reached > 0 ? def.Thresholds[reached - 1] : 0;
                 info.Fill   = Mathf.Clamp01((float)(value - segMin) / (next - segMin));
-                info.Number = $"{value} / {next}";
+                info.Number = $"{FormatValue(def, value)} / {FormatValue(def, next)}";
                 info.Tier   = $"Tier {reached}/{max}";
             }
 
             return info;
+        }
+
+        // Format a feat value per its DisplayFormat.
+        private static string FormatValue(FeatDef def, int value)
+        {
+            switch (def.Display)
+            {
+                case DisplayFormat.GameTime: return FormatGameDuration(value);
+                case DisplayFormat.Distance: return FormatDistance(value);
+                default:                     return value.ToString();
+            }
+        }
+
+        // Whole meters → "850 m" / "1.2 km".
+        private static string FormatDistance(int meters)
+        {
+            if (meters >= 1000)
+                return $"{meters / 1000f:0.#} km";
+            return $"{meters} m";
         }
 
         // Render real-seconds as humanized in-game time. Valheim runs

@@ -30,6 +30,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public const string FirstVineMatured     = "first_vine_matured";
         public const string VineryApprentice     = "vinery_apprentice";
 
+        // The peak pilgrimage — a two-stage entry. The hint stage unlocks when
+        // the player pets a Watcher and it leans them toward the world summit
+        // (PetMysteriousRockPatch sets PeakHintFlag); the arrival stage unlocks
+        // when they actually stand atop it (PeakReached feat).
+        public const string PeakPilgrimage       = "peak_pilgrimage";
+        public const string PeakHintFlag         = "peak_hint";
+
         // Flag IDs consumed by FirstTimeFlag conditions live in a
         // different customData list than entry IDs (TSP_journal_flags
         // vs TSP_journal_lore_unlocked), so reusing the entry-id string
@@ -117,6 +124,25 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 new LoreStage(
                     text: "Where the green things gather close, the body now feels them before the eye can find them.",
                     condition: new SkillLevel(VinerySkill.SkillType, 25)
+                )
+            ));
+
+            LoreRegistry.Register(new LoreEntry(
+                id: PeakPilgrimage,
+                title: "The Throat of the World",
+                new LoreStage(
+                    text: "When the hand rests on the Watcher, the weight shifts — straining toward the high places, where the land reaches nearest the sky. It would be carried there.",
+                    condition: new FirstTimeFlag(PeakHintFlag)
+                ),
+                new LoreStage(
+                    text: "You climbed until the land gave out beneath the sky, and nothing stood higher — only thin cold air, and the long fall of the world below you.",
+                    condition: new FeatThreshold(Feats.PeakReached, 1),
+                    mode: LoreStageMode.Append
+                ),
+                new LoreStage(
+                    text: "And when at last a Watcher was set upon that highest stone, the weight left your hands. It rests easy now, at the Throat of the World, and keeps its watch over all that lies below.",
+                    condition: new FeatThreshold(Feats.WatcherAtPeak, 1),
+                    mode: LoreStageMode.Append
                 )
             ));
 

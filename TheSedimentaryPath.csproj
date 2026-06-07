@@ -3,13 +3,23 @@
     <TargetFramework>net462</TargetFramework>
     <AssemblyName>TheSedimentaryPath</AssemblyName>
     <Description>The Rock provides. The Rock abides. A mod for Totally Normal Rock Enthusiasts</Description>
-    <Version>0.2.1</Version>
+    <Version>0.2.2</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>
       https://nuget.bepinex.dev/v3/index.json
     </RestoreAdditionalProjectSources>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Journal watermark art, baked into the DLL so the mod stays self-contained.
+         Explicit LogicalName pins the manifest resource name (independent of
+         RootNamespace defaulting and the ILRepack merge) — must match the loader
+         string in JournalUIHelpers.GetWatermarkSprite. -->
+    <EmbeddedResource Include="Assets\watermark.png">
+      <LogicalName>TheSedimentaryPath.Assets.watermark.png</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="BepInEx.Analyzers" Version="1.0.8" PrivateAssets="all" />

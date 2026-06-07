@@ -27,7 +27,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             skip.Owner = owner;
 
             __instance.m_canHitWater = true;
-            __instance.m_maxBounces  = 3;
+            __instance.m_maxBounces  = RockerySkill.MaxSkips;
 
             PopulateWaterEffects(__instance);
         }

@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.2
+- the long road is counted now and the heights upon it
+
 ## 0.2.1
 - the tally is set right where it strayed
 - a stone among stones is found to be watching

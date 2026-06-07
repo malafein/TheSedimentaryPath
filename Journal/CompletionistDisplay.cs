@@ -40,6 +40,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 case Feats.TradersVisited:
                     return Localize(entryId);
 
+                case Feats.DistinctRockTypes:
+                    return PickableItemName(entryId);
+
                 default:
                     // runestones_read (position-hashed text), brews_variety
                     // (deferred) — nothing nameable to show.
@@ -57,6 +60,19 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             if (!string.IsNullOrEmpty(token))
                 return Localize(token);
             return Prettify(prefab);
+        }
+
+        // Pickable prefab name → the localized name of the item it yields
+        // (e.g. "Pickable_Flint" → "Flint"), falling back to a prettified prefab.
+        private static string PickableItemName(string pickablePrefab)
+        {
+            GameObject go = ZNetScene.instance?.GetPrefab(pickablePrefab);
+            Pickable p = go != null ? go.GetComponent<Pickable>() : null;
+            ItemDrop drop = p?.m_itemPrefab != null ? p.m_itemPrefab.GetComponent<ItemDrop>() : null;
+            string token = drop?.m_itemData?.m_shared?.m_name;
+            if (!string.IsNullOrEmpty(token))
+                return Localize(token);
+            return Prettify(pickablePrefab.Replace("Pickable_", ""));
         }
 
         private static string Localize(string token)

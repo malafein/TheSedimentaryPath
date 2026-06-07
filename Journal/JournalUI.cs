@@ -57,6 +57,23 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         private const float TabBarHeight  = 50f;
         private const float ContentMargin = 20f;
 
+        // Watermark: a faint Mysterious Rock motif behind the content. Square art
+        // parented to the content area (so it centers in the reading region, not the
+        // whole panel) and nudged right toward the detail pane. Drawn above the
+        // content backing so the backing doesn't smother it.
+        //
+        // The art is white linework on transparent; the tint + alpha here are the
+        // two readability levers (no re-bake needed to adjust). Dark warm tint to
+        // echo the vanilla Compendium's Odin watermark (a dark figure burned into
+        // the wood). Note: a dark figure has low contrast on the dark journal
+        // backdrop — that's why alpha leans high here. Tune in-game.
+        private const float WatermarkSize    = 440f;
+        private const float WatermarkAlpha   = 0.6f;
+        private static readonly Color WatermarkTint = new Color(0.051f, 0.043f, 0.035f); // #0d0b09 (near-black, faint warm)
+        // Bias toward the detail pane (right ~⅔ of the content area), so the motif
+        // sits behind the reading copy rather than the list. ~17% of content width.
+        private const float WatermarkOffsetX = 120f;
+
         // ── Build ────────────────────────────────────────────────────────
 
         // Builds the panel hierarchy as a child of `parent` and returns
@@ -154,9 +171,34 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             // Darkened backing behind the text region (like the Compendium's
             // inset panels) so orange/white copy reads clearly over the busy
             // wood texture. Decorative only — let drags pass to the scroll list.
+            // The watermark renders above this backing (added below), so raising
+            // this alpha darkens the wood without dimming the motif.
             var contentBg = contentAreaRt.gameObject.AddComponent<Image>();
-            contentBg.color         = new Color(0f, 0f, 0f, 0.4f);
+            contentBg.color         = new Color(0f, 0f, 0f, 0.3f);
             contentBg.raycastTarget = false;
+
+            // Faint Mysterious Rock motif behind the content. Parented to the content
+            // area (centers in the reading region, not the whole panel) and nudged
+            // right toward the detail pane. First child here, so it renders above the
+            // dark backing but below the tab content/text added in the loop below.
+            // raycastTarget off so it never intercepts clicks/drags; preserveAspect
+            // since the art is square and the content area is not.
+            var watermark = JournalUIHelpers.GetWatermarkSprite();
+            if (watermark != null)
+            {
+                var wmRt = JournalUIHelpers.MakeChildRect(contentAreaRt, "TSP_Watermark");
+                wmRt.anchorMin        = new Vector2(0.5f, 0.5f);
+                wmRt.anchorMax        = new Vector2(0.5f, 0.5f);
+                wmRt.pivot            = new Vector2(0.5f, 0.5f);
+                wmRt.sizeDelta        = new Vector2(WatermarkSize, WatermarkSize);
+                wmRt.anchoredPosition = new Vector2(WatermarkOffsetX, 0f);
+
+                var wmImg = wmRt.gameObject.AddComponent<Image>();
+                wmImg.sprite         = watermark;
+                wmImg.preserveAspect = true;
+                wmImg.raycastTarget  = false;
+                wmImg.color          = new Color(WatermarkTint.r, WatermarkTint.g, WatermarkTint.b, WatermarkAlpha);
+            }
 
             // Each tab builds its content under the shared content area.
             foreach (var tab in _tabs)

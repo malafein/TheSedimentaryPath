@@ -13,6 +13,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public const string RockerySkillLevel      = "rockery_skill_level";
         public const string MysteriousRockFound    = "mysterious_rock_found";
         public const string MysteriousRocksPlaced  = "mysterious_rocks_placed";
+        public const string DistinctRockTypes      = "distinct_rock_types";
 
         // ── The Vine Path ──────────────────────────────────────────────
         public const string VineWatchSeconds       = "vine_watch_seconds";
@@ -42,6 +43,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public const string RocksInDistantLands    = "rocks_in_distant_lands";
         public const string TradersVisited         = "traders_visited";
         public const string SeaDistanceSailed      = "sea_distance_sailed";
+        public const string DistanceWalked         = "distance_walked";
+        public const string DistanceRidden         = "distance_ridden";
+        public const string SwimDistance           = "swim_distance";
+        public const string HighestAltitude        = "highest_altitude";
 
         // ── Trials ─────────────────────────────────────────────────────
         public const string StoneOnlyCreaturesFelled = "stone_only_creatures_felled";
@@ -52,5 +57,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public const string BossesUnarmored          = "bosses_unarmored";
         public const string BossesStoneOnly          = "bosses_stone_only";
         public const string GolemUnarmedSurvived     = "golem_unarmed_survived";
+        public const string PeakReached              = "peak_reached";
+        public const string WatcherAtPeak            = "watcher_at_peak";
     }
 }
