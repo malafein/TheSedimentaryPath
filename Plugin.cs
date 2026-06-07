@@ -13,7 +13,7 @@ namespace malafein.Valheim.TheSedimentaryPath
     {
         public const string ModGUID = "com.malafein.thesedimentarypath";
         public const string ModName = "The Sedimentary Path";
-        public const string ModVersion = "0.2.2";
+        public const string ModVersion = "0.2.3";
 
         public static GameObject HeftyStonePrefab;
         public static GameObject SmoothStonePrefab;

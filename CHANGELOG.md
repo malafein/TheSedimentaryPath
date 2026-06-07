@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3
+- the heights pay no heed to the hollow deeps below
+- the watchers are numbered true, though a stone be unset and set anew
+
 ## 0.2.2
 - the long road is counted now and the heights upon it
 

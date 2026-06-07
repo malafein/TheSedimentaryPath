@@ -116,6 +116,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             // Gate on grounded so jumps, falls and launches don't count.
             if (!player.IsOnGround()) return;
 
+            // Dungeons/instanced interiors are generated far above the world
+            // (Character.InInterior() == position.y > 3000f), so their y would
+            // otherwise bank an absurd high-water-mark. Ignore altitude there.
+            if (player.InInterior()) return;
+
             float seaLevel = ZoneSystem.instance != null ? ZoneSystem.instance.m_waterLevel : 30f;
             int altitude = (int)(cur.y - seaLevel);
 

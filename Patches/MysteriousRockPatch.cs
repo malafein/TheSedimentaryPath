@@ -102,46 +102,52 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
     // Mysterious Rock they originally placed (matched by ZDO placer-ID stamp).
     // Natural destruction (troll, decay) doesn't go through RemovePiece, so
     // those don't decrement the counter.
+    //
+    // The placer-ID check must run in the prefix, while the rock is still
+    // alive: the Mysterious Rock is a Character, so Player.RemovePiece removes
+    // it via Character.Damage(1e10) rather than ZNetScene.Destroy. By the time
+    // the postfix runs the rock's ZNetView is already invalid, so a postfix ZDO
+    // read would find nothing and the decrement would silently no-op (the bug
+    // that let place → deconstruct → place inflate the net count).
     [HarmonyPatch(typeof(Player), "RemovePiece")]
     public static class RemoveMysteriousRockPatch
     {
         private static readonly AccessTools.FieldRef<Player, int> RemoveRayMaskRef =
             AccessTools.FieldRefAccess<Player, int>("m_removeRayMask");
 
-        public static void Prefix(Player __instance, out Piece __state)
+        // __state == true means the raycast targeted a Mysterious Rock this
+        // player placed; the postfix decrements only once removal succeeds.
+        public static void Prefix(Player __instance, out bool __state)
         {
-            __state = null;
+            __state = false;
+            if (__instance != Player.m_localPlayer) return;
             if (GameCamera.instance == null || __instance.m_eye == null) return;
 
             int removeMask = RemoveRayMaskRef(__instance);
 
-            if (Physics.Raycast(GameCamera.instance.transform.position,
-                                GameCamera.instance.transform.forward,
-                                out RaycastHit hitInfo,
-                                50f,
-                                removeMask)
-                && Vector3.Distance(hitInfo.point, __instance.m_eye.position) < __instance.m_maxPlaceDistance)
-            {
-                Piece piece = hitInfo.collider.GetComponentInParent<Piece>();
-                if (piece == null && hitInfo.collider.GetComponent<Heightmap>() != null)
-                    piece = TerrainModifier.FindClosestModifierPieceInRange(hitInfo.point, 2.5f);
+            if (!Physics.Raycast(GameCamera.instance.transform.position,
+                                 GameCamera.instance.transform.forward,
+                                 out RaycastHit hitInfo,
+                                 50f,
+                                 removeMask))
+                return;
+            if (Vector3.Distance(hitInfo.point, __instance.m_eye.position) >= __instance.m_maxPlaceDistance)
+                return;
 
-                __state = piece;
-            }
-        }
+            Piece piece = hitInfo.collider.GetComponentInParent<Piece>();
+            if (piece == null || Utils.GetPrefabName(piece.gameObject) != "Placeable_HardRock")
+                return;
 
-        public static void Postfix(Player __instance, bool __result, Piece __state)
-        {
-            if (!__result || __state == null) return;
-            if (Utils.GetPrefabName(__state.gameObject) != "Placeable_HardRock") return;
-            if (__instance != Player.m_localPlayer) return;
-
-            ZNetView nview = __state.GetComponent<ZNetView>();
+            ZNetView nview = piece.GetComponent<ZNetView>();
             if (nview == null || !nview.IsValid()) return;
 
             long placerId = nview.GetZDO().GetLong(PlaceMysteriousRockPatch.PlacerIdZdoKey, 0L);
-            if (placerId != __instance.GetPlayerID()) return;
+            __state = placerId == __instance.GetPlayerID();
+        }
 
+        public static void Postfix(Player __instance, bool __result, bool __state)
+        {
+            if (!__result || !__state) return;
             FeatTracker.RecordEvent(__instance, Feats.MysteriousRocksPlaced, -1);
         }
     }
