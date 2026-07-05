@@ -216,6 +216,72 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 Log.Debug("ObjectDB.Awake: Dökkblað already registered, skipping");
             }
 
+            // Vinery weapons (RootAtgeir + RootSpear) — split skill (native weapon
+            // skill × Vinery), mirroring the rockery obsidian weapons. Both share the
+            // vine on-hit effects, so build + register those first.
+            VineStatusEffects.Build(__instance);
+            AddStatusEffectIfMissing(__instance, VineStatusEffects.Snare);
+            AddStatusEffectIfMissing(__instance, VineStatusEffects.Root);
+            AddStatusEffectIfMissing(__instance, VineStatusEffects.Tether);
+
+            // Register Root Atgeir (Polearms × Vinery) — the AoE "field" weapon.
+            if (__instance.GetItemPrefab(TSPVineryWeapons.RootAtgeirPrefab) == null)
+            {
+                var rootAtgeir = new RootAtgeir();
+                GameObject prefab = rootAtgeir.CreatePrefab();
+                if (prefab != null)
+                {
+                    Plugin.RootAtgeirPrefab = prefab;
+                    RegisterItem(__instance, prefab);
+                    RegisterInZNetScene(prefab);
+
+                    Plugin.StanceWeapons[TSPVineryWeapons.RootAtgeirName]    = rootAtgeir;
+                    Plugin.SplitSkillWeapons[TSPVineryWeapons.RootAtgeirName] = VinerySkill.SkillType;
+                    AddRootAtgeirRecipe(__instance);
+                    Log.Debug("ObjectDB.Awake: Root Atgeir registered");
+                }
+                else
+                {
+                    Log.Error("ObjectDB.Awake: RootAtgeir.CreatePrefab returned null");
+                }
+            }
+            else
+            {
+                Log.Debug("ObjectDB.Awake: Root Atgeir already registered, skipping");
+            }
+
+            // Register Root Spear (Spears × Vinery) — the single-target "line" weapon.
+            if (__instance.GetItemPrefab(TSPVineryWeapons.RootSpearPrefab) == null)
+            {
+                var rootSpear = new RootSpear();
+                GameObject prefab = rootSpear.CreatePrefab();
+                if (prefab != null)
+                {
+                    Plugin.RootSpearPrefab = prefab;
+                    RegisterItem(__instance, prefab);
+                    RegisterInZNetScene(prefab);
+
+                    if (rootSpear.ProjectilePrefab != null)
+                    {
+                        Plugin.RootSpearProjectilePrefab = rootSpear.ProjectilePrefab;
+                        RegisterInZNetScene(rootSpear.ProjectilePrefab);
+                    }
+
+                    Plugin.StanceWeapons[TSPVineryWeapons.RootSpearName]    = rootSpear;
+                    Plugin.SplitSkillWeapons[TSPVineryWeapons.RootSpearName] = VinerySkill.SkillType;
+                    AddRootSpearRecipe(__instance);
+                    Log.Debug("ObjectDB.Awake: Root Spear registered");
+                }
+                else
+                {
+                    Log.Error("ObjectDB.Awake: RootSpear.CreatePrefab returned null");
+                }
+            }
+            else
+            {
+                Log.Debug("ObjectDB.Awake: Root Spear already registered, skipping");
+            }
+
             // Register Smooth Stone
             if (__instance.GetItemPrefab("SmoothStone") == null)
             {
@@ -254,6 +320,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             ItemDrop itemDrop = prefab != null ? prefab.GetComponent<ItemDrop>() : null;
             Sprite[] icons = itemDrop?.m_itemData?.m_shared?.m_icons;
             return (icons != null && icons.Length > 0) ? icons[0] : null;
+        }
+
+        // Adds a status effect to ObjectDB only if that exact instance isn't already
+        // present (the vinery effects are shared static instances reused across
+        // ObjectDB.Awake calls).
+        private static void AddStatusEffectIfMissing(ObjectDB db, StatusEffect se)
+        {
+            if (se == null || db.m_StatusEffects.Contains(se)) return;
+            db.m_StatusEffects.Add(se);
+            Log.Debug($"AddStatusEffectIfMissing: {se.name} registered");
         }
 
         private static void RegisterItem(ObjectDB db, GameObject prefab)
@@ -355,6 +431,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             translations["item_dokkblad_desc"]   = "The dark glass of the mountain, drawn long. It does not reflect. It only cuts.";
             translations["dokkblad_stance_a"]    = "Thrust stance";
             translations["dokkblad_stance_b"]    = "Leap stance";
+            translations["item_rootatgeir"]         = "The Furrowing";
+            translations["item_rootatgeir_desc"]    = "It turns the soil and what stands upon it. The earth takes hold, and holds.";
+            translations["rootatgeir_stance_sweep"]  = "Sweep stance";
+            translations["rootatgeir_stance_furrow"] = "Furrow stance";
+            translations["item_rootspear"]          = "Root-Strand Coil";
+            translations["item_rootspear_desc"]     = "The earth does not forget; it merely waits to pull you back.";
+            translations["rootspear_stance_cast"]    = "Cast stance";
+            translations["rootspear_stance_vault"]   = "Vault stance";
+            translations["se_vinesnare"]             = "Snared";
+            translations["se_vineroot"]              = "Rooted";
             translations["se_weaponstance"]       = "Weapon Stance";
             translations[$"skill_{RockerySkill.SkillId}"]             = "Rockery";
             translations[$"skill_{RockerySkill.SkillId}_description"]  = "Stone speaks to those who listen.";
@@ -526,6 +612,56 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             db.m_recipes.Add(recipe);
             Log.Debug("AddKaldmorkRecipe: registered");
+        }
+
+        private static void AddRootAtgeirRecipe(ObjectDB db)
+        {
+            AddVineWeaponRecipe(db, "Recipe_RootAtgeir", Plugin.RootAtgeirPrefab,
+                rootAmt: 12, oozeAmt: 6, leatherAmt: 6, seedAmt: 8, rootPerLevel: 6);
+        }
+
+        private static void AddRootSpearRecipe(ObjectDB db)
+        {
+            AddVineWeaponRecipe(db, "Recipe_RootSpear", Plugin.RootSpearPrefab,
+                rootAmt: 8, oozeAmt: 4, leatherAmt: 4, seedAmt: 5, rootPerLevel: 4);
+        }
+
+        // Shared Swamp-tier vine-weapon recipe (workbench). VineGreenSeeds (ivy seeds)
+        // is a placeholder for the planned ivy-vine material — swap that m_resItem when
+        // it exists.
+        private static void AddVineWeaponRecipe(ObjectDB db, string recipeName, GameObject itemPrefab,
+            int rootAmt, int oozeAmt, int leatherAmt, int seedAmt, int rootPerLevel)
+        {
+            GameObject root      = db.GetItemPrefab("Root");
+            GameObject ooze      = db.GetItemPrefab("Ooze");
+            GameObject leather   = db.GetItemPrefab("LeatherScraps");
+            GameObject ivySeeds  = db.GetItemPrefab("VineGreenSeeds");
+            GameObject workbench = ZNetScene.instance?.GetPrefab("piece_workbench");
+
+            if (root == null || ooze == null || leather == null || ivySeeds == null)
+            {
+                Log.Error($"{recipeName}: one or more ingredient prefabs not found " +
+                    $"(Root={root != null}, Ooze={ooze != null}, LeatherScraps={leather != null}, VineGreenSeeds={ivySeeds != null})");
+                return;
+            }
+
+            Recipe recipe = ScriptableObject.CreateInstance<Recipe>();
+            recipe.name              = recipeName;
+            recipe.m_item            = itemPrefab.GetComponent<ItemDrop>();
+            recipe.m_amount          = 1;
+            recipe.m_enabled         = true;
+            recipe.m_craftingStation = workbench?.GetComponent<CraftingStation>();
+            recipe.m_minStationLevel = 1;
+            recipe.m_resources = new Piece.Requirement[]
+            {
+                new Piece.Requirement { m_resItem = root.GetComponent<ItemDrop>(),     m_amount = rootAmt,    m_amountPerLevel = rootPerLevel, m_recover = true },
+                new Piece.Requirement { m_resItem = ooze.GetComponent<ItemDrop>(),     m_amount = oozeAmt,    m_amountPerLevel = 0, m_recover = true },
+                new Piece.Requirement { m_resItem = leather.GetComponent<ItemDrop>(),  m_amount = leatherAmt, m_amountPerLevel = 0, m_recover = true },
+                new Piece.Requirement { m_resItem = ivySeeds.GetComponent<ItemDrop>(), m_amount = seedAmt,    m_amountPerLevel = 0, m_recover = true },
+            };
+
+            db.m_recipes.Add(recipe);
+            Log.Debug($"{recipeName}: registered (VineGreenSeeds = ivy placeholder)");
         }
 
         private static void AddSmoothStoneRecipe(ObjectDB db)

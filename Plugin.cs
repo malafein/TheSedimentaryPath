@@ -13,7 +13,7 @@ namespace malafein.Valheim.TheSedimentaryPath
     {
         public const string ModGUID = "com.malafein.thesedimentarypath";
         public const string ModName = "The Sedimentary Path";
-        public const string ModVersion = "0.2.3";
+        public const string ModVersion = "0.3.0";
 
         public static GameObject HeftyStonePrefab;
         public static GameObject SmoothStonePrefab;
@@ -21,6 +21,9 @@ namespace malafein.Valheim.TheSedimentaryPath
         public static GameObject KaldmorkPrefab;
         public static GameObject KaldmorkProjectilePrefab;
         public static GameObject DokkbladPrefab;
+        public static GameObject RootAtgeirPrefab;
+        public static GameObject RootSpearPrefab;
+        public static GameObject RootSpearProjectilePrefab;
         public static GameObject BlackstoneBrewBasePrefab;
 
         // Keyed by $item_* name. Any weapon implementing IStanceWeapon registers here

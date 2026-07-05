@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0
+- two shapes rise from the root: one furrows the field, one reaches down the line
+- the earth pulls back, and sometimes pulls you in
+
 ## 0.2.3
 - the heights pay no heed to the hollow deeps below
 - the watchers are numbered true, though a stone be unset and set anew
