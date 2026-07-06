@@ -66,6 +66,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Skills
             return itemName == "$item_vineberryjuicebase";
         }
 
+        // True for TSP vine-family weapons only (excludes the juice base).
+        // Used by feat tracking and kill-attribution checks.
+        public static bool IsVineryWeapon(string itemName)
+            => malafein.Valheim.TheSedimentaryPath.Items.TSPVineryWeapons.MatchesItemName(itemName);
+
         public static bool IsVineryWatchable(Pickable pickable) =>
             pickable != null && pickable.m_pickRaiseSkill == ValheimSkills.SkillType.Farming;
 

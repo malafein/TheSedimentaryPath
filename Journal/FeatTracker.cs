@@ -80,9 +80,12 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             // ── The Vine Path ──────────────────────────────────────────
             Add(Feats.VineWatchSeconds,      "The Verdant Vigil",         FeatCategory.VinePath,  FeatShape.UntieredRecord,   new int[0],                  "Time spent watching vines",              DisplayFormat.GameTime);
             Add(Feats.VinesGrown,            "Patience in Bloom",         FeatCategory.VinePath,  FeatShape.TieredCounter,    new[] { 5, 25, 100 },        "Vine matured under your watch");
-            Add(Feats.VineberriesHarvested,  "The Vine's Gift",           FeatCategory.VinePath,  FeatShape.TieredCounter,    new[] { 50, 250, 1000 },     "Vineberry picked");
+            Add(Feats.VineberriesHarvested,  "The Vine's Gift",           FeatCategory.VinePath,  FeatShape.TieredCounter,    new[] { 50, 250, 1000 },     "Vine-borne pickable harvested (vineberry or bindsinew)");
             Add(Feats.VinerySkillLevel,      "The Vine Grows Familiar",   FeatCategory.VinePath,  FeatShape.TieredCounter,    new[] { 25, 50, 75, 100 },   "Vinery skill milestone");
             Add(Feats.VinesPlanted,          "The Sowing",                FeatCategory.VinePath,  FeatShape.TieredCounter,    new[] { 10, 50, 200 },       "Vine seed planted (ivy or vineberry)");
+            // Bump thresholds if a third vinery weapon lands.
+            Add(Feats.VineWeaponsCrafted,    "The Twining",               FeatCategory.VinePath,  FeatShape.CompletionistSet, new[] { 1, 2 },              "Distinct TSP vinery weapon crafted");
+            Add(Feats.VineWeaponKills,       "Held Fast",                 FeatCategory.VinePath,  FeatShape.TieredCounter,    new[] { 50, 250, 2500 },     "Creature killed by TSP Vinery weapon");
 
             // ── The Ferment ────────────────────────────────────────────
             Add(Feats.BrewsConsumed,         "The Iron Gut of the Earth", FeatCategory.Ferment,   FeatShape.TieredCounter,    new[] { 5, 50, 500 },        "TSP brew consumed");

@@ -21,6 +21,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public const string VineberriesHarvested   = "vineberries_harvested";
         public const string VinerySkillLevel       = "vinery_skill_level";
         public const string VinesPlanted           = "vines_planted";
+        public const string VineWeaponsCrafted     = "vine_weapons_crafted";
+        public const string VineWeaponKills        = "vine_weapon_kills";
 
         // ── The Ferment ────────────────────────────────────────────────
         public const string BrewsConsumed          = "brews_consumed";

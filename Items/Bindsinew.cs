@@ -3,7 +3,7 @@ using UnityEngine;
 namespace malafein.Valheim.TheSedimentaryPath.Items
 {
     // Bindsinew — the Vinery cult's cultivated vine fiber, and the signature
-    // ingredient of both vinery weapons (The Furrowing, Root-Strand Coil). It is
+    // ingredient of both vinery weapons (The Furrowing Share, Root-Strand Coil). It is
     // harvested from TENDED green vines (ones grown from a planted seed); see the
     // green-vine repurpose / BindsinewVine for how it drops. "Living, grasping
     // cordage" — the source of the weapons' snare/root/reel identity.

@@ -45,6 +45,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             if (RockerySkill.IsRockeryWeapon(itemName))
                 FeatTracker.RecordEvent(player, Feats.StoneWeaponsCrafted, amount);
 
+            // Journal: The Twining — distinct TSP vinery weapon crafted (not the juice base).
+            if (VinerySkill.IsVineryWeapon(itemName))
+                FeatTracker.AddDistinct(player, Feats.VineWeaponsCrafted, itemName);
+
             ValheimSkills.SkillType craftSkill;
             float craftXP;
 

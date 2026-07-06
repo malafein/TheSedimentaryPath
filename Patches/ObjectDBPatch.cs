@@ -158,6 +158,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             // shared instance via Humanoid.GetCurrentWeapon postfix.
             KinFist.Build();
 
+            // Marker SE for rockery kill attribution — must exist before the obsidian
+            // weapons register (their SharedData points at it; see StoneStatusEffects).
+            StoneStatusEffects.Build();
+            AddStatusEffectIfMissing(__instance, StoneStatusEffects.Mark);
+
             // Register Kaldmörk (obsidian frost dagger)
             if (__instance.GetItemPrefab("Kaldmork") == null)
             {
@@ -456,10 +461,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             translations["item_dokkblad_desc"]   = "The dark glass of the mountain, drawn long. It does not reflect. It only cuts.";
             translations["dokkblad_stance_a"]    = "Thrust stance";
             translations["dokkblad_stance_b"]    = "Leap stance";
-            translations["item_rootatgeir"]         = "The Furrowing";
+            translations["item_rootatgeir"]         = "The Furrowing Share";
             translations["item_rootatgeir_desc"]    = "It turns the soil and what stands upon it. The earth takes hold, and holds.";
-            translations["rootatgeir_stance_sweep"]  = "Sweep stance";
-            translations["rootatgeir_stance_furrow"] = "Furrow stance";
+            translations["rootatgeir_stance_reap"]   = "Reap stance";
+            translations["rootatgeir_stance_harrow"] = "Harrow stance";
+            translations["rootatgeir_stance_tend"]   = "Tend stance";
             translations["item_rootspear"]          = "Root-Strand Coil";
             translations["item_rootspear_desc"]     = "The earth does not forget; it merely waits to pull you back.";
             translations["rootspear_stance_cast"]    = "Cast stance";

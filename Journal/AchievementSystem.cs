@@ -44,6 +44,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public static readonly int ZdoNonstoneDmgHash  = "TSP_nonstone_dmg".GetStableHashCode();
         public static readonly int ZdoNonKinDmgHash    = "TSP_non_kin_dmg".GetStableHashCode();
         public static readonly int ZdoFightStartedHash = "TSP_fight_started".GetStableHashCode();
+        // Last DIRECT player hit — recovers killer/weapon attribution for DoT
+        // deaths. SE_Poison/SE_Burning ticks call ApplyDamage with a fresh
+        // attacker-less HitData, so m_lastHit on a DoT death identifies neither
+        // the killer nor the weapon; the ticks bypass RPC_Damage, so these
+        // stamps are never overwritten by the DoT itself.
+        public static readonly int ZdoLastHitPlayerHash = "TSP_last_hit_player".GetStableHashCode();
+        public static readonly int ZdoLastHitVineHash   = "TSP_last_hit_vine".GetStableHashCode();
 
         // Belt-and-suspenders for melee: HitData.Serialize truncates m_skill
         // to a short, so custom-skill hashes get squeezed to 16 bits on the
@@ -152,16 +159,28 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             => skill == RockerySkill.SkillType
             || skill == RockerySkillShort;
 
+        // Kaldmörk/Dökkblað on-hit marker (see StoneStatusEffects) — the only
+        // signal a thrown-Kaldmörk hit carries: its HitData skill is the native
+        // Knives (obsidian weapons are split-skill) and the dagger is consumed
+        // at throw time, blinding the right-hand check below.
+        private static readonly int StoneMarkHash =
+            StatusEffects.StoneStatusEffects.MarkEffectName.GetStableHashCode();
+
         // True if the killing-blow weapon is a TSP Rockery-family weapon.
-        // Two signals:
-        //   - Truncated skill match (catches all four weapons including thrown
-        //     SmoothStone where the item is consumed before the hit lands)
+        // Three signals:
+        //   - Truncated skill match (catches Hefty/Smooth Stone — the pure-
+        //     Rockery weapons — including thrown stones where the item is
+        //     consumed before the hit lands; the obsidian pair carries the
+        //     native Knives/Swords skill, so this never matches them)
+        //   - Marker status-effect hash (catches all obsidian hits, incl.
+        //     the thrown dagger)
         //   - Attacker's right-hand item hash matches a TSP weapon (catches
         //     all melee paths with no collision risk)
         public static bool IsTSPRockeryWeaponHit(HitData hit)
         {
             if (hit == null) return false;
             if (SkillMatchesRockery(hit.m_skill)) return true;
+            if (hit.m_statusEffectHash != 0 && hit.m_statusEffectHash == StoneMarkHash) return true;
 
             GameObject attackerGo = ZNetScene.instance?.FindInstance(hit.m_attacker);
             if (attackerGo == null) return false;
@@ -177,6 +196,45 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         // secondary). Obsidian leap-stance isn't a projectile, so excluded.
         public static bool IsThrownTSPStone(HitData hit)
             => hit != null && hit.m_ranged && SkillMatchesRockery(hit.m_skill);
+
+        // The vinery weapons' on-hit status effect name hashes. Every hit of
+        // both weapons routes one of these at 100% chance (see
+        // HumanoidStartAttackPatch), so the hash riding the HitData is a
+        // reliable TSP signal — including the thrown Root-Strand Coil, where
+        // the spear is consumed before the hit lands and the right-hand check
+        // below can't see it.
+        private static readonly int VineSnareHash =
+            StatusEffects.VineStatusEffects.SnareEffectName.GetStableHashCode();
+        private static readonly int VineRootHash =
+            StatusEffects.VineStatusEffects.RootEffectName.GetStableHashCode();
+        private static readonly int VineTetherHash =
+            StatusEffects.VineStatusEffects.TetherEffectName.GetStableHashCode();
+
+        // True if the killing-blow weapon is a TSP Vinery-family weapon.
+        // Unlike the rockery weapons these keep their NATIVE skill on the hit
+        // (Polearms/Spears — split-skill only blends factors), so the skill
+        // field carries no TSP signal. Two signals instead:
+        //   - Vine status-effect hash on the HitData (all hits, incl. thrown)
+        //   - Attacker's right-hand item hash matches a TSP vinery weapon
+        public static bool IsTSPVineryWeaponHit(HitData hit)
+        {
+            if (hit == null) return false;
+            int seHash = hit.m_statusEffectHash;
+            if (seHash != 0
+                && (seHash == VineSnareHash
+                    || seHash == VineRootHash
+                    || seHash == VineTetherHash))
+                return true;
+
+            GameObject attackerGo = ZNetScene.instance?.FindInstance(hit.m_attacker);
+            if (attackerGo == null) return false;
+            ZNetView attackerNv = attackerGo.GetComponent<ZNetView>();
+            if (attackerNv == null) return false;
+            ZDO zdo = attackerNv.GetZDO();
+            if (zdo == null) return false;
+            int rightHash = zdo.GetInt(ZDOVars.s_rightItem, 0);
+            return Items.TSPVineryWeapons.MatchesHash(rightHash);
+        }
 
         // Bare-fist hit: the attacker had nothing equipped in the right hand
         // (no item in m_rightItem → ZDOVars.s_rightItem == 0) AND the hit
@@ -239,6 +297,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             // damage event count → for one_shot_kills check at death
             int newCount = zdo.GetInt(ZdoDmgCountHash, 0) + 1;
             zdo.Set(ZdoDmgCountHash, newCount);
+
+            // last direct player hit → DoT-death attribution (see hash comments)
+            if (hit.GetAttacker() is Player attackerPlayer)
+                zdo.Set(ZdoLastHitPlayerHash, attackerPlayer.GetPlayerID());
+            zdo.Set(ZdoLastHitVineHash, IsTSPVineryWeaponHit(hit) ? 1 : 0);
 
             // non-stone / non-kin damage flags → each set once, never cleared
             bool isStone = IsTSPRockeryWeaponHit(hit);
@@ -304,6 +367,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                                         long   attackerPlayerId,
                                         bool   wasThrownTSPStone,
                                         bool   wasTSPRockeryWeapon,
+                                        bool   wasTSPVineryWeapon,
                                         int    preDeathDamageCount,
                                         bool   nonstoneDamage,
                                         bool   nonKinDamage)
@@ -324,6 +388,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             {
                 if (wasTSPRockeryWeapon)
                     FeatTracker.RecordEvent(local, Feats.StoneKills);
+
+                if (wasTSPVineryWeapon)
+                    FeatTracker.RecordEvent(local, Feats.VineWeaponKills);
 
                 if (FeatTracker.IsDrunk(local))
                     FeatTracker.RecordEvent(local, Feats.EnemiesKilledDrunk);

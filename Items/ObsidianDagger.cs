@@ -102,6 +102,12 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             shared.m_maxQuality         = 4;
             shared.m_maxStackSize       = 1;
 
+            // Invisible kill-attribution marker — rides HitData.m_statusEffectHash so
+            // thrown-dagger kills classify as rockery after the item is consumed.
+            // Weapon-wide, so Dökkblað (cloned from this prefab) inherits it too.
+            shared.m_attackStatusEffect       = StoneStatusEffects.Mark;
+            shared.m_attackStatusEffectChance = 1f;
+
             // Preserve the vanilla knife secondary as the leap/melee stance option.
             _meleeSecondary = shared.m_secondaryAttack;
 

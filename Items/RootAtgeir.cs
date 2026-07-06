@@ -15,11 +15,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
     // Cultivator third stance). Tinted green over the grafted mesh; stats are our own.
     //
     // Every hit lands poison (in m_damages) and a snare (movement slow). The atgeir
-    // gives Sweep for free (native thrust primary + native 360° spin secondary). The
-    // stance toggle only swaps the SECONDARY attack:
-    //   • Sweep  (default): native atgeir 360° spin       → snare (SE_VineSnare)
-    //   • Furrow (stance B): the two-handed SLEDGE'S PRIMARY (overhead smash), borrowed
-    //                        as the secondary               → root (SE_VineRoot)
+    // gives Reap for free (native thrust primary + native 360° spin secondary). The
+    // stance toggle cycles three farmer's verbs, each named for its motion:
+    //   • Reap   (default): native atgeir 360° spin — the wide scything cut
+    //             → snare (SE_VineSnare)
+    //   • Harrow (stance B): the two-handed SLEDGE'S PRIMARY (overhead smash),
+    //             borrowed as the secondary — breaking ground → root (SE_VineRoot)
+    //   • Tend   (stance C): a real farming tool — the Cultivator's own PieceTable
+    //             goes on the shared data, so vanilla place mode takes over
+    //             (till/plant, build HUD, ghost). No attacks while tending;
+    //             InPlaceMode() consumes the attack input by design.
     //
     // We borrow the sledge's PRIMARY (m_attack) — that's where sledges keep their big
     // overhead swing (their secondary slot isn't it). No m_animationState swap: like
@@ -30,12 +35,20 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
     // effect is routed by HumanoidStartAttackPatch → PrepareAttackEffect.
     public class RootAtgeir : IStanceWeapon
     {
-        public bool IsSweepStance  { get; private set; } = true;
-        public bool IsFurrowStance => !IsSweepStance;
+        public enum Stance { Reap, Harrow, Tend }
+
+        public Stance CurrentStance { get; private set; } = Stance.Reap;
+        public bool IsHarrowStance => CurrentStance == Stance.Harrow;
 
         private ItemDrop.ItemData.SharedData _shared;
-        private Attack _sweepAttack;  // Sweep: native atgeir spin (AoE)
-        private Attack _smashAttack;  // Furrow: sledge PRIMARY overhead smash (AoE)
+        private Attack _reapAttack;   // Reap: native atgeir spin (AoE)
+        private Attack _smashAttack;  // Harrow: sledge PRIMARY overhead smash (AoE)
+        private PieceTable _cultivatorPieces; // Tend: the Cultivator's own table
+
+        // Player.SetPlaceMode is protected; it both stores the table and refreshes
+        // the available-pieces list, so it's the one entry point worth calling.
+        private static readonly System.Reflection.MethodInfo SetPlaceModeMethod =
+            HarmonyLib.AccessTools.Method(typeof(Player), "SetPlaceMode");
 
         // Green vine tint (set, not multiplied — keeps texture detail).
         private static readonly Color VineMaterialTint = new Color(0.18f, 0.42f, 0.12f, 1f);
@@ -102,38 +115,44 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             shared.m_maxQuality          = 4;
             shared.m_maxStackSize        = 1;
 
-            // Sweep = the native atgeir spin (the clone's own secondary). Furrow = the
+            // Reap = the native atgeir spin (the clone's own secondary). Harrow = the
             // two-handed sledge's PRIMARY overhead smash, borrowed as the secondary.
-            _sweepAttack = shared.m_secondaryAttack;
+            _reapAttack = shared.m_secondaryAttack;
             _smashAttack = ZNetScene.instance.GetPrefab("SledgeIron")
                 ?.GetComponent<ItemDrop>()?.m_itemData?.m_shared?.m_attack;
             if (_smashAttack == null)
             {
-                Log.Warn("RootAtgeir: SledgeIron primary not found — Furrow falls back to the sweep spin");
-                _smashAttack = _sweepAttack;
+                Log.Warn("RootAtgeir: SledgeIron primary not found — Harrow falls back to the reap spin");
+                _smashAttack = _reapAttack;
             }
             else
             {
-                // Clone so setting Furrow's stamina below doesn't mutate the shared
+                // Clone so setting Harrow's stamina below doesn't mutate the shared
                 // SledgeIron attack (which every iron sledge would otherwise inherit).
                 _smashAttack = _smashAttack.Clone();
             }
 
-            // Lighter than iron — Iron Atgeir costs 14/28; The Furrowing costs 12/24.
-            // Both secondary stances (sweep spin, furrow smash) share the 24 cost.
+            // Lighter than iron — Iron Atgeir costs 14/28; the Share costs 12/24.
+            // Both secondary stances (reap spin, harrow smash) share the 24 cost.
             if (shared.m_attack != null) shared.m_attack.m_attackStamina = 12f;
-            _sweepAttack.m_attackStamina = 24f;
+            _reapAttack.m_attackStamina = 24f;
             _smashAttack.m_attackStamina = 24f;
 
-            // Default to Sweep (the clone already carries the atgeir spin). Per-swing
+            // Default to Reap (the clone already carries the atgeir spin). Per-swing
             // routing sets the actual on-hit effect (see PrepareAttackEffect).
             shared.m_attackStatusEffect       = VineStatusEffects.Snare;
             shared.m_attackStatusEffectChance = 1f;
 
+            // Tend stance: adopt the Cultivator's own piece table (till/plant).
+            _cultivatorPieces = ZNetScene.instance?.GetPrefab("Cultivator")
+                ?.GetComponent<ItemDrop>()?.m_itemData?.m_shared?.m_buildPieces;
+            if (_cultivatorPieces == null)
+                Log.Warn("RootAtgeir: Cultivator piece table not found — Tend stance disabled");
+
             return prefab;
         }
 
-        // Gives The Furrowing the Cultivator's look by adopting the Cultivator's OWN
+        // Gives The Furrowing Share the Cultivator's look by adopting the Cultivator's OWN
         // "attach" node — both its grip transform and its visual children. The Cultivator
         // already knows how to sit in a hand, so this places the mesh with its authored
         // orientation instead of forcing its geometry into the atgeir's mesh pivot (which
@@ -184,38 +203,61 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
         }
 
         // Routes the per-swing on-hit effect (called from HumanoidStartAttackPatch):
-        // the primary always snares; only the Furrow-stance secondary roots.
+        // the primary always snares; only the Harrow-stance secondary roots.
         public void PrepareAttackEffect(ItemDrop.ItemData.SharedData shared, bool secondaryAttack)
         {
-            bool root = secondaryAttack && IsFurrowStance && VineStatusEffects.Root != null;
+            bool root = secondaryAttack && IsHarrowStance && VineStatusEffects.Root != null;
             shared.m_attackStatusEffect       = root ? (StatusEffect)VineStatusEffects.Root : VineStatusEffects.Snare;
             shared.m_attackStatusEffectChance = 1f;
         }
 
         public void ToggleStance()
         {
-            IsSweepStance = !IsSweepStance;
+            CurrentStance = NextStance(CurrentStance);
             ApplyStance();
+        }
+
+        private Stance NextStance(Stance current)
+        {
+            switch (current)
+            {
+                case Stance.Reap:   return Stance.Harrow;
+                case Stance.Harrow: return _cultivatorPieces != null ? Stance.Tend : Stance.Reap;
+                default:            return Stance.Reap;
+            }
         }
 
         public void ApplyStance()
         {
-            string msgKey = IsSweepStance ? "$rootatgeir_stance_sweep" : "$rootatgeir_stance_furrow";
+            string msgKey;
+            switch (CurrentStance)
+            {
+                case Stance.Harrow: msgKey = "$rootatgeir_stance_harrow"; break;
+                case Stance.Tend:   msgKey = "$rootatgeir_stance_tend";   break;
+                default:            msgKey = "$rootatgeir_stance_reap";   break;
+            }
             MessageHud.instance?.ShowMessage(MessageHud.MessageType.TopLeft, msgKey);
 
             Player player = Player.m_localPlayer;
             if (player == null) return;
 
-            // Swap the secondary attack: Sweep = atgeir spin, Furrow = sledge overhead
+            // Swap the secondary attack: Reap = atgeir spin, Harrow = sledge overhead
             // smash. No m_animationState swap. Snare is the resting on-hit effect;
-            // per-swing routing overrides it for the Furrow secondary (→ root).
+            // per-swing routing overrides it for the Harrow secondary (→ root).
             var equipped = player.GetCurrentWeapon()?.m_shared;
             if (equipped != null)
             {
-                equipped.m_secondaryAttack = IsSweepStance
-                    ? (_sweepAttack ?? equipped.m_secondaryAttack)
-                    : (_smashAttack ?? equipped.m_secondaryAttack);
+                equipped.m_secondaryAttack = IsHarrowStance
+                    ? (_smashAttack ?? equipped.m_secondaryAttack)
+                    : (_reapAttack ?? equipped.m_secondaryAttack);
                 equipped.m_attackStatusEffect = VineStatusEffects.Snare;
+
+                // Tend: hand the shared data the Cultivator's piece table and
+                // sync place mode now (SetupEquipment only re-reads m_buildPieces on
+                // equip changes). Leaving the stance nulls both; UpdatePlacement
+                // hides the placement ghost itself once InPlaceMode() goes false.
+                equipped.m_buildPieces = CurrentStance == Stance.Tend ? _cultivatorPieces : null;
+                SetPlaceModeMethod?.Invoke(player, new object[] { equipped.m_buildPieces });
             }
 
             int seHash = "SE_WeaponStance".GetStableHashCode();

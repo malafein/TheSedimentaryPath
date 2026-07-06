@@ -41,10 +41,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         {
             if (!__result) return;
 
-            // Journal: The Vine's Gift — count Vineberry-from-vine pickups.
+            // Journal: The Vine's Gift — count vine-borne pickups. Deliberately
+            // combined: bindsinew shares the counter with vineberries.
             if (character is Player player && __instance.GetComponentInParent<Vine>() != null)
             {
                 FeatTracker.RecordEvent(player, Feats.VineberriesHarvested);
+
+                // Lore: the first Bindsinew drawn from a tended vine.
+                if (__instance.m_itemPrefab != null
+                    && __instance.m_itemPrefab.name == Items.TSPVineryWeapons.BindsinewPrefab)
+                    JournalData.SetFlag(player, TSPLore.FirstBindsinew);
             }
 
             if (__state <= 0) return;

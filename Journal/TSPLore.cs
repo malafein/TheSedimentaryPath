@@ -29,6 +29,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public const string FirstVinePlanted     = "first_vine_planted";
         public const string FirstVineMatured     = "first_vine_matured";
         public const string VineryApprentice     = "vinery_apprentice";
+        public const string FirstBindsinew       = "first_bindsinew";
+        public const string FirstVineWeapon      = "first_vine_weapon";
+        public const string FirstVineKill        = "first_vine_kill";
 
         // The peak pilgrimage — a two-stage entry. The hint stage unlocks when
         // the player pets a Watcher and it leans them toward the world summit
@@ -124,6 +127,33 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 new LoreStage(
                     text: "Where the green things gather close, the body now feels them before the eye can find them.",
                     condition: new SkillLevel(VinerySkill.SkillType, 25)
+                )
+            ));
+
+            LoreRegistry.Register(new LoreEntry(
+                id: FirstBindsinew,
+                title: "The Binding Thread",
+                new LoreStage(
+                    text: "The watched vine gives up its thread. It coils to the hand, unwilling to lie still.",
+                    condition: new FirstTimeFlag(FirstBindsinew)
+                )
+            ));
+
+            LoreRegistry.Register(new LoreEntry(
+                id: FirstVineWeapon,
+                title: "The First Twining",
+                new LoreStage(
+                    text: "Thread wound over thread, and a weapon came from the winding. It has not stopped being a vine.",
+                    condition: new FeatCompletionistCount(Feats.VineWeaponsCrafted, 1)
+                )
+            ));
+
+            LoreRegistry.Register(new LoreEntry(
+                id: FirstVineKill,
+                title: "The Vine Holds Fast",
+                new LoreStage(
+                    text: "It was held, and it did not get away. The vine keeps what it catches.",
+                    condition: new FeatThreshold(Feats.VineWeaponKills, 1)
                 )
             ));
 

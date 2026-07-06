@@ -11,6 +11,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
     //   biomes / distant-lands  → ((int)Heightmap.Biome).ToString()
     //   bosses / felled creatures → creature prefab name
     //   traders                 → Trader.m_name (often a $localization token)
+    //   vinery weapons          → $item_* localization token
     //   runestones / brews      → opaque hashes / not yet keyed → no name
     //
     // Returns null when an entry can't be made into a meaningful name; the
@@ -38,6 +39,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                     return CreatureName(entryId);
 
                 case Feats.TradersVisited:
+                case Feats.VineWeaponsCrafted:
                     return Localize(entryId);
 
                 case Feats.DistinctRockTypes:

@@ -23,6 +23,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             WasTSPRockeryWeapon = 0x04,
             NonstoneDamage      = 0x08,
             NonKinDamage        = 0x10,
+            WasTSPVineryWeapon  = 0x20,
         }
 
         public static void Register()
@@ -43,6 +44,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                                      long   attackerPlayerId,
                                      bool   wasThrownTSPStone,
                                      bool   wasTSPRockeryWeapon,
+                                     bool   wasTSPVineryWeapon,
                                      int    preDeathDamageCount,
                                      bool   nonstoneDamage,
                                      bool   nonKinDamage)
@@ -53,6 +55,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             if (isBoss)              flags |= DeathFlags.IsBoss;
             if (wasThrownTSPStone)   flags |= DeathFlags.WasThrownTSPStone;
             if (wasTSPRockeryWeapon) flags |= DeathFlags.WasTSPRockeryWeapon;
+            if (wasTSPVineryWeapon)  flags |= DeathFlags.WasTSPVineryWeapon;
             if (nonstoneDamage)      flags |= DeathFlags.NonstoneDamage;
             if (nonKinDamage)        flags |= DeathFlags.NonKinDamage;
 
@@ -80,6 +83,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             bool isBoss               = (flags & DeathFlags.IsBoss)              != 0;
             bool wasThrownTSPStone    = (flags & DeathFlags.WasThrownTSPStone)   != 0;
             bool wasTSPRockeryWeapon  = (flags & DeathFlags.WasTSPRockeryWeapon) != 0;
+            bool wasTSPVineryWeapon   = (flags & DeathFlags.WasTSPVineryWeapon)  != 0;
             bool nonstoneDamage       = (flags & DeathFlags.NonstoneDamage)      != 0;
             bool nonKinDamage         = (flags & DeathFlags.NonKinDamage)        != 0;
 
@@ -90,6 +94,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 attackerPlayerId,
                 wasThrownTSPStone,
                 wasTSPRockeryWeapon,
+                wasTSPVineryWeapon,
                 preDeathDmgCount,
                 nonstoneDamage,
                 nonKinDamage);

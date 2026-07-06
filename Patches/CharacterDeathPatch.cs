@@ -33,12 +33,26 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             long attackerPlayerId    = 0L;
             bool wasThrownTSPStone   = false;
             bool wasTSPRockeryWeapon = false;
+            bool wasTSPVineryWeapon  = false;
             if (lastHit != null)
             {
                 if (lastHit.GetAttacker() is Player attackerPlayer)
                     attackerPlayerId = attackerPlayer.GetPlayerID();
                 wasThrownTSPStone   = AchievementSystem.IsThrownTSPStone(lastHit);
                 wasTSPRockeryWeapon = AchievementSystem.IsTSPRockeryWeaponHit(lastHit);
+                wasTSPVineryWeapon  = AchievementSystem.IsTSPVineryWeaponHit(lastHit);
+
+                // DoT death: the tick's HitData names neither attacker nor
+                // weapon (SE ticks call ApplyDamage with a fresh HitData and
+                // SetAttacker is a no-op on the vanilla DoT effects). Recover
+                // both from the last direct player hit stamped on the ZDO.
+                if (attackerPlayerId == 0L
+                    && (lastHit.m_hitType == HitData.HitType.Poisoned
+                        || lastHit.m_hitType == HitData.HitType.Burning))
+                {
+                    attackerPlayerId   = zdo.GetLong(AchievementSystem.ZdoLastHitPlayerHash, 0L);
+                    wasTSPVineryWeapon = zdo.GetInt(AchievementSystem.ZdoLastHitVineHash, 0) == 1;
+                }
             }
 
             int  dmgCount = zdo.GetInt(AchievementSystem.ZdoDmgCountHash, 0);
@@ -59,6 +73,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 attackerPlayerId,
                 wasThrownTSPStone,
                 wasTSPRockeryWeapon,
+                wasTSPVineryWeapon,
                 dmgCount,
                 nonstone,
                 nonKin);
