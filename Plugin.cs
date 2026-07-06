@@ -24,6 +24,7 @@ namespace malafein.Valheim.TheSedimentaryPath
         public static GameObject RootAtgeirPrefab;
         public static GameObject RootSpearPrefab;
         public static GameObject RootSpearProjectilePrefab;
+        public static GameObject BindsinewPrefab;
         public static GameObject BlackstoneBrewBasePrefab;
 
         // Keyed by $item_* name. Any weapon implementing IStanceWeapon registers here
@@ -51,6 +52,8 @@ namespace malafein.Valheim.TheSedimentaryPath
         public static ConfigEntry<float> HeldRotY;
         public static ConfigEntry<float> HeldRotZ;
         public static ConfigEntry<float> HeldScale;
+        public static ConfigEntry<float> DebugVineGrowSeconds;
+        public static ConfigEntry<float> DebugBindsinewRespawnMinutes;
 #endif
 
         public static bool IsDebugMode =>
@@ -129,6 +132,10 @@ namespace malafein.Valheim.TheSedimentaryPath
                 "When enabled, shows ZDO IDs and raw credit/skill-factor values in vine and plant hover text.");
             ShrineIntervalDebug = ClientConfig("Debug", "ShrineIntervalSeconds", 0f,
                 "Debug: override rock shrine conversion check interval in seconds. 0 = default (1800s / one Valheim day).");
+            DebugVineGrowSeconds = ClientConfig("Debug", "VineGrowSeconds", 0f,
+                "Debug: override the green-vine sapling grow time (seconds). 0 = default. Affects newly planted seeds only — set, then restart.");
+            DebugBindsinewRespawnMinutes = ClientConfig("Debug", "BindsinewRespawnMinutes", 0f,
+                "Debug: override the Bindsinew harvest respawn (minutes). 0 = default (~200). Affects newly grown vines only — set, then restart.");
 
             const string heldSection = "Debug - HeftyStone Held";
             HeldOffsetX = ClientConfig(heldSection, "OffsetX", HeftyStone.HeldOffsetX, "X position offset for mesh within attach node");

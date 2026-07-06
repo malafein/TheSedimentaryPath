@@ -216,6 +216,31 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 Log.Debug("ObjectDB.Awake: Dökkblað already registered, skipping");
             }
 
+            // Bindsinew — the cultivated vine fiber both vinery weapons are built from.
+            // Register before the weapons so their recipes can reference it.
+            if (__instance.GetItemPrefab(TSPVineryWeapons.BindsinewPrefab) == null)
+            {
+                GameObject bindsinew = Bindsinew.CreatePrefab();
+                if (bindsinew != null)
+                {
+                    Plugin.BindsinewPrefab = bindsinew;
+                    RegisterItem(__instance, bindsinew);
+                    RegisterInZNetScene(bindsinew);
+                    // Repoint the green vine's pickable at Bindsinew (tended+watched vines
+                    // only — see BindsinewVine). Needs the Bindsinew prefab registered first.
+                    BindsinewVine.FindAndRepurpose();
+                    Log.Debug("ObjectDB.Awake: Bindsinew registered");
+                }
+                else
+                {
+                    Log.Error("ObjectDB.Awake: Bindsinew.CreatePrefab returned null");
+                }
+            }
+            else
+            {
+                Log.Debug("ObjectDB.Awake: Bindsinew already registered, skipping");
+            }
+
             // Vinery weapons (RootAtgeir + RootSpear) — split skill (native weapon
             // skill × Vinery), mirroring the rockery obsidian weapons. Both share the
             // vine on-hit effects, so build + register those first.
@@ -439,6 +464,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             translations["item_rootspear_desc"]     = "The earth does not forget; it merely waits to pull you back.";
             translations["rootspear_stance_cast"]    = "Cast stance";
             translations["rootspear_stance_vault"]   = "Vault stance";
+            translations["item_bindsinew"]          = "Bindsinew";
+            translations["item_bindsinew_desc"]     = "Fiber drawn from a tended vine, still faintly coiling in the hand.";
             translations["se_vinesnare"]             = "Snared";
             translations["se_vineroot"]              = "Rooted";
             translations["se_weaponstance"]       = "Weapon Stance";
@@ -570,7 +597,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             recipe.m_amount          = 1;
             recipe.m_enabled         = true;
             recipe.m_craftingStation = workbenchPrefab?.GetComponent<CraftingStation>();
-            recipe.m_minStationLevel = 3;
+            recipe.m_minStationLevel = 2;
             recipe.m_resources = new Piece.Requirement[]
             {
                 new Piece.Requirement { m_resItem = obsidianPrefab.GetComponent<ItemDrop>(),    m_amount = 45, m_amountPerLevel = 0,  m_recover = true },
@@ -617,31 +644,32 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         private static void AddRootAtgeirRecipe(ObjectDB db)
         {
             AddVineWeaponRecipe(db, "Recipe_RootAtgeir", Plugin.RootAtgeirPrefab,
-                rootAmt: 12, oozeAmt: 6, leatherAmt: 6, seedAmt: 8, rootPerLevel: 6);
+                bindsinewAmt: 12, bindsinewPerLevel: 6, barkAmt: 10, rootAmt: 6, oozeAmt: 6, oozePerLevel: 3);
         }
 
         private static void AddRootSpearRecipe(ObjectDB db)
         {
             AddVineWeaponRecipe(db, "Recipe_RootSpear", Plugin.RootSpearPrefab,
-                rootAmt: 8, oozeAmt: 4, leatherAmt: 4, seedAmt: 5, rootPerLevel: 4);
+                bindsinewAmt: 10, bindsinewPerLevel: 5, barkAmt: 8, rootAmt: 5, oozeAmt: 4, oozePerLevel: 2);
         }
 
-        // Shared Swamp-tier vine-weapon recipe (workbench). VineGreenSeeds (ivy seeds)
-        // is a placeholder for the planned ivy-vine material — swap that m_resItem when
-        // it exists.
+        // Shared Swamp-tier vine-weapon recipe (workbench L2). Bindsinew (the cultivated
+        // vine fiber) is the signature ingredient and carries the per-level scaling;
+        // Ooze (poison goo) also scales, tying upgrades to the poison identity. Ancient
+        // Bark is the organic haft, Root the swampy binding.
         private static void AddVineWeaponRecipe(ObjectDB db, string recipeName, GameObject itemPrefab,
-            int rootAmt, int oozeAmt, int leatherAmt, int seedAmt, int rootPerLevel)
+            int bindsinewAmt, int bindsinewPerLevel, int barkAmt, int rootAmt, int oozeAmt, int oozePerLevel)
         {
+            GameObject bindsinew = Plugin.BindsinewPrefab;
+            GameObject bark      = db.GetItemPrefab("ElderBark"); // "Ancient bark" — internal ID is ElderBark
             GameObject root      = db.GetItemPrefab("Root");
             GameObject ooze      = db.GetItemPrefab("Ooze");
-            GameObject leather   = db.GetItemPrefab("LeatherScraps");
-            GameObject ivySeeds  = db.GetItemPrefab("VineGreenSeeds");
             GameObject workbench = ZNetScene.instance?.GetPrefab("piece_workbench");
 
-            if (root == null || ooze == null || leather == null || ivySeeds == null)
+            if (bindsinew == null || bark == null || root == null || ooze == null)
             {
                 Log.Error($"{recipeName}: one or more ingredient prefabs not found " +
-                    $"(Root={root != null}, Ooze={ooze != null}, LeatherScraps={leather != null}, VineGreenSeeds={ivySeeds != null})");
+                    $"(Bindsinew={bindsinew != null}, ElderBark={bark != null}, Root={root != null}, Ooze={ooze != null})");
                 return;
             }
 
@@ -651,17 +679,17 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             recipe.m_amount          = 1;
             recipe.m_enabled         = true;
             recipe.m_craftingStation = workbench?.GetComponent<CraftingStation>();
-            recipe.m_minStationLevel = 1;
+            recipe.m_minStationLevel = 2;
             recipe.m_resources = new Piece.Requirement[]
             {
-                new Piece.Requirement { m_resItem = root.GetComponent<ItemDrop>(),     m_amount = rootAmt,    m_amountPerLevel = rootPerLevel, m_recover = true },
-                new Piece.Requirement { m_resItem = ooze.GetComponent<ItemDrop>(),     m_amount = oozeAmt,    m_amountPerLevel = 0, m_recover = true },
-                new Piece.Requirement { m_resItem = leather.GetComponent<ItemDrop>(),  m_amount = leatherAmt, m_amountPerLevel = 0, m_recover = true },
-                new Piece.Requirement { m_resItem = ivySeeds.GetComponent<ItemDrop>(), m_amount = seedAmt,    m_amountPerLevel = 0, m_recover = true },
+                new Piece.Requirement { m_resItem = bindsinew.GetComponent<ItemDrop>(), m_amount = bindsinewAmt, m_amountPerLevel = bindsinewPerLevel, m_recover = true },
+                new Piece.Requirement { m_resItem = bark.GetComponent<ItemDrop>(),      m_amount = barkAmt,      m_amountPerLevel = 0,            m_recover = true },
+                new Piece.Requirement { m_resItem = root.GetComponent<ItemDrop>(),      m_amount = rootAmt,      m_amountPerLevel = 0,            m_recover = true },
+                new Piece.Requirement { m_resItem = ooze.GetComponent<ItemDrop>(),      m_amount = oozeAmt,      m_amountPerLevel = oozePerLevel, m_recover = true },
             };
 
             db.m_recipes.Add(recipe);
-            Log.Debug($"{recipeName}: registered (VineGreenSeeds = ivy placeholder)");
+            Log.Debug($"{recipeName}: registered (Bindsinew signature ingredient)");
         }
 
         private static void AddSmoothStoneRecipe(ObjectDB db)

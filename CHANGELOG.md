@@ -3,6 +3,7 @@
 ## 0.3.0
 - two shapes rise from the root: one furrows the field, one reaches down the line
 - the earth pulls back, and sometimes pulls you in
+- the vine that is sown and watched gives up its binding thread
 
 ## 0.2.3
 - the heights pay no heed to the hollow deeps below

@@ -1,6 +1,7 @@
 using HarmonyLib;
 using malafein.Valheim.TheSedimentaryPath.Journal;
 using malafein.Valheim.TheSedimentaryPath.Skills;
+using malafein.Valheim.TheSedimentaryPath.World;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
 {
@@ -21,6 +22,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         public static void Prefix(Plant __instance, out string __state)
         {
             __state = null;
+
+            // Reset the growth context each call; it's set below only for a vine plant
+            // and cleared in Postfix, so it's live exactly for this Grow's Instantiate
+            // (the grown vine's Awake, which runs synchronously inside it).
+            BindsinewVine.s_growingFromPlant = false;
+            BindsinewVine.s_growingFromPlantWatched = false;
+
             if (!VinerySkill.IsVinePlant(__instance)) return;
 
             ZNetView nview = __instance.GetComponent<ZNetView>();
@@ -28,10 +36,18 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             // Capture watchers list in prefix because Plant.Grow destroys the ZDO.
             __state = nview.GetZDO()?.GetString(VinerySkill.ZdoWatchersKey, "");
+
+            // Hand the grown vine its lineage: planted → tended; watched-as-sapling
+            // (had watchers) → watched. Read by BindsinewVine.ConfigureInstance.
+            BindsinewVine.s_growingFromPlant = true;
+            BindsinewVine.s_growingFromPlantWatched = !string.IsNullOrEmpty(__state);
         }
 
         public static void Postfix(string __state)
         {
+            BindsinewVine.s_growingFromPlant = false;
+            BindsinewVine.s_growingFromPlantWatched = false;
+
             if (string.IsNullOrEmpty(__state)) return;
             VineMaturedRpc.BroadcastMaturation(__state);
         }

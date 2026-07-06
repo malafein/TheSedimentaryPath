@@ -2,6 +2,7 @@ using HarmonyLib;
 using System;
 using UnityEngine;
 using malafein.Valheim.TheSedimentaryPath.Skills;
+using malafein.Valheim.TheSedimentaryPath.World;
 
 namespace malafein.Valheim.TheSedimentaryPath.Patches
 {
@@ -22,6 +23,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
     {
         public static void Postfix(Vine __instance)
         {
+            // Bindsinew gating: decide/persist this vine's tended+watched flags (from the
+            // growth context) and gate its Bindsinew pickable. No-op on non-green vines.
+            BindsinewVine.ConfigureInstance(__instance);
+
             ZNetView nview = __instance.GetComponent<ZNetView>();
             if (nview == null) return;
 
@@ -47,6 +52,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 float total = zdo.GetFloat(VinerySkill.ZdoCreditKey, 0f);
                 zdo.Set(VinerySkill.ZdoCreditKey, total + creditReceived);
 
+                // Watching a tended vine qualifies it (and its spread children) for Bindsinew.
+                BindsinewVine.MarkWatchedIfTended(zdo);
+
                 // Advance berry respawn if currently picked
                 if (zdo.GetBool(ZDOVars.s_picked, false))
                 {
@@ -61,6 +69,20 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 Log.Debug($"Vine RPC_AddVineryCredit: advanced timer {creditReceived:F2}s (growStart-={creditTicks}), total={total + creditReceived:F1}s");
             });
         }
+    }
+
+    /// <summary>
+    /// Hands the growth context to a spread child so it can inherit the parent's
+    /// tended/watched flags. Vine.Grow instantiates the child from m_vinePrefab, and the
+    /// child's Awake (→ BindsinewVine.ConfigureInstance) runs synchronously inside that
+    /// Instantiate, while s_spreadParent is set. Cleared in the postfix so context never
+    /// leaks to a later, unrelated Instantiate.
+    /// </summary>
+    [HarmonyPatch(typeof(Vine), "Grow")]
+    public static class VineGrowPatch
+    {
+        public static void Prefix(Vine __instance) => BindsinewVine.s_spreadParent = __instance;
+        public static void Postfix() => BindsinewVine.s_spreadParent = null;
     }
 
     // ─── Plant (cultivated saplings) ─────────────────────────────────────────

@@ -104,7 +104,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             shared.m_timedBlockBonus    = 2f;
             shared.m_deflectionForce    = 20f;
             shared.m_movementModifier   = -0.05f;
-            shared.m_maxQuality         = 3;
+            shared.m_maxQuality         = 4;
             shared.m_maxStackSize       = 1;
 
             return prefab;

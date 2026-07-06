@@ -23,10 +23,14 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
         // ── Prefab names ────────────────────────────────────────────────
         public const string RootAtgeirPrefab = "RootAtgeir";
         public const string RootSpearPrefab  = "RootSpear";
+        // Bindsinew — the cult-cultivated vine fiber both weapons are built from,
+        // harvested from tended green vines (see BindsinewVine / the green-vine repurpose).
+        public const string BindsinewPrefab  = "TSP_Bindsinew";
 
         // ── Localization keys (m_shared.m_name) ─────────────────────────
         public const string RootAtgeirName = "$item_rootatgeir";
         public const string RootSpearName  = "$item_rootspear";
+        public const string BindsinewName  = "$item_bindsinew";
 
         // ── Precomputed prefab-name hashes for fast per-frame comparison ─
         public static readonly int RootAtgeirHash = RootAtgeirPrefab.GetStableHashCode();

@@ -69,14 +69,17 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             shared.m_skillType   = ValheimSkills.SkillType.Spears;
             shared.m_icons       = VisualUtil.TintIcons(shared.m_icons, VineIconTint);
 
+            // Swamp-tier, under Ancient Bark Spear (55 pierce) on raw physical — the
+            // reel/grapple utility is the payoff. Rockery pattern: pierce STATIC, only
+            // the poison grows per level.
             shared.m_damages = new HitData.DamageTypes
             {
-                m_pierce = 40f,
-                m_poison = 18f,
+                m_pierce = 42f,
+                m_poison = 15f,
             };
             shared.m_damagesPerLevel = new HitData.DamageTypes
             {
-                m_poison = 7f,
+                m_poison = 8f,
             };
             shared.m_attackForce        = 30f;
             shared.m_maxDurability       = 150f;
@@ -84,6 +87,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             shared.m_weight              = 1.5f;
             shared.m_maxQuality          = 4;
             shared.m_maxStackSize        = 1;
+
+            // Lighter than iron — Ancient Bark Spear costs 10/12; Root-Strand Coil 8/10.
+            // (Primary is the inherited Elderbark thrust; the throw's cost is set in
+            // BuildThrowAttack.)
+            if (shared.m_attack != null) shared.m_attack.m_attackStamina = 8f;
 
             // The returning vine-throw projectile (shared by both stances).
             ProjectilePrefab = CreateProjectilePrefab(spearBase);
@@ -118,7 +126,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
                 m_attackHeight       = 1.3f,
                 m_attackRange        = 1.0f,
                 m_launchAngle        = 0f,
-                m_attackStamina      = 15f,
+                m_attackStamina      = 10f,
             };
         }
 

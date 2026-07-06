@@ -82,17 +82,18 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
                 (cultIcons != null && cultIcons.Length > 0) ? cultIcons : shared.m_icons,
                 VineIconTint);
 
-            // Swamp-tier: slash + pierce carried over from the atgeir, poison added
-            // and the only per-level growth (mirrors the Vinery poison identity).
+            // Swamp-tier, sitting deliberately under Iron Atgeir (65 pierce) on raw
+            // physical — the crowd-control utility is the payoff. Mirrors the Rockery
+            // pattern: physical (pierce) is STATIC; only the elemental (our poison)
+            // grows per level. Both weapon types are pierce-primary natively.
             shared.m_damages = new HitData.DamageTypes
             {
-                m_slash  = 45f,
-                m_pierce = 20f,
-                m_poison = 20f,
+                m_pierce = 50f,
+                m_poison = 15f,
             };
             shared.m_damagesPerLevel = new HitData.DamageTypes
             {
-                m_poison = 8f,
+                m_poison = 10f,
             };
             shared.m_attackForce        = 60f;
             shared.m_maxDurability       = 200f;
@@ -111,6 +112,18 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
                 Log.Warn("RootAtgeir: SledgeIron primary not found — Furrow falls back to the sweep spin");
                 _smashAttack = _sweepAttack;
             }
+            else
+            {
+                // Clone so setting Furrow's stamina below doesn't mutate the shared
+                // SledgeIron attack (which every iron sledge would otherwise inherit).
+                _smashAttack = _smashAttack.Clone();
+            }
+
+            // Lighter than iron — Iron Atgeir costs 14/28; The Furrowing costs 12/24.
+            // Both secondary stances (sweep spin, furrow smash) share the 24 cost.
+            if (shared.m_attack != null) shared.m_attack.m_attackStamina = 12f;
+            _sweepAttack.m_attackStamina = 24f;
+            _smashAttack.m_attackStamina = 24f;
 
             // Default to Sweep (the clone already carries the atgeir spin). Per-swing
             // routing sets the actual on-hit effect (see PrepareAttackEffect).
