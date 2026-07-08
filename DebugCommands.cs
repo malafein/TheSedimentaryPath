@@ -24,6 +24,7 @@ namespace malafein.Valheim.TheSedimentaryPath
     //   tsp_setskill <rockery|vinery|all> <level>   set a TSP skill level (0-100)
     //   tsp_setfeat  <featId> <value>               set a journal feat's value/tier
     //   tsp_dumpui                                   log vanilla UI donor details
+    //   tsp_dumptex <prefabName>                     dump a prefab's textures as PNGs
     //
     // tsp_setskill replaces the old DebugSkillSet25/50 hotkeys.
     internal static class DebugCommands
@@ -55,7 +56,14 @@ namespace malafein.Valheim.TheSedimentaryPath
                 "TSP debug: log vanilla UI donor details (trophy frame + Craft button state) to the player log.",
                 DumpUI);
 
-            Log.Info("DebugCommands: registered tsp_setskill, tsp_setfeat, tsp_dumpui");
+            // Read-only diagnostic — writes texture copies to disk for hand-editing
+            // passes (see VisualUtil.LoadOverrideTexture for the way back in).
+            new Terminal.ConsoleCommand("tsp_dumptex",
+                "TSP debug: dump a prefab's material textures as PNGs. Usage: tsp_dumptex <prefabName>",
+                DumpTextures,
+                optionsFetcher: () => new List<string> { "RootSpear", "RootAtgeir", "SpearElderbark", "Cultivator" });
+
+            Log.Info("DebugCommands: registered tsp_setskill, tsp_setfeat, tsp_dumpui, tsp_dumptex");
         }
 
         private static void SetSkill(Terminal.ConsoleEventArgs args)
@@ -248,6 +256,68 @@ namespace malafein.Valheim.TheSedimentaryPath
             Log.Info($"    {label}: text=\"{t.text}\" font={(t.font != null ? t.font.name : "-")} " +
                      $"mat={(t.fontSharedMaterial != null ? t.fontSharedMaterial.name : "-")} colour={t.color} " +
                      $"style={t.fontStyle} size={t.fontSize}");
+        }
+
+        // Dumps every texture referenced by a prefab's materials as PNG files (via
+        // VisualUtil.ReadableCopy — the vanilla textures aren't CPU-readable), for
+        // hand-editing passes in an external editor. Albedos round-trip cleanly;
+        // normal maps come out odd-looking (linear data) but aren't the edit target.
+        // System.IO is fully qualified here: this class has its own Path(Transform)
+        // helper that would shadow System.IO.Path.
+        private static void DumpTextures(Terminal.ConsoleEventArgs args)
+        {
+            if (args.Length < 2)
+            {
+                args.Context.AddString("Usage: tsp_dumptex <prefabName>");
+                return;
+            }
+
+            string prefabName = args[1];
+            GameObject prefab = ZNetScene.instance?.GetPrefab(prefabName);
+            if (prefab == null)
+            {
+                args.Context.AddString($"tsp_dumptex: prefab '{prefabName}' not found in ZNetScene");
+                return;
+            }
+
+            string outDir = System.IO.Path.Combine(BepInEx.Paths.ConfigPath, "tsp_texdump");
+            System.IO.Directory.CreateDirectory(outDir);
+
+            var seen = new HashSet<Texture>();
+            int written = 0;
+            foreach (Renderer renderer in prefab.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material mat in renderer.sharedMaterials)
+                {
+                    if (mat == null || mat.shader == null) continue;
+                    var shader = mat.shader;
+                    int props = shader.GetPropertyCount();
+                    for (int i = 0; i < props; i++)
+                    {
+                        if (shader.GetPropertyType(i) != UnityEngine.Rendering.ShaderPropertyType.Texture)
+                            continue;
+                        string prop = shader.GetPropertyName(i);
+                        Texture tex = mat.GetTexture(prop);
+                        if (tex == null || !seen.Add(tex)) continue;
+
+                        Texture2D readable = VisualUtil.ReadableCopy(tex);
+                        string file = SanitizeFileName($"{prefabName}_{mat.name}_{prop}_{tex.name}") + ".png";
+                        System.IO.File.WriteAllBytes(System.IO.Path.Combine(outDir, file), readable.EncodeToPNG());
+                        Object.Destroy(readable);
+                        Log.Info($"tsp_dumptex: {file} ({tex.width}x{tex.height})");
+                        written++;
+                    }
+                }
+            }
+
+            args.Context.AddString($"tsp_dumptex: wrote {written} texture(s) to {outDir}");
+        }
+
+        private static string SanitizeFileName(string name)
+        {
+            foreach (char c in System.IO.Path.GetInvalidFileNameChars())
+                name = name.Replace(c, '_');
+            return name.Replace(' ', '_');
         }
 
         private static string Sn(Sprite s) => s != null ? s.name : "<none>";

@@ -265,6 +265,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                     RegisterItem(__instance, prefab);
                     RegisterInZNetScene(prefab);
 
+                    if (rootAtgeir.HarrowHitVfxPrefab != null)
+                        RegisterInZNetScene(rootAtgeir.HarrowHitVfxPrefab);
+
                     Plugin.StanceWeapons[TSPVineryWeapons.RootAtgeirName]    = rootAtgeir;
                     Plugin.SplitSkillWeapons[TSPVineryWeapons.RootAtgeirName] = VinerySkill.SkillType;
                     AddRootAtgeirRecipe(__instance);
@@ -471,7 +474,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             translations["rootspear_stance_cast"]    = "Cast stance";
             translations["rootspear_stance_vault"]   = "Vault stance";
             translations["item_bindsinew"]          = "Bindsinew";
-            translations["item_bindsinew_desc"]     = "Fiber drawn from a tended vine, still faintly coiling in the hand.";
+            translations["item_bindsinew_desc"]     = "Sinew of the watched vine, still coiling in the hand. It does not ask whose.";
             translations["se_vinesnare"]             = "Snared";
             translations["se_vineroot"]              = "Rooted";
             translations["se_weaponstance"]       = "Weapon Stance";
@@ -649,33 +652,62 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
         private static void AddRootAtgeirRecipe(ObjectDB db)
         {
-            AddVineWeaponRecipe(db, "Recipe_RootAtgeir", Plugin.RootAtgeirPrefab,
-                bindsinewAmt: 12, bindsinewPerLevel: 6, barkAmt: 10, rootAmt: 6, oozeAmt: 6, oozePerLevel: 3);
+            AddVineWeaponRecipe(
+                db,
+                "Recipe_RootAtgeir",
+                Plugin.RootAtgeirPrefab,
+                bindsinewAmt: 12,
+                bindsinewPerLevel: 6,
+                barkAmt: 10,
+                rootAmt: 6,
+                oozeAmt: 6,
+                oozePerLevel: 3,
+                ironAmt: 5);
         }
 
         private static void AddRootSpearRecipe(ObjectDB db)
         {
-            AddVineWeaponRecipe(db, "Recipe_RootSpear", Plugin.RootSpearPrefab,
-                bindsinewAmt: 10, bindsinewPerLevel: 5, barkAmt: 8, rootAmt: 5, oozeAmt: 4, oozePerLevel: 2);
+            AddVineWeaponRecipe(
+                db,
+                "Recipe_RootSpear",
+                Plugin.RootSpearPrefab,
+                bindsinewAmt: 10,
+                bindsinewPerLevel: 5,
+                barkAmt: 8,
+                rootAmt: 5,
+                oozeAmt: 4,
+                oozePerLevel: 2,
+                ironAmt: 3);
         }
 
         // Shared Swamp-tier vine-weapon recipe (workbench L2). Bindsinew (the cultivated
         // vine fiber) is the signature ingredient and carries the per-level scaling;
         // Ooze (poison goo) also scales, tying upgrades to the poison identity. Ancient
-        // Bark is the organic haft, Root the swampy binding.
-        private static void AddVineWeaponRecipe(ObjectDB db, string recipeName, GameObject itemPrefab,
-            int bindsinewAmt, int bindsinewPerLevel, int barkAmt, int rootAmt, int oozeAmt, int oozePerLevel)
+        // Bark is the organic haft, Root the swampy binding, Iron the tool's metal
+        // (initial cost only — upgrades stay organic).
+        private static void AddVineWeaponRecipe(
+            ObjectDB db,
+            string recipeName,
+            GameObject itemPrefab,
+            int bindsinewAmt,
+            int bindsinewPerLevel,
+            int barkAmt,
+            int rootAmt,
+            int oozeAmt,
+            int oozePerLevel,
+            int ironAmt)
         {
             GameObject bindsinew = Plugin.BindsinewPrefab;
             GameObject bark      = db.GetItemPrefab("ElderBark"); // "Ancient bark" — internal ID is ElderBark
             GameObject root      = db.GetItemPrefab("Root");
             GameObject ooze      = db.GetItemPrefab("Ooze");
+            GameObject iron      = db.GetItemPrefab("Iron");
             GameObject workbench = ZNetScene.instance?.GetPrefab("piece_workbench");
 
-            if (bindsinew == null || bark == null || root == null || ooze == null)
+            if (bindsinew == null || bark == null || root == null || ooze == null || iron == null)
             {
                 Log.Error($"{recipeName}: one or more ingredient prefabs not found " +
-                    $"(Bindsinew={bindsinew != null}, ElderBark={bark != null}, Root={root != null}, Ooze={ooze != null})");
+                    $"(Bindsinew={bindsinew != null}, ElderBark={bark != null}, Root={root != null}, Ooze={ooze != null}, Iron={iron != null})");
                 return;
             }
 
@@ -690,6 +722,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             {
                 new Piece.Requirement { m_resItem = bindsinew.GetComponent<ItemDrop>(), m_amount = bindsinewAmt, m_amountPerLevel = bindsinewPerLevel, m_recover = true },
                 new Piece.Requirement { m_resItem = bark.GetComponent<ItemDrop>(),      m_amount = barkAmt,      m_amountPerLevel = 0,            m_recover = true },
+                new Piece.Requirement { m_resItem = iron.GetComponent<ItemDrop>(),      m_amount = ironAmt,      m_amountPerLevel = 0,            m_recover = true },
                 new Piece.Requirement { m_resItem = root.GetComponent<ItemDrop>(),      m_amount = rootAmt,      m_amountPerLevel = 0,            m_recover = true },
                 new Piece.Requirement { m_resItem = ooze.GetComponent<ItemDrop>(),      m_amount = oozeAmt,      m_amountPerLevel = oozePerLevel, m_recover = true },
             };

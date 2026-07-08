@@ -35,8 +35,20 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
 
         private ItemDrop.ItemData.SharedData _shared;
 
-        private static readonly Color VineMaterialTint = new Color(0.18f, 0.42f, 0.12f, 1f);
+        // Lightened (2026-07-07): the original dark tint (0.18, 0.42, 0.12) crushed
+        // the bark detail into a flat green.
+        private static readonly Color VineMaterialTint = new Color(0.32f, 0.55f, 0.22f, 1f);
         private static readonly Color VineIconTint     = new Color(0.30f, 0.55f, 0.22f, 1f);
+
+        // Per-part color (dark wood shaft / green vine wraps / grey iron tip) needs
+        // per-pixel work — the whole spear is ONE material (AncientSpear_mat) — so a
+        // hand-painted copy of its albedo replaces the flat green _Color tint when
+        // present (the painted texture carries ALL the color; _Color goes white).
+        // Loose PNG next to the plugin DLL wins (edit → restart, no rebuild), else
+        // the embedded Assets copy; with neither, the green tint stands.
+        // Source dump: tsp_dumptex RootSpear (DEBUG builds).
+        private const string AlbedoOverrideFile = "rootspear_albedo.png";
+        private Texture2D _albedoOverride;
 
         public GameObject CreatePrefab()
         {
@@ -50,8 +62,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             GameObject prefab = Object.Instantiate(spearBase, Plugin.PrefabContainer);
             prefab.name = TSPVineryWeapons.RootSpearPrefab;
 
+            // Iron pivot (2026-07-07): no matte pass — the head keeps its metal
+            // response (iron backs it in the recipe now); green rides the albedo only.
             VisualUtil.TintMaterials(prefab, VineMaterialTint);
             VisualUtil.ZeroEmission(prefab);
+            _albedoOverride = VisualUtil.LoadOverrideTexture(AlbedoOverrideFile);
+            ApplyAlbedoOverride(prefab, "weapon");
+            VisualUtil.DumpMaterials(prefab, "RootStrandCoil");
 
             ItemDrop itemDrop = prefab.GetComponent<ItemDrop>();
             if (itemDrop == null)
@@ -67,7 +84,19 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             shared.m_description = "$item_rootspear_desc";
             // Native weapon skill; Vinery is the split partner (Plugin.SplitSkillWeapons).
             shared.m_skillType   = ValheimSkills.SkillType.Spears;
-            shared.m_icons       = VisualUtil.TintIcons(shared.m_icons, VineIconTint);
+            // Icon: with the painted albedo active, the pre-rendered vanilla icon no
+            // longer matches — snapshot the real (painted) mesh instead. The tinted
+            // vanilla icon stands when there's no override (or the snapshot fails).
+            Sprite snapshot = _albedoOverride != null
+                ? IconSnapshot.Render(
+                    prefab.transform.Find("attach")?.gameObject,
+                    focus: 0.6f,   // vanilla-style head crop
+                    flip: true,    // model's tip comes out down-left
+                    label: "RootSpear")
+                : null;
+            shared.m_icons = snapshot != null
+                ? new[] { snapshot }
+                : VisualUtil.TintIcons(shared.m_icons, VineIconTint);
 
             // Swamp-tier, under Ancient Bark Spear (55 pierce) on raw physical — the
             // reel/grapple utility is the payoff. Rockery pattern: pierce STATIC, only
@@ -157,6 +186,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             projPrefab.name = "RootSpear_projectile";
             VisualUtil.TintMaterials(projPrefab, VineMaterialTint);
             VisualUtil.ZeroEmission(projPrefab);
+            ApplyAlbedoOverride(projPrefab, "projectile");
+            VisualUtil.DumpMaterials(projPrefab, "RootStrandCoil_projectile");
 
             Projectile proj = projPrefab.GetComponent<Projectile>();
             if (proj != null)
@@ -236,6 +267,20 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             lc.m_slack              = 0.3f;
 
             Log.Debug($"RootSpear.AddVineRope: rope added (harpoon material={(srcLR?.sharedMaterial != null)})");
+        }
+
+        // Applies the hand-painted albedo (see AlbedoOverrideFile) to the spear's
+        // cloned materials: the painted texture replaces AncientSpear_d and the green
+        // _Color tint goes white so the paint carries the color. No-op when no
+        // override texture was found.
+        private void ApplyAlbedoOverride(GameObject prefab, string label)
+        {
+            if (_albedoOverride == null) return;
+            int swapped = VisualUtil.SwapAlbedo(prefab, "AncientSpear", _albedoOverride, Color.white);
+            if (swapped == 0)
+                Log.Warn($"RootSpear.ApplyAlbedoOverride: no AncientSpear material on the {label} — override not applied");
+            else
+                Log.Debug($"RootSpear.ApplyAlbedoOverride: {swapped} material(s) overridden on the {label}");
         }
 
         // Routes the per-swing on-hit effect (called from HumanoidStartAttackPatch):

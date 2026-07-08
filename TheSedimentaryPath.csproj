@@ -19,6 +19,16 @@
     <EmbeddedResource Include="Assets\watermark.png">
       <LogicalName>TheSedimentaryPath.Assets.watermark.png</LogicalName>
     </EmbeddedResource>
+    <!-- Hand-painted Root-Strand Coil albedo (dark wood / green vine / iron tip).
+         Conditional: embeds automatically once the painted file lands in Assets/;
+         until then the loose-file override next to the plugin DLL (or the plain
+         green tint) applies. Loader: VisualUtil.LoadOverrideTexture. -->
+    <EmbeddedResource Include="Assets\rootspear_albedo.png" Condition="Exists('Assets\rootspear_albedo.png')">
+      <LogicalName>TheSedimentaryPath.Assets.rootspear_albedo.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\rootatgeir_albedo.png" Condition="Exists('Assets\rootatgeir_albedo.png')">
+      <LogicalName>TheSedimentaryPath.Assets.rootatgeir_albedo.png</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

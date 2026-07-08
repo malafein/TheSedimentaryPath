@@ -10,15 +10,22 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
     // depends on the active stance. StartAttack's secondaryAttack flag tells us which
     // is about to fire, so we set the right effect here, just before the swing.
     //
-    //   RootAtgeir — primary/Sweep: snare;  Furrow secondary: root
+    // POSTFIX gated on __result: StartAttack is called repeatedly (held button,
+    // retries mid-attack) and only sometimes starts a swing — routing on every call
+    // re-rolled the Harrow root proc several times per swing. The successful call
+    // returns true, and the hit trigger that reads the effect comes later in the
+    // animation, so routing here is exactly once per real swing and still in time.
+    //
+    //   RootAtgeir — primary/Sweep: snare;  Furrow secondary: root (chance-rolled)
     //   RootSpear  — primary/Vault: snare;  Cast secondary:   tether (reel)
     //                (Vault's self-pull is handled client-side by RootSpearProjectile)
     [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.StartAttack))]
     public static class HumanoidStartAttackPatch
     {
-        [HarmonyPrefix]
-        public static void Prefix(Humanoid __instance, bool secondaryAttack)
+        [HarmonyPostfix]
+        public static void Postfix(Humanoid __instance, bool secondaryAttack, bool __result)
         {
+            if (!__result) return;
             if (__instance != Player.m_localPlayer) return;
 
             var shared = __instance.GetCurrentWeapon()?.m_shared;

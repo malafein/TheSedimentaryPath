@@ -37,6 +37,9 @@ namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
                 Snare.m_ttl           = 4f;
                 Snare.m_speedModifier = -0.45f; // ~45% movement slow
                 Snare.m_icon          = rootIcon;
+                // No visual: the snare lands on EVERY hit of both weapons, so the
+                // full root-grab vfx would be spam. A subtler variant can be picked
+                // after seeing the Root visual in-game.
             }
 
             if (Root == null)
@@ -47,6 +50,14 @@ namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
                 Root.m_ttl           = 6f;
                 Root.m_speedModifier = -0.9f; // near-immobilized: roots the target in place
                 Root.m_icon          = rootIcon;
+
+                // The Ashlands "Nature" weapons chance-apply a rooted hold whose SE
+                // carries the authored root-grab visuals on the target. Adopt those
+                // start effects (as our own clone, editable) so the Harrow slam's
+                // hold READS as roots, not just a movement debuff.
+                StatusEffect rootedDonor = FindRootedDonor(db);
+                if (rootedDonor != null)
+                    Root.m_startEffects = VisualUtil.CloneEffectList(rootedDonor.m_startEffects);
             }
 
             if (Tether == null)
@@ -57,6 +68,34 @@ namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
                 Tether.m_ttl  = 1.4f;            // reel window (Impulse is mass-scaled → needs time)
                 Tether.m_icon = rootIcon;
             }
+        }
+
+        // Finds the vanilla rooted status effect via the Ashlands "Nature" weapons that
+        // chance-apply it, walking a donor list in case any given item is renamed. The
+        // staff is last: its root effect may ride a summon rather than the item itself.
+        private static StatusEffect FindRootedDonor(ObjectDB db)
+        {
+            string[] donors =
+            {
+                "THSwordSlayerNature",
+                "MaceEldnerNature",
+                "CrossbowRipperNature",
+                "StaffGreenRoots",
+            };
+            foreach (string name in donors)
+            {
+                StatusEffect se = db?.GetItemPrefab(name)
+                    ?.GetComponent<ItemDrop>()?.m_itemData?.m_shared?.m_attackStatusEffect;
+                if (se?.m_startEffects?.m_effectPrefabs != null &&
+                    se.m_startEffects.m_effectPrefabs.Length > 0)
+                {
+                    Log.Debug($"VineStatusEffects: rooted-visual donor '{name}' → SE '{se.name}' ({se.GetType().Name})");
+                    VisualUtil.DumpEffectList($"{se.name}.m_startEffects", se.m_startEffects);
+                    return se;
+                }
+            }
+            Log.Warn("VineStatusEffects: no Nature rooted-effect donor found — vine root has no visual");
+            return null;
         }
 
         private static Sprite FirstIcon(ObjectDB db, string prefabName)
