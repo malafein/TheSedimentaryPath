@@ -10,7 +10,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
     // Entry-ID formats differ per feat (see the recording patches):
     //   biomes / distant-lands  → ((int)Heightmap.Biome).ToString()
     //   bosses / felled creatures → creature prefab name
-    //   traders                 → Trader.m_name (often a $localization token)
+    //   traders                 → Trader.m_name ($npc_* token), or the prefab
+    //                             name when m_name ships empty (BogWitch)
     //   vinery weapons          → $item_* localization token
     //   runestones / brews      → opaque hashes / not yet keyed → no name
     //
@@ -39,6 +40,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                     return CreatureName(entryId);
 
                 case Feats.TradersVisited:
+                    return TraderName(entryId);
+
                 case Feats.VineWeaponsCrafted:
                     return Localize(entryId);
 
@@ -50,6 +53,22 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                     // (deferred) — nothing nameable to show.
                     return null;
             }
+        }
+
+        // Trader entry → localized display name. $-token entries localize
+        // directly; prefab-name entries (empty Trader.m_name, e.g. BogWitch)
+        // try the vanilla "$npc_<prefab>" token convention — Localize returns
+        // "[token]" when the key is unknown, in which case fall back to the
+        // prettified prefab name (covers modded traders with no npc token).
+        private static string TraderName(string entryId)
+        {
+            if (entryId.StartsWith("$"))
+                return Localize(entryId);
+
+            string localized = Localize("$npc_" + entryId.ToLowerInvariant());
+            if (!string.IsNullOrEmpty(localized) && !localized.StartsWith("["))
+                return localized;
+            return Prettify(entryId);
         }
 
         // Prefab name → localized creature display name, falling back to a

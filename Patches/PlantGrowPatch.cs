@@ -1,4 +1,5 @@
 using HarmonyLib;
+using UnityEngine;
 using malafein.Valheim.TheSedimentaryPath.Journal;
 using malafein.Valheim.TheSedimentaryPath.Skills;
 using malafein.Valheim.TheSedimentaryPath.World;
@@ -9,10 +10,13 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
     // recorded watchers via VineMaturedRpc so each watcher's client credits
     // the Patience in Bloom feat. Runs on the ZDO owner only.
     //
-    // Plant.Grow is called once per maturation — it instantiates the grown
-    // prefab and destroys the Plant. By that point TSP_watchers (populated
-    // by VineGrowthPatch's RPC handler) holds every PlayerID that contributed
-    // watch credit.
+    // Plant.SUpdate calls Grow every ~10s once past grow time, but Grow is a
+    // no-op (returns null) while the plant is unhealthy (NoSpace/NoSun/...);
+    // only the healthy call instantiates the grown prefab and destroys the
+    // Plant. The postfix must gate on __result, or a blocked watched sapling
+    // credits the feat every 10 seconds forever. By maturation, TSP_watchers
+    // (populated by VineGrowthPatch's RPC handler) holds every PlayerID that
+    // contributed watch credit.
     //
     // Only Plants whose grown form has a Vine component count; non-vine
     // crops (carrot, barley, etc.) are ignored via VinerySkill.IsVinePlant.
@@ -43,10 +47,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             BindsinewVine.s_growingFromPlantWatched = !string.IsNullOrEmpty(__state);
         }
 
-        public static void Postfix(string __state)
+        public static void Postfix(
+            GameObject __result,
+            string __state)
         {
             BindsinewVine.s_growingFromPlant = false;
             BindsinewVine.s_growingFromPlantWatched = false;
+
+            // Grow returns null when the plant couldn't grow (unhealthy) —
+            // nothing matured, so no feat credit.
+            if (__result == null) return;
 
             if (string.IsNullOrEmpty(__state)) return;
             VineMaturedRpc.BroadcastMaturation(__state);

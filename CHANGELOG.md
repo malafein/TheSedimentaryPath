@@ -3,6 +3,7 @@
 ## 0.3.0
 - two shapes rise from the root: one furrows the field, one reaches down the line
 - the earth pulls back, takes hold, and sometimes pulls you in
+- the tally waits for true blooming, and the silent stranger is counted among the met
 
 ## 0.2.3
 - the heights pay no heed to the hollow deeps below
