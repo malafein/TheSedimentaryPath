@@ -8,11 +8,26 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
     // Lore tab — master / detail (Compendium-style).
     //
     // Left pane: a scrollable list of unlocked entry titles (LoreRegistry
-    // filtered by IsLoreUnlocked). Right pane: the selected entry's title
-    // and the text of the player's currently-unlocked stage. Both panes are
-    // visible at once; selecting a list row updates the detail in place (no
-    // back button). The selected row is highlighted gold like the vanilla
-    // Compendium.
+    // filtered by IsLoreUnlocked), grouped under one section header per
+    // LoreCategory in registration (narrative) order. Right pane: the
+    // selected entry's title and the text of the player's
+    // currently-unlocked stage. Both panes are visible at once; selecting
+    // a list row updates the detail in place (no back button). The
+    // selected row is highlighted gold like the vanilla Compendium.
+    //
+    // Two state markers, deliberately distinct:
+    //   unread      — a gold dot after the title (+ bold), matching the
+    //                 collapsed-header dot: new text the player hasn't
+    //                 viewed. Cleared when the row is selected
+    //                 (JournalData.MarkLoreRead); a later stage advance
+    //                 makes the entry unread again on its own.
+    //   open thread — the detail pane appends a "the path continues ..."
+    //                 footer when the entry's current stage is unlocked
+    //                 but a later stage exists, i.e. it points somewhere
+    //                 unvisited. Derived purely from stage structure.
+    //                 (A row-level glyph was tried and dropped: long
+    //                 titles wrapped it onto a second line, and the
+    //                 footer already carries the signal.)
     //
     // OnActivated rebuilds the list, so unlocks that fire while the panel is
     // closed (or while another tab is showing) appear next time Lore becomes
@@ -30,21 +45,39 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         private string           _selectedId;
         private Image            _selectedBg;
         private TextMeshProUGUI  _selectedLabel;
+        private Player           _player;
         private readonly List<ItemView> _items = new List<ItemView>();
 
-        private const float LeftPaneFraction = 0.34f;
-        private const float PaneGap          = 10f;
-        private const float ListItemHeight   = 36f;
-        private const float DetailTitleHeight = 40f;
+        private const float LeftPaneFraction    = 0.34f;
+        private const float PaneGap             = 10f;
+        private const float ListItemHeight      = 36f;
+        private const float SectionHeaderHeight = 26f;
+        private const float DetailTitleHeight   = 40f;
 
-        private static readonly Color NormalItemColor   = new Color(0f, 0f, 0f, 0f);
-        private static readonly Color SelectedItemColor = new Color(1f, 0.718f, 0.36f, 0.22f);
+        private static readonly Color NormalItemColor    = new Color(0f, 0f, 0f, 0f);
+        private static readonly Color SelectedItemColor  = new Color(1f, 0.718f, 0.36f, 0.22f);
+        private static readonly Color SectionHeaderColor = new Color(0.20f, 0.20f, 0.20f, 0.85f);
 
-        // One list row's clickable handle + the bits SelectEntry recolors.
+        // Accent-gold unread dot for rich-text spans inside titles. The dot
+        // is a middle-dot glyph (proven present in the font, unlike • / ●)
+        // scaled up to read as a marker rather than a speck.
+        private const string UnreadDot        = "<color=#FFB75C><size=170%><b>·</b></size></color>";
+        // Headers render at 13pt vs the rows' 16, so the header dot needs a
+        // taller span (210% ≈ the same on-screen size as the row dots).
+        private const string UnreadDotHeader  = "<color=#FFB75C><size=210%><b>·</b></size></color>";
+
+        // Collapsible sections, matching the Feats tab: headers toggle their
+        // rows; expanded state persists for the controller's lifetime.
+        private readonly Dictionary<LoreCategory, bool>            _expanded     = new Dictionary<LoreCategory, bool>();
+        private readonly Dictionary<LoreCategory, TextMeshProUGUI> _headerLabels = new Dictionary<LoreCategory, TextMeshProUGUI>();
+
+        // One list row's clickable handle + the bits SelectEntry updates.
         private class ItemView
         {
             public LoreEntry        Entry;
             public int              StageIdx;
+            public bool             Unread;
+            public GameObject       Row;
             public Image            Bg;
             public TextMeshProUGUI  Label;
         }
@@ -53,6 +86,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
         protected override void BuildContent(Transform parent)
         {
+            // All sections start expanded.
+            foreach (LoreCategory cat in System.Enum.GetValues(typeof(LoreCategory)))
+                _expanded[cat] = true;
+
             var rootRt = JournalUIHelpers.MakeChildRect(parent, "LoreContent");
             rootRt.anchorMin = Vector2.zero;
             rootRt.anchorMax = Vector2.one;
@@ -126,20 +163,43 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
         // ── Activation / list ──────────────────────────────────────────────
 
-        public override void OnActivated(Player player) => RebuildList(player);
+        public override void OnActivated(Player player)
+        {
+            _player = player;
+            RebuildList(player);
+        }
 
         private void RebuildList(Player player)
         {
             ClearContent(ListContent);
             _items.Clear();
+            _headerLabels.Clear();
             _selectedBg    = null; // destroyed by ClearContent
             _selectedLabel = null;
 
-            foreach (var entry in LoreRegistry.All())
+            // One section per category, entries in registration (narrative)
+            // order within it. Categories with nothing unlocked build no
+            // header — empty sections never appear.
+            foreach (LoreCategory cat in System.Enum.GetValues(typeof(LoreCategory)))
             {
-                if (player == null || !JournalData.IsLoreUnlocked(player, entry.Id)) continue;
-                int stageIdx = JournalData.GetLoreStage(player, entry.Id);
-                _items.Add(BuildListItem(entry, stageIdx));
+                bool headerBuilt = false;
+                foreach (var entry in LoreRegistry.All())
+                {
+                    if (entry.Category != cat) continue;
+                    if (player == null || !JournalData.IsLoreUnlocked(player, entry.Id)) continue;
+                    if (!headerBuilt)
+                    {
+                        BuildSectionHeader(cat);
+                        headerBuilt = true;
+                    }
+                    int stageIdx = JournalData.GetLoreStage(player, entry.Id);
+                    var view = BuildListItem(entry, stageIdx, player);
+                    _items.Add(view);
+                    if (!_expanded[cat]) view.Row.SetActive(false);
+                }
+                // Deferred until the section's rows exist: the collapsed
+                // header's unread dot needs them.
+                if (headerBuilt) RefreshSectionHeaderLabel(cat);
             }
 
             if (_items.Count == 0)
@@ -157,7 +217,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             SelectEntry(target ?? _items[0]);
         }
 
-        private ItemView BuildListItem(LoreEntry entry, int stageIdx)
+        private ItemView BuildListItem(LoreEntry entry, int stageIdx, Player player)
         {
             var itemGo = new GameObject(
                 $"LoreItem_{entry.Id}",
@@ -183,14 +243,33 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             labelRt.offsetMax = new Vector2(-8, 0);
             var label = JournalUIHelpers.AddText(
                 labelRt,
-                entry.Title,
+                "",
                 Font,
                 fontSize: 16,
                 alignment: TextAlignmentOptions.MidlineLeft);
 
-            var view = new ItemView { Entry = entry, StageIdx = stageIdx, Bg = img, Label = label };
+            var view = new ItemView
+            {
+                Entry    = entry,
+                StageIdx = stageIdx,
+                Unread   = JournalData.GetLoreStagesRead(player, entry.Id) <= stageIdx,
+                Row      = itemGo,
+                Bg       = img,
+                Label    = label
+            };
+            ApplyRowLabel(view);
             btn.onClick.AddListener(() => SelectEntry(view));
             return view;
+        }
+
+        // Row title with the unread marker (see class comment). The dot
+        // trails the title so rows and collapsed headers read the same way.
+        private static void ApplyRowLabel(ItemView view)
+        {
+            view.Label.text = view.Unread
+                ? view.Entry.Title + " " + UnreadDot
+                : view.Entry.Title;
+            view.Label.fontStyle = view.Unread ? FontStyles.Bold : FontStyles.Normal;
         }
 
         private void BuildEmptyMessage()
@@ -209,12 +288,90 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 alignment: TextAlignmentOptions.Center);
         }
 
+        // ── Sections ────────────────────────────────────────────────────────
+
+        private void BuildSectionHeader(LoreCategory cat)
+        {
+            var go = new GameObject(
+                $"Section_{cat}",
+                typeof(RectTransform),
+                typeof(Image),
+                typeof(Button),
+                typeof(LayoutElement));
+            go.transform.SetParent(ListContent, false);
+
+            go.GetComponent<Image>().color = SectionHeaderColor;
+            go.GetComponent<LayoutElement>().preferredHeight = SectionHeaderHeight;
+
+            var labelRt = JournalUIHelpers.MakeChildRect(go.transform, "Label");
+            labelRt.anchorMin = Vector2.zero;
+            labelRt.anchorMax = Vector2.one;
+            labelRt.offsetMin = new Vector2(10, 0);
+            labelRt.offsetMax = new Vector2(-8, 0);
+            _headerLabels[cat] = JournalUIHelpers.AddText(
+                labelRt,
+                "",
+                Font,
+                fontSize: 13,
+                alignment: TextAlignmentOptions.MidlineLeft);
+
+            var btn = go.GetComponent<Button>();
+            btn.targetGraphic = go.GetComponent<Image>();
+            btn.onClick.AddListener(() => ToggleSection(cat));
+        }
+
+        private void ToggleSection(LoreCategory cat)
+        {
+            _expanded[cat] = !_expanded[cat];
+            foreach (var view in _items)
+                if (view.Entry.Category == cat)
+                    view.Row.SetActive(_expanded[cat]);
+            RefreshSectionHeaderLabel(cat);
+        }
+
+        // Yellow category label with the Feats-style expand arrow. A
+        // collapsed section hiding unread entries carries the gold dot so
+        // news can't be buried out of sight.
+        private void RefreshSectionHeaderLabel(LoreCategory cat)
+        {
+            if (!_headerLabels.TryGetValue(cat, out var label) || label == null) return;
+            string arrow = _expanded[cat] ? "▼" : "▶";
+            string text = JournalUIHelpers.Colored(
+                JournalUIHelpers.LabelColorTag, $"{arrow}  {CategoryLabel(cat)}");
+            if (!_expanded[cat] && _items.Exists(v => v.Entry.Category == cat && v.Unread))
+                text += " " + UnreadDotHeader;
+            label.text = text;
+        }
+
+        private static string CategoryLabel(LoreCategory cat)
+        {
+            switch (cat)
+            {
+                case LoreCategory.StonePath:  return "The Stone Path";
+                case LoreCategory.VinePath:   return "The Vine Path";
+                case LoreCategory.Ferment:    return "The Ferment";
+                case LoreCategory.WiderWorld: return "The Wider World";
+                default:                      return cat.ToString();
+            }
+        }
+
         // ── Selection / detail ──────────────────────────────────────────────
 
         private void SelectEntry(ItemView view)
         {
             if (view == null) return;
             _selectedId = view.Entry.Id;
+
+            // Viewing is reading: the detail pane shows the entry's text, so
+            // record the stages seen and drop the unread marker. A later
+            // stage advance makes the entry unread again on its own.
+            if (view.Unread)
+            {
+                JournalData.MarkLoreRead(_player, view.Entry.Id, view.StageIdx + 1);
+                view.Unread = false;
+                ApplyRowLabel(view);
+                RefreshSectionHeaderLabel(view.Entry.Category);
+            }
 
             if (_selectedBg != null)    _selectedBg.color    = NormalItemColor;
             if (_selectedLabel != null) _selectedLabel.color = JournalUIHelpers.BodyTextColor;
@@ -230,6 +387,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         // Divider drawn between accreted (Append) stages — a thin centred rule.
         private const string StageDivider = "\n\n<align=\"center\"><color=#9b8b6a>─── · ───</color></align>\n\n";
 
+        // Footer under an open thread's text — the entry has a locked later
+        // stage, i.e. it points somewhere the player hasn't been yet.
+        private const string OpenThreadFooter = "\n\n<i><color=#9b8b6a>the path continues ...</color></i>";
+
         private void ShowDetail(LoreEntry entry, int stageIdx)
         {
             if (entry == null || entry.Stages.Count == 0)
@@ -242,6 +403,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             stageIdx = Mathf.Clamp(stageIdx, 0, entry.Stages.Count - 1);
             _detailTitle.text = entry.Title;
             _detailBody.text  = BuildBody(entry, stageIdx);
+            if (stageIdx < entry.Stages.Count - 1)
+                _detailBody.text += OpenThreadFooter;
         }
 
         // Build the visible body by walking every unlocked stage (0..stageIdx) in

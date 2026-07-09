@@ -3,22 +3,40 @@ using ValheimSkills = global::Skills;
 
 namespace malafein.Valheim.TheSedimentaryPath.Journal
 {
+    // ── LoreCategory ─────────────────────────────────────────────────
+    // Which journey an entry belongs to. Mirrors FeatCategory's
+    // path-first split; the Lore tab groups its list under one section
+    // header per category, in this enum's declaration order.
+    public enum LoreCategory
+    {
+        StonePath,
+        VinePath,
+        Ferment,
+        WiderWorld
+    }
+
     // ── LoreEntry ────────────────────────────────────────────────────
     // A piece of journal lore. May have a single stage (one-shot unlock)
     // or multiple stages where each stage's condition reveals more text.
     // Stages are evaluated strictly sequentially — stage N can only
     // advance once stage N-1 is already the player's current stage.
+    //
+    // An entry whose current stage is unlocked while a later stage still
+    // exists is an "open thread" — the Lore tab derives its live-clue
+    // marker from that shape alone; there is no manual importance flag.
     public class LoreEntry
     {
-        public string                  Id     { get; }
-        public string                  Title  { get; }
-        public IReadOnlyList<LoreStage> Stages { get; }
+        public string                  Id       { get; }
+        public string                  Title    { get; }
+        public LoreCategory            Category { get; }
+        public IReadOnlyList<LoreStage> Stages  { get; }
 
-        public LoreEntry(string id, string title, params LoreStage[] stages)
+        public LoreEntry(string id, string title, LoreCategory category, params LoreStage[] stages)
         {
-            Id     = id;
-            Title  = title;
-            Stages = stages ?? new LoreStage[0];
+            Id       = id;
+            Title    = title;
+            Category = category;
+            Stages   = stages ?? new LoreStage[0];
         }
     }
 

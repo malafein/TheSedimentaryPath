@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.1
+- the tales gather, each to its own path, and what waits unread does not wait quietly
+
 ## 0.3.0
 - two shapes rise from the root: one furrows the field, one reaches down the line
 - the earth pulls back, takes hold, and sometimes pulls you in

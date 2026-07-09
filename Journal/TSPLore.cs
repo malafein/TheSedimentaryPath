@@ -6,9 +6,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
     // TSP's lore content — the entry catalog, separate from the framework
     // so adding a new entry touches one file. Parallel to TSPBoons.
     //
-    // Phase 1 starter set: seven entries spanning the basic Stone Path
-    // beats, one Ferment intro, the first biome crossing, and the
-    // three-stage Stone-Kin arc tied to the boon tiers.
+    // Entries are registered in narrative order within each LoreCategory:
+    // the Lore tab groups by category and renders each section in
+    // registration order, so the order below IS the order the journal
+    // tells each journey in.
     //
     // first_troll is deliberately deferred until the troll boulder
     // weapon ships — the lore depends on that feature for the body text
@@ -49,9 +50,14 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
         public static void RegisterAll()
         {
+            // ── The Stone Path ───────────────────────────────────────────
+            // Find the Rock → set it standing → knap → first kill →
+            // the skill milestone → the pilgrimage → the boon.
+
             LoreRegistry.Register(new LoreEntry(
                 id: FirstMysteriousRock,
                 title: "One Among the Stones",
+                category: LoreCategory.StonePath,
                 new LoreStage(
                     text: "Among the field-stones, one sat heavier than its size, and did not look away. The others are only stone. This one waits. Carry it to where it can stand, and it will keep watch over you.",
                     condition: new FeatThreshold(Feats.MysteriousRockFound, 1)
@@ -61,6 +67,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             LoreRegistry.Register(new LoreEntry(
                 id: FirstRockPlaced,
                 title: "The First Watcher",
+                category: LoreCategory.StonePath,
                 new LoreStage(
                     text: "One stone, set standing. One more pair of eyes for the Rock.",
                     condition: new FeatThreshold(Feats.MysteriousRocksPlaced, 1)
@@ -68,17 +75,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             ));
 
             LoreRegistry.Register(new LoreEntry(
-                id: FirstBlackstoneBrew,
-                title: "The First Sip",
-                new LoreStage(
-                    text: "The black draught goes down heavier than water. Something settles in the gut, and stays.",
-                    condition: new FirstTimeFlag(FirstBlackstoneBrew)
-                )
-            ));
-
-            LoreRegistry.Register(new LoreEntry(
                 id: FirstStoneWeapon,
                 title: "The First Knapping",
+                category: LoreCategory.StonePath,
                 new LoreStage(
                     text: "Stone struck on stone, and a tool came from the striking. The oldest making, returned to.",
                     condition: new FeatThreshold(Feats.StoneWeaponsCrafted, 1)
@@ -88,6 +87,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             LoreRegistry.Register(new LoreEntry(
                 id: FirstStoneKill,
                 title: "The Stone Answers",
+                category: LoreCategory.StonePath,
                 new LoreStage(
                     text: "You struck, and the stone answered. The first time of many. There will be no last.",
                     condition: new FeatThreshold(Feats.StoneKills, 1)
@@ -97,6 +97,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             LoreRegistry.Register(new LoreEntry(
                 id: RockeryApprentice,
                 title: "The Stone Grows Near",
+                category: LoreCategory.StonePath,
                 new LoreStage(
                     text: "Where they lie close, the body now knows before the eye does.",
                     condition: new SkillLevel(RockerySkill.SkillType, 25)
@@ -104,62 +105,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             ));
 
             LoreRegistry.Register(new LoreEntry(
-                id: FirstVinePlanted,
-                title: "The First Sowing",
-                new LoreStage(
-                    text: "A seed pressed into the earth, and the waiting begins. The vine keeps its own slow counsel.",
-                    condition: new FeatThreshold(Feats.VinesPlanted, 1)
-                )
-            ));
-
-            LoreRegistry.Register(new LoreEntry(
-                id: FirstVineMatured,
-                title: "The Vine Answers",
-                new LoreStage(
-                    text: "You watched, and the vine answered — leaf by leaf, in its own time. Patience is the only tending it asks.",
-                    condition: new FeatThreshold(Feats.VinesGrown, 1)
-                )
-            ));
-
-            LoreRegistry.Register(new LoreEntry(
-                id: VineryApprentice,
-                title: "The Vine Grows Near",
-                new LoreStage(
-                    text: "Where the green things gather close, the body now feels them before the eye can find them.",
-                    condition: new SkillLevel(VinerySkill.SkillType, 25)
-                )
-            ));
-
-            LoreRegistry.Register(new LoreEntry(
-                id: FirstBindsinew,
-                title: "The Binding Thread",
-                new LoreStage(
-                    text: "The watched vine gives up its thread. It coils to the hand, unwilling to lie still.",
-                    condition: new FirstTimeFlag(FirstBindsinew)
-                )
-            ));
-
-            LoreRegistry.Register(new LoreEntry(
-                id: FirstVineWeapon,
-                title: "The First Twining",
-                new LoreStage(
-                    text: "Thread wound over thread, and a weapon came from the winding. It has not stopped being a vine.",
-                    condition: new FeatCompletionistCount(Feats.VineWeaponsCrafted, 1)
-                )
-            ));
-
-            LoreRegistry.Register(new LoreEntry(
-                id: FirstVineKill,
-                title: "The Vine Holds Fast",
-                new LoreStage(
-                    text: "It was held, and it did not get away. The vine keeps what it catches.",
-                    condition: new FeatThreshold(Feats.VineWeaponKills, 1)
-                )
-            ));
-
-            LoreRegistry.Register(new LoreEntry(
                 id: PeakPilgrimage,
                 title: "The Throat of the World",
+                category: LoreCategory.StonePath,
                 new LoreStage(
                     text: "When the hand rests on the Watcher, the weight shifts — straining toward the high places, where the land reaches nearest the sky. It would be carried there.",
                     condition: new FirstTimeFlag(PeakHintFlag)
@@ -177,17 +125,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             ));
 
             LoreRegistry.Register(new LoreEntry(
-                id: BlackForestFirst,
-                title: "The Dark Trees",
-                new LoreStage(
-                    text: "Past the soft grass, the trunks stand close, and the light bleeds through them slowly.",
-                    condition: new BiomeEntered(Heightmap.Biome.BlackForest)
-                )
-            ));
-
-            LoreRegistry.Register(new LoreEntry(
                 id: StoneKin,
                 title: "Stone Knows Its Own",
+                category: LoreCategory.StonePath,
                 new LoreStage(
                     text: "Knelt at the standing stone, and the body did not refuse it. Something has taken hold.",
                     condition: new BoonTierReached(TSPBoons.StoneKin, 1)
@@ -199,6 +139,99 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 new LoreStage(
                     text: "The hands have become the stone. What they strike, the stone strikes.",
                     condition: new BoonTierReached(TSPBoons.StoneKin, 3)
+                )
+            ));
+
+            // ── The Vine Path ────────────────────────────────────────────
+            // Sow → watch it answer → the thread → the twining →
+            // first kill → the skill milestone. (The boon arc lands with
+            // the Vinery empowerment build.)
+
+            LoreRegistry.Register(new LoreEntry(
+                id: FirstVinePlanted,
+                title: "The First Sowing",
+                category: LoreCategory.VinePath,
+                new LoreStage(
+                    text: "A seed pressed into the earth, and the waiting begins. The vine keeps its own slow counsel.",
+                    condition: new FeatThreshold(Feats.VinesPlanted, 1)
+                )
+            ));
+
+            LoreRegistry.Register(new LoreEntry(
+                id: FirstVineMatured,
+                title: "The Vine Answers",
+                category: LoreCategory.VinePath,
+                new LoreStage(
+                    text: "You watched, and the vine answered — leaf by leaf, in its own time. Patience is the only tending it asks.",
+                    condition: new FeatThreshold(Feats.VinesGrown, 1)
+                )
+            ));
+
+            LoreRegistry.Register(new LoreEntry(
+                id: FirstBindsinew,
+                title: "The Binding Thread",
+                category: LoreCategory.VinePath,
+                new LoreStage(
+                    text: "The watched vine gives up its thread. It coils to the hand, unwilling to lie still.",
+                    condition: new FirstTimeFlag(FirstBindsinew)
+                )
+            ));
+
+            LoreRegistry.Register(new LoreEntry(
+                id: FirstVineWeapon,
+                title: "The First Twining",
+                category: LoreCategory.VinePath,
+                new LoreStage(
+                    text: "Thread wound over thread, and a weapon came from the winding. It has not stopped being a vine.",
+                    condition: new FeatCompletionistCount(Feats.VineWeaponsCrafted, 1)
+                )
+            ));
+
+            LoreRegistry.Register(new LoreEntry(
+                id: FirstVineKill,
+                title: "The Vine Holds Fast",
+                category: LoreCategory.VinePath,
+                new LoreStage(
+                    text: "It was held, and it did not get away. The vine keeps what it catches.",
+                    condition: new FeatThreshold(Feats.VineWeaponKills, 1)
+                )
+            ));
+
+            LoreRegistry.Register(new LoreEntry(
+                id: VineryApprentice,
+                title: "The Vine Grows Near",
+                category: LoreCategory.VinePath,
+                new LoreStage(
+                    text: "Where the green things gather close, the body now feels them before the eye can find them.",
+                    condition: new SkillLevel(VinerySkill.SkillType, 25)
+                )
+            ));
+
+            // ── The Ferment ──────────────────────────────────────────────
+            // Grows with the Grausten / Basic Stone brews when they ship.
+
+            LoreRegistry.Register(new LoreEntry(
+                id: FirstBlackstoneBrew,
+                title: "The First Sip",
+                category: LoreCategory.Ferment,
+                new LoreStage(
+                    text: "The black draught goes down heavier than water. Something settles in the gut, and stays.",
+                    condition: new FirstTimeFlag(FirstBlackstoneBrew)
+                )
+            ));
+
+            // ── The Wider World ──────────────────────────────────────────
+            // Biome strays. The Dark Trees is a dormant hook — troll lore
+            // can give it a next stage later, at which point the
+            // open-thread marker lights it up on its own.
+
+            LoreRegistry.Register(new LoreEntry(
+                id: BlackForestFirst,
+                title: "The Dark Trees",
+                category: LoreCategory.WiderWorld,
+                new LoreStage(
+                    text: "Past the soft grass, the trunks stand close, and the light bleeds through them slowly.",
+                    condition: new BiomeEntered(Heightmap.Biome.BlackForest)
                 )
             ));
         }

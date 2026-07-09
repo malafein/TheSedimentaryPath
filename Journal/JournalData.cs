@@ -9,6 +9,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
     //   TSP_journal_feat_<id>         int progress counter
     //   TSP_journal_lore_unlocked     comma-separated list of unlocked lore IDs
     //   TSP_journal_lore_stage_<id>   int, current stage of an evolving entry
+    //   TSP_journal_lore_read_<id>    int, count of stages the player has viewed
     //   TSP_journal_boon_<id>         int, current unlocked boon tier (0 = locked)
     //   TSP_journal_flags             comma-separated one-time event flags
     //
@@ -23,6 +24,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         private const string Prefix              = "TSP_journal_";
         private const string FeatPrefix          = Prefix + "feat_";
         private const string LoreStagePrefix     = Prefix + "lore_stage_";
+        private const string LoreReadPrefix      = Prefix + "lore_read_";
         private const string BoonPrefix          = Prefix + "boon_";
         private const string CompletionistPrefix = Prefix + "set_";
         private const string LoreUnlockedKey     = Prefix + "lore_unlocked";
@@ -65,6 +67,20 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         // is <= the current stored value.
         public static bool AdvanceLoreStage(Player player, string loreId, int stage)
             => AdvanceInt(player, LoreStagePrefix + loreId, stage);
+
+        // ── Lore read tracking (monotonic) ──────────────────────────────
+        // How many stages of an entry the player has *viewed* in the
+        // journal. An entry is unread while stages-read <= current stage
+        // index (the latest unlocked stage hasn't been seen); a stage
+        // advance therefore makes the entry unread again with no reset
+        // write needed.
+
+        public static int GetLoreStagesRead(Player player, string loreId)
+            => ReadInt(player, LoreReadPrefix + loreId);
+
+        // Returns true if the stored count advanced.
+        public static bool MarkLoreRead(Player player, string loreId, int stagesRead)
+            => AdvanceInt(player, LoreReadPrefix + loreId, stagesRead);
 
         // ── Boon tier (monotonic) ───────────────────────────────────────
 

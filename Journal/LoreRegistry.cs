@@ -27,10 +27,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
     // Each stage's condition contributes exactly one index entry (the
     // channel it cares about). The EvaluateAll spawn-pass in LoreChecker
     // is the only path that touches stages without going through an index.
+    //
+    // All() enumerates in registration order — the Lore tab's
+    // within-category narrative order — backed by an explicit list
+    // because Dictionary.Values ordering is not contractual.
     public static class LoreRegistry
     {
         private static readonly Dictionary<string, LoreEntry> _byId
             = new Dictionary<string, LoreEntry>();
+        private static readonly List<LoreEntry> _ordered
+            = new List<LoreEntry>();
 
         private static readonly Dictionary<string, List<LoreStageRef>> _byFeat
             = new Dictionary<string, List<LoreStageRef>>();
@@ -52,6 +58,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public static void Register(LoreEntry entry)
         {
             if (entry == null || string.IsNullOrEmpty(entry.Id)) return;
+            int existing = _ordered.FindIndex(e => e.Id == entry.Id);
+            if (existing >= 0) _ordered[existing] = entry;
+            else               _ordered.Add(entry);
             _byId[entry.Id] = entry;
 
             for (int i = 0; i < entry.Stages.Count; i++)
@@ -68,7 +77,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             return entry;
         }
 
-        public static IEnumerable<LoreEntry> All() => _byId.Values;
+        // Registration order, which TSPLore.RegisterAll makes narrative order.
+        public static IEnumerable<LoreEntry> All() => _ordered;
 
         // ── Index accessors (used by LoreChecker.Notify* dispatchers) ────
 
