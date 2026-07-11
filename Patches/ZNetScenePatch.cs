@@ -19,9 +19,14 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             AchievementSystem.ClearAll();
             BoonSystem.ClearAll();
 
-            RockShrine.RegisterRPCs();
-            VineMaturedRpc.Register();
-            CreatureDeathRpc.Register();
+            // Aggregate success line keeps RPC names (spoilers) out of player
+            // logs; each Register warns individually on failure.
+            bool rpcsOk = RockShrine.RegisterRPCs();
+            rpcsOk &= VineMaturedRpc.Register();
+            rpcsOk &= CreatureDeathRpc.Register();
+            rpcsOk &= StatusEffects.VineHoldRpc.Register();
+            if (rpcsOk)
+                Log.Info("TSP: RPC handlers registered");
 
             FieldInfo field = AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs");
             if (field == null)

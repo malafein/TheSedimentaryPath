@@ -3,7 +3,7 @@
     <TargetFramework>net462</TargetFramework>
     <AssemblyName>TheSedimentaryPath</AssemblyName>
     <Description>The Rock provides. The Rock abides. A mod for Totally Normal Rock Enthusiasts</Description>
-    <Version>0.3.1</Version>
+    <Version>0.3.2</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>

@@ -98,6 +98,24 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             return tier;
         }
 
+        // Hold→duration accrual for rituals with a variable hold (the
+        // longer the pose is held, the longer the boon lasts). Generic so
+        // any ritual can adopt it — a Stone-Kin retrofit stays a thematic
+        // decision, not an engineering one.
+        //
+        //   held < minHold           → 0 (the ritual hasn't taken)
+        //   otherwise                → cap × held/fullHold, clamped to cap
+        public static float AccruedDuration(
+            float heldSeconds,
+            float minHoldSeconds,
+            float fullHoldSeconds,
+            float capSeconds)
+        {
+            if (heldSeconds < minHoldSeconds) return 0f;
+            if (fullHoldSeconds <= 0f) return capSeconds;
+            return capSeconds * Mathf.Clamp01(heldSeconds / fullHoldSeconds);
+        }
+
         // Record the highest tier the player has reached for a boon and
         // notify lore. Called by GrantBoon for boons that use the generic
         // ApplyBoon adapter, and called directly by ritual fast-paths

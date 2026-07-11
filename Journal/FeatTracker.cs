@@ -85,7 +85,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             Add(Feats.VinesPlanted,          "The Sowing",                FeatCategory.VinePath,  FeatShape.TieredCounter,    new[] { 10, 50, 200 },       "Vine seed planted (ivy or vineberry)");
             // Bump thresholds if a third vinery weapon lands.
             Add(Feats.VineWeaponsCrafted,    "The Twining",               FeatCategory.VinePath,  FeatShape.CompletionistSet, new[] { 1, 2 },              "Distinct TSP vinery weapon crafted");
-            Add(Feats.VineWeaponKills,       "Held Fast",                 FeatCategory.VinePath,  FeatShape.TieredCounter,    new[] { 50, 250, 2500 },     "Creature killed by TSP Vinery weapon");
+            Add(Feats.VineWeaponKills,       "The Vine's Answer",         FeatCategory.VinePath,  FeatShape.TieredCounter,    new[] { 50, 250, 2500 },     "Creature killed by TSP Vinery weapon");
 
             // ── The Ferment ────────────────────────────────────────────
             Add(Feats.BrewsConsumed,         "The Iron Gut of the Earth", FeatCategory.Ferment,   FeatShape.TieredCounter,    new[] { 5, 50, 500 },        "TSP brew consumed");
@@ -127,6 +127,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             Add(Feats.BossesUnarmored,          "Bared to the Forsaken",     FeatCategory.Trials, FeatShape.CompletionistSet, new[] { 1, 4, 8 },         "Boss defeated with empty armor slots");
             Add(Feats.BossesStoneOnly,          "The Forsaken Stone-Felled", FeatCategory.Trials, FeatShape.CompletionistSet, new[] { 1, 4, 8 },         "Boss defeated stone-only");
             Add(Feats.GolemUnarmedSurvived,     "Standing Before the Stone", FeatCategory.Trials, FeatShape.TieredCounter,    new[] { 60, 180, 600 },    "Seconds unarmed in Stone Golem aggro range");
+            Add(Feats.AbomRootedKills,          "The Grasping, Grasped",     FeatCategory.Trials, FeatShape.TieredCounter,    new[] { 1, 5, 20 },        "Abomination felled while held by your roots");
+            Add(Feats.RootedCreaturesFelled,    "Rooted, And Reaped",        FeatCategory.Trials, FeatShape.CompletionistSet, new[] { 1, 10, 50 },       "Distinct creature felled while held by your roots");
+            Add(Feats.AbomStillSeconds,         "Taking Root",               FeatCategory.Trials, FeatShape.TieredCounter,    new[] { 30, 90, 300 },     "Seconds standing motionless before an Abomination");
 
             Log.Debug($"FeatRegistry: loaded {_byId.Count} feat definitions");
         }

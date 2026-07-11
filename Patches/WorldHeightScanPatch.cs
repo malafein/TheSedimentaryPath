@@ -189,7 +189,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             Vector3 spawn = Player.m_localPlayer.transform.position;
 
-            Log.Info(
+            Log.Debug(
                 $"WorldHeightScan: maxMountain={bestMtn.Height:F2}m at ({bestMtn.X:F1},{bestMtn.Z:F1}) " +
                 $"maxAny={bestAny.Height:F2}m elapsed={totalElapsed:F2}s"
             );

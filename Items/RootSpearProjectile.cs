@@ -47,10 +47,19 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
         private static readonly AccessTools.FieldRef<Projectile, ItemDrop.ItemData> WeaponRef =
             AccessTools.FieldRefAccess<Projectile, ItemDrop.ItemData>("m_weapon");
 
+        // Count of the local player's own thrown spears currently in flight
+        // or lodged (not yet returned). The Holdfast doctrine reads this:
+        // the vine rope to the thrown spear IS the grip, just longer, so
+        // presence holds through the whole reel/return window. A counter
+        // (not a bool) so overlapping throws can't clear each other's flag.
+        private static int s_liveLocalThrows;
+        public static bool HasLiveLocalThrow => s_liveLocalThrows > 0;
+
         private Projectile m_projectile;
         private ZNetView m_znview;
         private bool m_ownerResolved;
         private bool m_isOwner;
+        private bool m_countedLive; // this instance holds a s_liveLocalThrows count
         private bool m_owesReturn; // consumed at throw; must give the spear back (owner only)
         private bool m_returned;
         private bool m_vault;      // thrown in Vault stance (self-pull) vs Cast
@@ -81,6 +90,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             // consumed at throw, not yet given back), return it now.
             if (m_owesReturn && !m_returned)
                 GiveSpearBack();
+            ReleaseLiveCount();
+        }
+
+        // Exactly-once release of this instance's live-throw count, on
+        // return or destruction (whichever comes first).
+        private void ReleaseLiveCount()
+        {
+            if (!m_countedLive) return;
+            m_countedLive = false;
+            if (s_liveLocalThrows > 0) s_liveLocalThrows--;
         }
 
         private void ResolveOwner()
@@ -89,6 +108,12 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             m_ownerResolved = true;
             m_isOwner    = m_znview.IsOwner();
             m_owesReturn = m_isOwner; // on the thrower's client we own it and owe the spear
+
+            if (m_isOwner)
+            {
+                s_liveLocalThrows++;
+                m_countedLive = true;
+            }
 
             // Capture the exact spear that was thrown (Projectile.Setup has run by now, so
             // m_weapon is set). Clone it so the return preserves all instance data.
@@ -177,6 +202,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             if (m_returned) return;
             m_returned   = true;
             m_owesReturn = false;
+            ReleaseLiveCount();
 
             Player player = Player.m_localPlayer;
             if (player == null) return;

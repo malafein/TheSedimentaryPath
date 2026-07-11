@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.2
+- the vine answers those who watched it grow
+- the path keeps its counsel, and speaks plainly only of trouble
+
 ## 0.3.1
 - the tales gather, each to its own path, and what waits unread does not wait quietly
 

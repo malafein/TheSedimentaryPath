@@ -19,6 +19,12 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
     //   RootAtgeir — primary/Sweep: snare;  Furrow secondary: root (chance-rolled)
     //   RootSpear  — primary/Vault: snare;  Cast secondary:   tether (reel)
     //                (Vault's self-pull is handled client-side by RootSpearProjectile)
+    //
+    // The same per-swing timing also carries the jade empowerment
+    // (NatureWeaponEmpowerment): the local player's Ashlands Nature weapons get
+    // their proc chance scaled by Vinery, and staff-summoned tentaroots — whose
+    // AI calls StartAttack on their owning client — get theirs scaled by the
+    // summoner's stamped skill.
     [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.StartAttack))]
     public static class HumanoidStartAttackPatch
     {
@@ -26,10 +32,18 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
         public static void Postfix(Humanoid __instance, bool secondaryAttack, bool __result)
         {
             if (!__result) return;
-            if (__instance != Player.m_localPlayer) return;
 
             var shared = __instance.GetCurrentWeapon()?.m_shared;
             if (shared == null) return;
+
+            if (__instance != Player.m_localPlayer)
+            {
+                NatureWeaponEmpowerment.EmpowerSummonSwing(__instance, shared);
+                return;
+            }
+
+            NatureWeaponEmpowerment.EmpowerPlayerSwing(shared);
+
             if (!Plugin.StanceWeapons.TryGetValue(shared.m_name, out var weapon)) return;
 
             if (weapon is RootAtgeir atgeir)

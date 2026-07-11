@@ -167,6 +167,33 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             player != null && player.IsRecipeKnown(RecipeSharedName);
     }
 
+    // Composite gate — passes only when every child condition passes.
+    // LoreRegistry indexes each child on its own event channel, so any
+    // child's event triggers evaluation of the whole stage.
+    //
+    // Children must be monotonic (once true, stays true): stages unlock
+    // strictly sequentially, so a stage whose condition could flip back
+    // to false before it ever fired would permanently block every stage
+    // behind it.
+    public class AllOf : LoreCondition
+    {
+        public IReadOnlyList<LoreCondition> Conditions { get; }
+        public AllOf(params LoreCondition[] conditions)
+        {
+            Conditions = conditions ?? new LoreCondition[0];
+        }
+        public override bool Evaluate(Player player)
+        {
+            if (Conditions.Count == 0) return false;
+            for (int i = 0; i < Conditions.Count; i++)
+            {
+                if (Conditions[i] == null || !Conditions[i].Evaluate(player))
+                    return false;
+            }
+            return true;
+        }
+    }
+
     // Fires when the named boon reaches the given tier.
     public class BoonTierReached : LoreCondition
     {

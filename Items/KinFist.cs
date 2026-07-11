@@ -104,7 +104,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             // the existing SplitSkillWeapons convention.
             Plugin.SplitSkillWeapons[ItemName] = Skills.RockerySkill.SkillType;
 
-            Log.Info("KinFist.Build: ready (block/parry from FistFenrirClaw)");
+            Log.Debug("KinFist.Build: ready (block/parry from FistFenrirClaw)");
+            Log.Info("TSP: combat extras ready");
         }
 
         // Called from SE_StoneKin.Initialize at tier 3. Updates the

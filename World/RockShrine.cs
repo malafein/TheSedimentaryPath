@@ -192,10 +192,16 @@ namespace malafein.Valheim.TheSedimentaryPath.World
 
         // ── Public API ───────────────────────────────────────────────────────────
 
-        public static void RegisterRPCs()
+        public static bool RegisterRPCs()
         {
+            if (ZRoutedRpc.instance == null)
+            {
+                Log.Warn($"{ShrineConvertedRpcName}: ZRoutedRpc not ready at registration time");
+                return false;
+            }
             ZRoutedRpc.instance.Register<ZPackage>(ShrineConvertedRpcName, OnShrineConvertedRpc);
-            Log.Info($"RockShrine: registered {ShrineConvertedRpcName} RPC");
+            Log.Debug($"RockShrine: registered {ShrineConvertedRpcName} RPC");
+            return true;
         }
 
         // Called by RockShrineComponent when it is the ZDO owner and the timer fires.
@@ -383,7 +389,7 @@ namespace malafein.Valheim.TheSedimentaryPath.World
             if (added == null)
             {
                 // Chest full — drop the gold as a ground item near the Rock instead
-                Log.Warn("RockShrine: chest full, dropping gold near shrine");
+                Log.Debug("RockShrine: chest full, dropping gold near shrine");
                 var coinPrefab = ObjectDB.instance?.GetItemPrefab(GoldPrefabName);
                 if (coinPrefab != null)
                     Object.Instantiate(coinPrefab, rockView.transform.position + Vector3.up, Quaternion.identity);
@@ -391,7 +397,7 @@ namespace malafein.Valheim.TheSedimentaryPath.World
 
             s_containerSave?.Invoke(chest, null);
 
-            Log.Info($"RockShrine: {BerriesPerBatch}x {OfferingPrefabName} → {GoldPerBatch}x {GoldPrefabName}" +
+            Log.Debug($"RockShrine: {BerriesPerBatch}x {OfferingPrefabName} → {GoldPerBatch}x {GoldPrefabName}" +
                      $" | chest at {chest.transform.position} | added to chest: {added != null}");
 
             string speechLine = Random.value < SpeechChance

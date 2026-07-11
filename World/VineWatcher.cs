@@ -43,6 +43,12 @@ namespace malafein.Valheim.TheSedimentaryPath.World
         private const string WatchTargetZdoKey = "sedimentarypath_watching_vine";
         private const string WatchCycleZdoKey  = "sedimentarypath_vine_cycle";
 
+        // True while the LOCAL player's watch bond has a live target
+        // (sitting AND facing a watchable). Maintained by the owner-side
+        // logic below; the Holdfast ritual keys on this — watching IS the
+        // ritual, merely sitting near a grove is not.
+        public static bool LocalPlayerIsWatching { get; private set; }
+
         // Secondary bonds — all clients compute these from the primary position.
         // A secondary is "unlocked" at a given cycle via a deterministic hash so every
         // client agrees without any additional ZDO traffic.
@@ -77,6 +83,8 @@ namespace malafein.Valheim.TheSedimentaryPath.World
         private void OnDestroy()
         {
             StopBondEffect();
+            if (_player != null && _player == Player.m_localPlayer)
+                LocalPlayerIsWatching = false;
         }
 
         private void Update()
@@ -124,6 +132,8 @@ namespace malafein.Valheim.TheSedimentaryPath.World
                 zdo.Set(WatchCycleZdoKey, 0);
             }
 
+            LocalPlayerIsWatching = true;
+
             _watchTimer += Time.deltaTime;
             if (_watchTimer >= RpcInterval)
             {
@@ -134,6 +144,7 @@ namespace malafein.Valheim.TheSedimentaryPath.World
 
         private void ResetLocalWatch(ZDO zdo)
         {
+            LocalPlayerIsWatching = false;
             if (_currentTarget != null || !string.IsNullOrEmpty(zdo.GetString(WatchTargetZdoKey)))
             {
                 _watchTimer          = 0f;

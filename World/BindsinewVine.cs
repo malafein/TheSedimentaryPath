@@ -107,7 +107,8 @@ namespace malafein.Valheim.TheSedimentaryPath.World
 #endif
 
             GreenVinePrefab = greenVine;
-            Log.Info($"BindsinewVine: '{greenVine.name}' now yields Bindsinew (tended+watched vines only)");
+            Log.Debug($"BindsinewVine: '{greenVine.name}' now yields Bindsinew (tended+watched vines only)");
+            Log.Info("TSP: flora extras ready");
         }
 
         // VineGreenSeeds → the Plant piece (sapling) that consumes it → its grown Vine prefab.

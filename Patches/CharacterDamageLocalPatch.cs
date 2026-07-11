@@ -30,6 +30,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             if (hit.m_attacker != local.GetZDOID()) return;
 
             AchievementSystem.RecordLocalContribution(__instance);
+            AchievementSystem.RecordLocalGrasp(__instance, hit);
         }
     }
 }

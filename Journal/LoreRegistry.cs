@@ -104,6 +104,12 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
             switch (cond)
             {
+                case AllOf all:
+                    // Index each child on its own channel; DispatchTo
+                    // dedupes per entry, so multi-channel stages are safe.
+                    for (int c = 0; c < all.Conditions.Count; c++)
+                        IndexCondition(entry, stageIdx, all.Conditions[c]);
+                    break;
                 case FeatThreshold ft:
                     AddTo(_byFeat, ft.FeatId, stageRef);
                     break;

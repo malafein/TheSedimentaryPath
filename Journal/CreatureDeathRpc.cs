@@ -26,15 +26,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             WasTSPVineryWeapon  = 0x20,
         }
 
-        public static void Register()
+        public static bool Register()
         {
             if (ZRoutedRpc.instance == null)
             {
                 Log.Warn($"{Name}: ZRoutedRpc not ready at registration time");
-                return;
+                return false;
             }
             ZRoutedRpc.instance.Register<ZPackage>(Name, OnReceive);
-            Log.Info($"CreatureDeathRpc: registered {Name} RPC");
+            Log.Debug($"CreatureDeathRpc: registered {Name} RPC");
+            return true;
         }
 
         // Called by the owner client from CharacterDeathPatch.

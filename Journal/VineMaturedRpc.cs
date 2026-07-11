@@ -18,15 +18,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public const string Name = "TSP_VineMatured";
 
         // Called from ZNetScenePatch.Postfix after ZNetScene is up. Idempotent.
-        public static void Register()
+        public static bool Register()
         {
             if (ZRoutedRpc.instance == null)
             {
                 Log.Warn($"{Name}: ZRoutedRpc not ready at registration time");
-                return;
+                return false;
             }
             ZRoutedRpc.instance.Register<ZPackage>(Name, OnReceive);
-            Log.Info($"VineMaturedRpc: registered {Name} RPC");
+            Log.Debug($"VineMaturedRpc: registered {Name} RPC");
+            return true;
         }
 
         private static void OnReceive(long sender, ZPackage pkg)

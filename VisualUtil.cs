@@ -300,6 +300,47 @@ namespace malafein.Valheim.TheSedimentaryPath
             };
         }
 
+        // Deep variant of CloneEffectList for borrowing another effect's visuals
+        // in a different color: every entry keeps its placement flags but points
+        // at a retinted clone of its prefab (parented under Plugin.PrefabContainer
+        // so it survives scene loads). The vanilla prefabs are never touched.
+        public static EffectList CloneEffectListRetinted(
+            EffectList src,
+            Color tint,
+            string namePrefix)
+        {
+            if (src?.m_effectPrefabs == null) return null;
+            var entries = new EffectList.EffectData[src.m_effectPrefabs.Length];
+            for (int i = 0; i < entries.Length; i++)
+            {
+                EffectList.EffectData e = src.m_effectPrefabs[i];
+                if (e == null) continue;
+                GameObject prefab = e.m_prefab;
+                if (prefab != null)
+                {
+                    GameObject clone = Object.Instantiate(prefab, Plugin.PrefabContainer);
+                    clone.name = $"{namePrefix}_{prefab.name}";
+                    TintParticles(clone, tint);
+                    prefab = clone;
+                }
+                entries[i] = new EffectList.EffectData
+                {
+                    m_prefab                    = prefab,
+                    m_enabled                   = e.m_enabled,
+                    m_variant                   = e.m_variant,
+                    m_attach                    = e.m_attach,
+                    m_follow                    = e.m_follow,
+                    m_inheritParentRotation     = e.m_inheritParentRotation,
+                    m_inheritParentScale        = e.m_inheritParentScale,
+                    m_multiplyParentVisualScale = e.m_multiplyParentVisualScale,
+                    m_randomRotation            = e.m_randomRotation,
+                    m_scale                     = e.m_scale,
+                    m_childTransform            = e.m_childTransform,
+                };
+            }
+            return new EffectList { m_effectPrefabs = entries };
+        }
+
         // Flattens the specular response on every material under `root`'s MeshRenderers:
         // metallic/gloss/smoothness/specular floats go to 0, metal/gloss maps are cleared,
         // metal/spec colors go to black. The vanilla materials keep their metallic response

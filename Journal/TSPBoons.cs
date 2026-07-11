@@ -7,6 +7,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
     public static class TSPBoons
     {
         public const string StoneKin = "stone_kin";
+        public const string Holdfast = "holdfast";
 
         private static readonly int StoneKinSEHash = "SE_StoneKin".GetStableHashCode();
 
@@ -29,6 +30,24 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             ));
 
             BoonSystem.RegisterRitual(StoneKinRitual.Tick, StoneKinRitual.ClearAll);
+
+            BoonRegistry.Register(new BoonDef(
+                id: Holdfast,
+                name: "Holdfast",
+                gatingFeatIds: new[] { Feats.AbomRootedKills, Feats.AbomStillSeconds },
+                durationByTier: new[] { 600f, 1200f, 1800f },   // 10 / 20 / 30 min CAPS — the vigil fills them
+                applyBoon: ApplyHoldfastDefault,
+                description: "The Vine holds you as its own. While the vine is in hand (or its full raiment worn) and your feet stand on living ground, its gifts are yours.",
+                ritualText: "Sit and watch among a well-watched grove. The ritual takes hold near half a minute of watching; the longer you watch, the longer the vine holds.",
+                effectsByTier: new[]
+                {
+                    "Health regen ×1.5.\nResistant to Poison.\nThe Wet chill no longer weakens you.",
+                    "Health regen ×2.\nImmune to Poison.\nMelee attackers that strike you may be snared.",
+                    "Health regen ×2.\nImmune to Poison.\nAttackers are rooted instead of snared, held longer the more the grove was watched.",
+                }
+            ));
+
+            BoonSystem.RegisterRitual(HoldfastRitual.Tick, HoldfastRitual.ClearAll);
         }
 
         // Called from StoneKinRitual with the cached shrine score at
@@ -78,5 +97,41 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         // damage will be minimum-curve based on the score (currently 0).
         private static void ApplyStoneKinDefault(Player player, int tier)
             => ApplyStoneKin(player, tier, 0);
+
+        // Called from HoldfastRitual with the grove score and the vigil's
+        // accrued duration. The score drives the tier-3 root-hold length
+        // via the curve in SE_Holdfast.Initialize.
+        public static void ApplyHoldfast(Player player, int tier, float groveScore, float durationSeconds)
+        {
+            if (player == null || tier <= 0 || durationSeconds <= 0f) return;
+
+            SEMan seman = player.GetSEMan();
+            if (seman == null) return;
+
+            SE_Holdfast se = seman.GetStatusEffect(SE_Holdfast.Hash) as SE_Holdfast
+                          ?? seman.AddStatusEffect(SE_Holdfast.Hash) as SE_Holdfast;
+
+            if (se == null)
+            {
+                Log.Error("TSPBoons.ApplyHoldfast: SEMan did not return SE_Holdfast instance");
+                return;
+            }
+
+            se.Initialize(tier, durationSeconds, groveScore);
+            Log.Debug($"TSPBoons: Holdfast applied — tier={tier} duration={durationSeconds:0}s score={groveScore:0}");
+
+            BoonSystem.PersistBoonTier(player, Holdfast, tier);
+        }
+
+        // Fallback adapter (dev console, non-ritual grants): full tier cap,
+        // zero grove score — the tier-3 hold sits at its minimum duration.
+        private static void ApplyHoldfastDefault(Player player, int tier)
+        {
+            BoonDef def = BoonRegistry.Get(Holdfast);
+            float cap = (def != null && tier >= 1 && tier <= def.DurationByTier.Length)
+                ? def.DurationByTier[tier - 1]
+                : 0f;
+            ApplyHoldfast(player, tier, 0f, cap);
+        }
     }
 }

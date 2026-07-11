@@ -108,7 +108,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
             go.SetActive(false);
             JournalUI.Bind(controller);
-            Log.Info($"JournalUIController: built (panel={(gotPanel ? "vanilla" : "<flat>")}, body={(bodyFont != null ? bodyFont.name : "<none>")})");
+            Log.Debug($"JournalUIController: built (panel={(gotPanel ? "vanilla" : "<flat>")}, body={(bodyFont != null ? bodyFont.name : "<none>")})");
             return controller;
         }
 

@@ -52,6 +52,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
         // ── Trials ─────────────────────────────────────────────────────
         public const string StoneOnlyCreaturesFelled = "stone_only_creatures_felled";
+        public const string RootedCreaturesFelled    = "rooted_creatures_felled";
         public const string KinOnlyGolemKills        = "kin_only_golem_kills";
         public const string PerfectSkips             = "perfect_skips";
         public const string DrunkPilgrimBosses       = "drunk_pilgrim_bosses";
@@ -59,6 +60,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         public const string BossesUnarmored          = "bosses_unarmored";
         public const string BossesStoneOnly          = "bosses_stone_only";
         public const string GolemUnarmedSurvived     = "golem_unarmed_survived";
+        public const string AbomRootedKills          = "abom_rooted_kills";
+        public const string AbomStillSeconds         = "abom_still_seconds";
         public const string PeakReached              = "peak_reached";
         public const string WatcherAtPeak            = "watcher_at_peak";
     }

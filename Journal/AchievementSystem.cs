@@ -51,6 +51,18 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         // stamps are never overwritten by the DoT itself.
         public static readonly int ZdoLastHitPlayerHash = "TSP_last_hit_player".GetStableHashCode();
         public static readonly int ZdoLastHitVineHash   = "TSP_last_hit_vine".GetStableHashCode();
+        // The Grasping, Grasped counts a death landing within this window of
+        // YOUR last root/tether application (tracked attacker-side, per
+        // client — see _myGraspStamps): for the Furrow root that's identical
+        // to "SE still active" (its ttl IS 6s); for the Coil it extends the
+        // 1.4s reel to a real finishing window — the tether lays its 4s
+        // snare as it releases, so the vine's touch genuinely lingers about
+        // this long. Plain snare hits (every swing, 100%) deliberately don't
+        // count: they'd collapse the trial into "killed with a vinery weapon
+        // at all". Group-friendly the way the golem trial is — every player
+        // whose own grasp held it in the window is credited — but each
+        // credit is earned by grasping, not by mere damage participation.
+        public const float VineHoldWindowSeconds = 6f;
 
         // Belt-and-suspenders for melee: HitData.Serialize truncates m_skill
         // to a short, so custom-skill hashes get squeezed to 16 bits on the
@@ -68,12 +80,34 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         private static readonly int StoneGolemPrefabHash = "StoneGolem".GetStableHashCode();
         private const string       StoneGolemPrefabName = "StoneGolem";
 
+        // ── Abomination prefab (the Vine's avatar) ──────────────────────────
+        private static readonly int AbominationPrefabHash = "Abomination".GetStableHashCode();
+        public  const string       AbominationPrefabName  = "Abomination";
+
         // ── Tuning constants ────────────────────────────────────────────────
         // Standing Before the Stone proximity. Wiki has golem attacks at 6–8m;
         // 6m is the inner edge — you're within reach of every attack but not
         // glued to the model.
         private const float GolemAggroRange     = 6f;
         private const float GolemAggroRangeSqr  = GolemAggroRange * GolemAggroRange;
+
+        // Taking Root proximity — the Abomination's sweeping attacks reach
+        // further than a golem's; 8m keeps you inside its threat without
+        // hugging the trunk. Alertness is deliberately NOT required (same as
+        // the golem trial): if you can take root beside a sleeping one, more
+        // power to you.
+        private const float AbomTrialRange    = 8f;
+        private const float AbomTrialRangeSqr = AbomTrialRange * AbomTrialRange;
+
+        // "Motionless" = no INTENDED movement (m_moveDir from input), not no
+        // displacement: every hit applies pushback (ApplyPushback runs even
+        // on fully blocked hits), so a velocity check would reset the stand
+        // on every strike and make the trial impossible — enduring the hits
+        // IS the trial. Knockback hard enough to fling you out of range
+        // still resets via the range check. Dodge-rolling counts as moving
+        // (i-frames are not taking root); an in-place jump slips through,
+        // and gains nothing.
+        private const float StillMoveInputThreshold = 0.1f;
 
         // Boss-fight observation cadence. 4 Hz so a player who walks into an
         // already-started fight observes (and snapshots) within ~250ms —
@@ -118,12 +152,26 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         private static readonly Dictionary<ZDOID, float> _skipHitVictims
             = new Dictionary<ZDOID, float>();
 
+        // "When did MY player last grip this victim with a root or tether?"
+        // (Time.time of the local player's last root/tether-carrying hit.)
+        // Attacker-side like _localContributions, so it works regardless of
+        // who owns the victim's ZDO; consumed by ResolveDeath against
+        // VineHoldWindowSeconds, swept with the other transient state.
+        private static readonly Dictionary<ZDOID, float> _myGraspStamps
+            = new Dictionary<ZDOID, float>();
+
         // Cached proximity scans. Refreshed by Tick on the scan cadences.
         private static readonly List<Character> _nearbyBosses = new List<Character>(4);
         private static Character _cachedNearestGolem;
+        private static Character _cachedNearestAbom;
 
         // Standing Before the Stone running timer (seconds).
         private static float _golemUnarmedTimer;
+
+        // Taking Root running timer (seconds). Same shape as the golem
+        // trial: a single continuous stand, reset the moment your feet move
+        // or the Abomination leaves range, personal-best recorded.
+        private static float _abomStillTimer;
 
         // Scratch list reused by SweepStaleFights to avoid foreach-mutation.
         private static readonly List<ZDOID> _sweepBuf = new List<ZDOID>(4);
@@ -144,6 +192,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             AccessTools.FieldRefAccess<Humanoid, ItemDrop.ItemData>("m_chestItem");
         private static readonly AccessTools.FieldRef<Humanoid, ItemDrop.ItemData> LegItemRef =
             AccessTools.FieldRefAccess<Humanoid, ItemDrop.ItemData>("m_legItem");
+        // Input-driven movement vector — pushback never touches it, so it
+        // distinguishes walking from being knocked around (Taking Root).
+        private static readonly AccessTools.FieldRef<Character, Vector3> MoveDirRef =
+            AccessTools.FieldRefAccess<Character, Vector3>("m_moveDir");
 
         // ── Owner-side weapon attribution helpers (public for the RPC) ──────
 
@@ -278,6 +330,20 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             _localContributions[id] = Time.time;
         }
 
+        // Called from CharacterDamageLocalPatch alongside the contribution
+        // record: if the local player's hit carries the vine ROOT or TETHER
+        // effect, note when — The Grasping, Grasped credits a death within
+        // VineHoldWindowSeconds of your own grasp (see the window notes).
+        public static void RecordLocalGrasp(Character victim, HitData hit)
+        {
+            if (victim == null || hit == null) return;
+            int seHash = hit.m_statusEffectHash;
+            if (seHash == 0 || (seHash != VineRootHash && seHash != VineTetherHash)) return;
+            ZDOID id = victim.GetZDOID();
+            if (id.IsNone()) return;
+            _myGraspStamps[id] = Time.time;
+        }
+
         // Called from CharacterDamagePatch (Character.RPC_Damage Postfix) on
         // the victim's ZDO owner only — the one client that actually applies
         // the hit. Accumulates damage facts on the creature's ZDO so the death
@@ -342,7 +408,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             }
             if (now - _lastGolemScan >= GolemScanInterval)
             {
-                RefreshCachedGolem(player.transform.position);
+                RefreshCachedTrialCreatures(player.transform.position);
                 _lastGolemScan = now;
             }
             if (now - _lastStaleSweep >= StaleSweepInterval)
@@ -355,8 +421,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             if (_nearbyBosses.Count > 0) ScanForNewFights(player, now);
             if (_bossFights.Count > 0)    UpdateFightInvariants(player, now);
 
-            // Golem timer evaluated only when a golem is in range.
+            // Trial timers evaluated only when their creature is in range.
             UpdateGolemTimer(player, dt);
+            UpdateAbomStillTimer(player, dt);
         }
 
         // Called from CreatureDeathRpc on every client that receives the
@@ -444,9 +511,26 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 }
             }
 
+            // Grasp-window credit — earned by the grasp, not by damage
+            // participation: MY root or tether gripped this creature within
+            // the hold window of its death. Several players can each grasp
+            // and all be credited. Rooted, And Reaped collects the distinct
+            // creatures so felled — the trail that leads a cultist to try
+            // it on an Abomination, where The Grasping, Grasped waits.
+            if (_myGraspStamps.TryGetValue(victimId, out float graspTime)
+                && Time.time - graspTime <= VineHoldWindowSeconds)
+            {
+                if (!isBoss && !string.IsNullOrEmpty(prefab))
+                    FeatTracker.AddDistinct(local, Feats.RootedCreaturesFelled, prefab);
+
+                if (prefab == AbominationPrefabName)
+                    FeatTracker.RecordEvent(local, Feats.AbomRootedKills);
+            }
+
             _bossFights.Remove(victimId);
             _localContributions.Remove(victimId);
             _skipHitVictims.Remove(victimId);
+            _myGraspStamps.Remove(victimId);
         }
 
         // Drop all transient state. Called on world unload (ZNetScenePatch).
@@ -455,9 +539,12 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             _bossFights.Clear();
             _localContributions.Clear();
             _skipHitVictims.Clear();
+            _myGraspStamps.Clear();
             _nearbyBosses.Clear();
             _cachedNearestGolem = null;
+            _cachedNearestAbom  = null;
             _golemUnarmedTimer = 0f;
+            _abomStillTimer    = 0f;
             _lastBossScan = _lastGolemScan = _lastStaleSweep = 0f;
         }
 
@@ -476,32 +563,50 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             }
         }
 
-        private static void RefreshCachedGolem(Vector3 playerPos)
+        // One pass over all characters caches the nearest trial creature of
+        // each cult — golem for Standing Before the Stone, Abomination for
+        // Taking Root — inside their respective trial ranges.
+        private static void RefreshCachedTrialCreatures(Vector3 playerPos)
         {
             _cachedNearestGolem = null;
-            float bestSqr = GolemAggroRangeSqr;
+            _cachedNearestAbom  = null;
+            float bestGolemSqr = GolemAggroRangeSqr;
+            float bestAbomSqr  = AbomTrialRangeSqr;
             List<Character> all = Character.GetAllCharacters();
             for (int i = 0; i < all.Count; i++)
             {
                 Character c = all[i];
                 if (c == null || c is Player) continue;
-                if (!IsStoneGolem(c)) continue;
-                float dSqr = (c.transform.position - playerPos).sqrMagnitude;
-                if (dSqr < bestSqr)
+
+                int prefabHash = PrefabHashOf(c);
+                if (prefabHash == StoneGolemPrefabHash)
                 {
-                    bestSqr = dSqr;
-                    _cachedNearestGolem = c;
+                    float dSqr = (c.transform.position - playerPos).sqrMagnitude;
+                    if (dSqr < bestGolemSqr)
+                    {
+                        bestGolemSqr = dSqr;
+                        _cachedNearestGolem = c;
+                    }
+                }
+                else if (prefabHash == AbominationPrefabHash)
+                {
+                    float dSqr = (c.transform.position - playerPos).sqrMagnitude;
+                    if (dSqr < bestAbomSqr)
+                    {
+                        bestAbomSqr = dSqr;
+                        _cachedNearestAbom = c;
+                    }
                 }
             }
         }
 
-        private static bool IsStoneGolem(Character c)
+        private static int PrefabHashOf(Character c)
         {
             ZNetView nv = NviewRef(c);
-            if (nv == null) return false;
+            if (nv == null) return 0;
             ZDO zdo = nv.GetZDO();
-            if (zdo == null) return false;
-            return zdo.GetPrefab() == StoneGolemPrefabHash;
+            if (zdo == null) return 0;
+            return zdo.GetPrefab();
         }
 
         private static void ScanForNewFights(Player player, float now)
@@ -578,6 +683,33 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 FeatTracker.RecordPersonalBest(player, Feats.GolemUnarmedSurvived, seconds);
         }
 
+        // Taking Root — a single continuous motionless stand within reach of
+        // an Abomination, personal-best recorded (the golem trial's shape).
+        // Blocking and attacking are allowed; moving your feet or dodging,
+        // or the creature leaving range, resets the stand.
+        private static void UpdateAbomStillTimer(Player player, float dt)
+        {
+            Character a = _cachedNearestAbom;
+            if (a == null) { _abomStillTimer = 0f; return; }
+
+            if ((a.transform.position - player.transform.position).sqrMagnitude > AbomTrialRangeSqr)
+            {
+                _abomStillTimer = 0f;
+                return;
+            }
+
+            if (MoveDirRef(player).magnitude > StillMoveInputThreshold || player.InDodge())
+            {
+                _abomStillTimer = 0f;
+                return;
+            }
+
+            _abomStillTimer += dt;
+            int seconds = Mathf.FloorToInt(_abomStillTimer);
+            if (seconds > 0)
+                FeatTracker.RecordPersonalBest(player, Feats.AbomStillSeconds, seconds);
+        }
+
         private static void SweepStaleFights(float now)
         {
             if (_bossFights.Count > 0)
@@ -614,6 +746,20 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
                 }
                 for (int i = 0; i < _sweepBuf.Count; i++)
                     _skipHitVictims.Remove(_sweepBuf[i]);
+            }
+
+            // Grasp stamps go stale far faster than the fight memory — the
+            // hold window is seconds — but the skip-hit cadence is fine.
+            if (_myGraspStamps.Count > 0)
+            {
+                _sweepBuf.Clear();
+                foreach (KeyValuePair<ZDOID, float> kvp in _myGraspStamps)
+                {
+                    if (now - kvp.Value > SkipHitStaleSeconds)
+                        _sweepBuf.Add(kvp.Key);
+                }
+                for (int i = 0; i < _sweepBuf.Count; i++)
+                    _myGraspStamps.Remove(_sweepBuf[i]);
             }
 
             _sweepBuf.Clear();

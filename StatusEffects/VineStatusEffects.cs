@@ -19,6 +19,11 @@ namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
 
         public static readonly int SnareHash = SnareEffectName.GetStableHashCode();
 
+        // Snare cloud color: multiplies the vanilla poisoned-cloud's own green,
+        // so values < 1 darken it. Kept clearly darker than a live Poison so the
+        // two read apart when the same hit applies both. In-game tuning knob.
+        private static readonly Color SnareCloudTint = new Color(0.35f, 0.5f, 0.35f, 1f);
+
         public static SE_Stats Snare  { get; private set; }
         public static SE_Stats Root   { get; private set; }
         public static SE_VineTether Tether { get; private set; }
@@ -37,9 +42,27 @@ namespace malafein.Valheim.TheSedimentaryPath.StatusEffects
                 Snare.m_ttl           = 4f;
                 Snare.m_speedModifier = -0.45f; // ~45% movement slow
                 Snare.m_icon          = rootIcon;
-                // No visual: the snare lands on EVERY hit of both weapons, so the
-                // full root-grab vfx would be spam. A subtler variant can be picked
-                // after seeing the Root visual in-game.
+
+                // Subtle held-cue (the full root-grab vfx would be spam — the
+                // snare lands on EVERY hit of both weapons): the vanilla
+                // poisoned-cloud, retinted darker so it reads apart from the
+                // real poisoning the same hit usually deals. Donor is the
+                // Poison SE itself — no prefab-name guessing. Cosmetic only:
+                // a miss leaves the snare functional but invisible.
+                StatusEffect poisonDonor = db?.m_StatusEffects?.Find(
+                    se => se != null && se.name == "Poison");
+                if (poisonDonor != null && poisonDonor.m_startEffects.HasEffects())
+                {
+                    Snare.m_startEffects = VisualUtil.CloneEffectListRetinted(
+                        poisonDonor.m_startEffects,
+                        SnareCloudTint,
+                        "TSP_vfx_vinesnare");
+                    VisualUtil.DumpEffectList("SE_VineSnare.m_startEffects", Snare.m_startEffects);
+                }
+                else
+                {
+                    Log.Warn("VineStatusEffects: Poison SE donor has no start effects — snare stays without a visual");
+                }
             }
 
             if (Root == null)

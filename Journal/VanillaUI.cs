@@ -211,7 +211,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             ResolveButton();
             ResolveScrollbar();
 
-            Log.Info(
+            Log.Debug(
                 $"VanillaUI resolved: title={Name(_titleFont)} body={Name(_bodyFont)} " +
                 $"panel={(_hasPanel ? $"{_panelSprite.name} colour={_panelColor}" : "<flat>")} " +
                 $"button={(_hasButton ? $"{_buttonSprite.name} transition={_btnTransition}" : "<flat>")}");

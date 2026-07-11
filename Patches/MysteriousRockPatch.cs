@@ -166,7 +166,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 return;
 
             player.RaiseSkill(RockerySkill.SkillType, 0.25f);
-            Log.Info("PetMysteriousRock: petted the rock, awarded 0.25 XP");
+            Log.Debug("PetMysteriousRock: petted the rock, awarded 0.25 XP");
 
             // Shrine pilgrimage hint: only the Mysterious Rock leans the view
             // toward the world's highest peak (and unlocks the tease lore), and
@@ -195,7 +195,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 return;
 
             player.RaiseSkill(RockerySkill.SkillType, 25f);
-            Log.Info("MysteriousRockSpeak: the Rock has spoken, awarded 25 XP");
+            Log.Debug("MysteriousRockSpeak: the Rock has spoken, awarded 25 XP");
         }
     }
 

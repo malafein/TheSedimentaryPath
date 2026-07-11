@@ -153,6 +153,25 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
                 Log.Debug("ObjectDB.Awake: SE_StoneKin registered");
             }
 
+            // Register the Holdfast status effect template — the Vinery
+            // boon. Tier-specific configuration (m_ttl, tier mods, root-hold
+            // duration) is set per-instance by SE_Holdfast.Initialize()
+            // after SEMan adds the clone.
+            if (!__instance.m_StatusEffects.Exists(se => se is SE_Holdfast))
+            {
+                SE_Holdfast holdfastSE = ScriptableObject.CreateInstance<SE_Holdfast>();
+                holdfastSE.name = SE_Holdfast.EffectName;
+                holdfastSE.m_name = "Holdfast";
+                holdfastSE.m_tooltip = "The vine holds fast to you.";
+                // Borrow the Abomination trophy icon (placeholder until a
+                // custom icon lands, same as Stone-Kin's golem trophy).
+                holdfastSE.m_icon = GetItemIcon(__instance, "TrophyAbomination");
+                if (holdfastSE.m_icon == null)
+                    Log.Warn("ObjectDB.Awake: TrophyAbomination icon not found; SE_Holdfast will have no HUD icon");
+                __instance.m_StatusEffects.Add(holdfastSE);
+                Log.Debug("ObjectDB.Awake: SE_Holdfast registered");
+            }
+
             // Build KinFist (hidden ItemData, not in inventory).
             // Tier-3 KinFist activation reads its damage from this
             // shared instance via Humanoid.GetCurrentWeapon postfix.
@@ -245,6 +264,10 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             {
                 Log.Debug("ObjectDB.Awake: Bindsinew already registered, skipping");
             }
+
+            // Vinery empowers the vanilla Ashlands Nature (jade) weapons — capture
+            // their authored proc chances before any per-swing scaling mutates them.
+            NatureWeaponEmpowerment.Build(__instance);
 
             // Vinery weapons (RootAtgeir + RootSpear) — split skill (native weapon
             // skill × Vinery), mirroring the rockery obsidian weapons. Both share the
