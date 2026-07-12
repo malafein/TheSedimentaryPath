@@ -26,7 +26,11 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
 
             if (_takeInputMethod == null)
                 _takeInputMethod = AccessTools.Method(typeof(Player), "TakeInput");
-            if (!(bool)_takeInputMethod.Invoke(__instance, null)) return;
+            if (!(bool)_takeInputMethod.Invoke(__instance, null))
+            {
+                HandleJournalOverInventory();
+                return;
+            }
 
             HandleHotkey(Plugin.ToggleRockeryProximity, () =>
             {
@@ -56,6 +60,27 @@ namespace malafein.Valheim.TheSedimentaryPath.Patches
             HandleHotkey(Plugin.JournalHotkey, () =>
             {
                 if (!JournalUI.IsOpen) JournalUI.Open();
+            });
+        }
+
+        // Inventory ⇄ Journal open symmetry, journal side: the journal key
+        // works over the OPEN INVENTORY specifically — the inventory yields
+        // and the journal opens (the inverse swap lives in
+        // InventoryGuiShowJournalPatch). Every other TakeInput-false state
+        // stays inert: chat, console, menu, and the open journal itself
+        // (whose re-press close is owned by JournalUI.Update).
+        private static void HandleJournalOverInventory()
+        {
+            // IsVisible() is only patched true while the journal is open, so
+            // with the journal closed a true here is the real inventory.
+            if (JournalUI.IsOpen || !InventoryGui.IsVisible()) return;
+            if (Console.IsVisible() || Menu.IsVisible() || TextInput.IsVisible()) return;
+            if (Chat.instance != null && Chat.instance.HasFocus()) return;
+
+            HandleHotkey(Plugin.JournalHotkey, () =>
+            {
+                InventoryGui.instance.Hide();
+                JournalUI.Open();
             });
         }
 
