@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.3
+- the thrown coil finds the hand again, however swift the return
+- the stone and the vine answer only those who see the asking through
+- the journal and the satchel keep one table between them
+
 ## 0.3.2
 - the vine answers those who watched it grow
 - the path keeps its counsel, and speaks plainly only of trouble
