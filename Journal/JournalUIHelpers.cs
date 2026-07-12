@@ -113,7 +113,16 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             float fontSize,
             TextAlignmentOptions alignment)
         {
-            var tmp = rt.gameObject.AddComponent<TextMeshProUGUI>();
+            // TMP's Awake runs synchronously at AddComponent on an active
+            // object and hunts for the project-default font (LiberationSans
+            // SDF — not shipped with Valheim) before our assignment below
+            // lands, logging a warning per element. Add the component on an
+            // inactive object so Awake defers until the font is set.
+            GameObject go = rt.gameObject;
+            bool wasActive = go.activeSelf;
+            if (wasActive) go.SetActive(false);
+
+            var tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text = text;
             tmp.alignment = alignment;
             tmp.color = BodyTextColor;
@@ -124,6 +133,8 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             // material's atlas matches; title/button callers override afterward.
             if (font != null && font == VanillaUI.BodyFont && VanillaUI.BodyMaterial != null)
                 tmp.fontSharedMaterial = VanillaUI.BodyMaterial;
+
+            if (wasActive) go.SetActive(true);
             return tmp;
         }
 
