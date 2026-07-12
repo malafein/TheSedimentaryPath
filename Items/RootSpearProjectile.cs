@@ -1,3 +1,4 @@
+using System.Collections;
 using HarmonyLib;
 using UnityEngine;
 
@@ -220,19 +221,49 @@ namespace malafein.Valheim.TheSedimentaryPath.Items
             Inventory inv = player.GetInventory();
             if (inv != null && inv.AddItem(item))
             {
-                // Yank it back into an empty hand. GetCurrentWeapon() falls back to the
-                // unarmed weapon (never null), so "empty" means it equals that.
-                ItemDrop.ItemData current = player.GetCurrentWeapon();
-                bool handEmpty = current == null
-                    || (player.m_unarmedWeapon != null && current == player.m_unarmedWeapon.m_itemData);
-                if (handEmpty)
-                    player.EquipItem(item);
+                // Yank it back into an empty hand — but EquipItem silently refuses while
+                // InAttack()/InDodge() (also swimming), and a fast return lands while the
+                // throw animation still runs. Vanilla defers mid-attack equips through
+                // Player's action queue (private), so poll instead until the guards
+                // clear. The coroutine runs on the player — this projectile is about to
+                // be destroyed.
+                if (HandEmpty(player) && !player.EquipItem(item))
+                    player.StartCoroutine(EquipWhenAble(player, item));
             }
             else
             {
                 // Inventory full — drop it at the player's feet so it's never lost.
                 ItemDrop.DropItem(item, 1, player.transform.position + Vector3.up, Quaternion.identity);
             }
+        }
+
+        // "Empty hand" = GetCurrentWeapon() fell through to the unarmed weapon
+        // (it never returns null while m_unarmedWeapon is set).
+        private static bool HandEmpty(Player player)
+        {
+            ItemDrop.ItemData current = player.GetCurrentWeapon();
+            return current == null
+                || (player.m_unarmedWeapon != null && current == player.m_unarmedWeapon.m_itemData);
+        }
+
+        // Waits out EquipItem's refusal guards (attack/dodge animation, swimming) and
+        // equips the returned spear once they clear. Gives up when the player takes
+        // another weapon in hand, the spear leaves the inventory, or the window
+        // elapses — the spear stays safely in the inventory either way.
+        private static IEnumerator EquipWhenAble(Player player, ItemDrop.ItemData item)
+        {
+            float deadline = Time.time + 4f;
+            while (Time.time < deadline)
+            {
+                yield return null;
+                if (player == null || player.IsDead()) yield break;
+                Inventory inv = player.GetInventory();
+                if (inv == null || !inv.ContainsItem(item)) yield break; // moved/dropped
+                if (!HandEmpty(player)) yield break; // took something else in hand
+                if (player.InAttack() || player.InDodge()) continue;
+                if (player.EquipItem(item)) yield break;
+            }
+            Log.Debug("RootSpearProjectile.EquipWhenAble: retry window elapsed — spear left in inventory");
         }
 
         private void DestroyProjectile()
