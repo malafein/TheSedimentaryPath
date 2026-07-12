@@ -28,11 +28,19 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
     // (minimum vigil reached), one when the cap is reached so the player
     // knows they may rise. The boon is granted when the sit ends.
     //
+    // The ritual answers only at the take-moment (0.3.3, user direction
+    // 2026-07-10): unworthy/tier-0 attempts hold the full minimum vigil too,
+    // and the rejection line fires at MinVigilSeconds — where "the vine
+    // takes hold" would — so the pilgrim genuinely attempts the ritual
+    // before being answered. Rising early gets no answer.
+    //
     // Flow (WATCHING begins the ritual — merely sitting near a grove opens
     // nothing and says nothing; the rejection lines are part of the ritual
-    // and only speak to someone actually watching):
-    //   Idle      → began watching near a worthy grove  → Holding
-    //   Holding   → rose before MinVigilSeconds watched → Idle (no grant)
+    // and only speak to someone who watched out the minimum vigil):
+    //   Idle      → began watching near a watched grove → Holding
+    //   Holding   → rose before MinVigilSeconds watched → Idle (no answer)
+    //             → MinVigilSeconds watched, unworthy
+    //               site or tier 0                      → rejection, Completed
     //             → rose after MinVigilSeconds watched  → grant, Completed
     //   Completed → wait for the sit to end             → Idle
     public static class HoldfastRitual
@@ -101,8 +109,9 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             {
                 case RitualState.Idle:
                     // Attempt once per watch session (the grove scan is not
-                    // per-frame cheap); a watch begun nowhere worthy stays
-                    // silent until the player rises and watches anew.
+                    // per-frame cheap); a watch begun with no watched grove
+                    // around at all stays silent until the player rises and
+                    // watches anew.
                     if (beganWatching) TryStart(player);
                     break;
 
@@ -139,32 +148,18 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             float score = ComputeGroveScore(player.transform.position);
             if (score <= 0f) return; // watching, but no watched grove around — silent
 
-            if (score < MinGroveScore)
-            {
-                Notify.Center("this grove is not yet worthy of the vine", 0f);
-                Log.Debug($"HoldfastRitual: rejected — score={score:0} below MinGroveScore={MinGroveScore:0}");
-                _state = RitualState.Completed; // hold here until the sit ends
-                return;
-            }
-
-            // Pre-check tier so the player isn't made to hold a long vigil
-            // just to find out they haven't earned the boon.
-            int tier = BoonSystem.ComputeBoonTier(player, BoonRegistry.Get(TSPBoons.Holdfast));
-            if (tier == 0)
-            {
-                Notify.Center("the vine does not yet know you", 0f);
-                Log.Debug("HoldfastRitual: rejected — boon tier 0 (trials not yet endured)");
-                _state = RitualState.Completed;
-                return;
-            }
-
+            // Worthiness and tier are deliberately NOT answered here — the
+            // pilgrim watches out the full minimum vigil and is answered at
+            // MinVigilSeconds in UpdateHold, at the moment the ritual would
+            // take. The grove score is cached from this scan (it's not
+            // per-frame cheap); tier is computed fresh at the take.
             _state       = RitualState.Holding;
             _heldSeconds = 0f;
             _groveScore  = score;
             _tookHold    = false;
             _capNotified = false;
 
-            Log.Debug($"HoldfastRitual: vigil started — tier={tier} groveScore={score:0}");
+            Log.Debug($"HoldfastRitual: vigil started — groveScore={score:0.00}");
         }
 
         private static void UpdateHold(Player player, float dt, bool watching)
@@ -178,6 +173,26 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
 
             if (!_tookHold && held >= MinVigilSeconds)
             {
+                // The minimum vigil has been watched out — now the ritual
+                // answers. Rejection lines fire here, at the take-moment,
+                // not at watch-start.
+                if (_groveScore < MinGroveScore)
+                {
+                    Notify.Center("this grove is not yet worthy of the vine", 0f);
+                    Log.Debug($"HoldfastRitual: rejected — score={_groveScore:0.00} below MinGroveScore={MinGroveScore:0}");
+                    _state = RitualState.Completed; // hold here until the sit ends
+                    return;
+                }
+
+                int tier = BoonSystem.ComputeBoonTier(player, BoonRegistry.Get(TSPBoons.Holdfast));
+                if (tier == 0)
+                {
+                    Notify.Center("the vine does not yet know you", 0f);
+                    Log.Debug("HoldfastRitual: rejected — boon tier 0 (trials not yet endured)");
+                    _state = RitualState.Completed;
+                    return;
+                }
+
                 _tookHold = true;
                 Notify.Center("the vine takes hold", 0f);
             }

@@ -11,11 +11,17 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
     // Owns its own state machine; other boons get their own ritual class
     // with whatever conditions fit them.
     //
+    // The ritual answers only at the take-moment (0.3.3, user direction
+    // 2026-07-10): unworthy/tier-0 attempts hold the full kneel too, and the
+    // rejection line fires where the grant would — the pilgrim genuinely
+    // attempts the ritual before being answered. Rising early gets no answer.
+    //
     // Flow:
-    //   Idle      → kneeling near a qualifying shrine → Holding
-    //   Holding   → held for RitualDurationSeconds   → Completed
-    //               → kneel breaks or out of range   → Idle
-    //   Completed → wait for kneel to end            → Idle
+    //   Idle      → kneeling near a shrine (any score) → Holding
+    //   Holding   → held for RitualDurationSeconds     → answered (grant, or
+    //               rejection: unworthy place / tier 0) → Completed
+    //             → kneel breaks or out of range        → Idle (no answer)
+    //   Completed → wait for kneel to end               → Idle
     public static class StoneKinRitual
     {
         // ── Tuning ───────────────────────────────────────────────────────
@@ -35,6 +41,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
         private static float       _holdStartTime;
         private static Vector3     _activeShrinePos;
         private static int         _cachedScore;
+        private static bool        _qualifying;
 
         // ── BoonSystem hooks ─────────────────────────────────────────────
 
@@ -76,6 +83,7 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             _holdStartTime   = 0f;
             _activeShrinePos = Vector3.zero;
             _cachedScore     = 0;
+            _qualifying      = false;
         }
 
         // ── Internals ────────────────────────────────────────────────────
@@ -85,49 +93,44 @@ namespace malafein.Valheim.TheSedimentaryPath.Journal
             RockShrineComponent shrine = RockShrine.FindNearest(player.transform.position, ShrineProximityRadius);
             if (shrine == null) return;  // kneeling but not near a shrine — silent
 
-            if (!shrine.IsQualifyingForBoon)
+            // Worthiness and tier are deliberately NOT answered here — the
+            // pilgrim holds the full kneel and is answered in Complete, at
+            // the moment the ritual would take. Worthiness is cached at
+            // kneel-start (the shrine can't change under a kneeling player);
+            // tier is computed fresh at the take.
+            _state           = RitualState.Holding;
+            _holdStartTime   = Time.time;
+            _activeShrinePos = shrine.transform.position;
+            _cachedScore     = shrine.Score;
+            _qualifying      = shrine.IsQualifyingForBoon;
+
+            Log.Debug($"StoneKinRitual: kneel started — score={_cachedScore} qualifying={_qualifying} at {_activeShrinePos}");
+        }
+
+        // The kneel has been held — now the ritual answers. Rejection lines
+        // fire here, at the take-moment, not at kneel-start.
+        private static void Complete(Player player)
+        {
+            _state = RitualState.Completed;  // hold here until kneel ends to avoid spamming
+
+            if (!_qualifying)
             {
                 Notify.Center("this place is not yet worthy of the stone", 0f);
-                Log.Debug($"StoneKinRitual: rejected — score={shrine.Score} below MinBoonScore={RockShrine.MinBoonScore}");
-                _state = RitualState.Completed;  // hold here until kneel ends to avoid spamming
+                Log.Debug($"StoneKinRitual: rejected — score={_cachedScore} below MinBoonScore={RockShrine.MinBoonScore}");
                 return;
             }
 
-            // Pre-check tier so we don't make the player hold the full
-            // ritual duration just to find out they haven't earned it.
             int tier = BoonSystem.ComputeBoonTier(player, BoonRegistry.Get(TSPBoons.StoneKin));
             if (tier == 0)
             {
                 Notify.Center("the stone does not yet know you as kin", 0f);
                 Log.Debug("StoneKinRitual: rejected — boon tier 0 (feats not yet earned)");
-                _state = RitualState.Completed;
                 return;
             }
 
-            _state           = RitualState.Holding;
-            _holdStartTime   = Time.time;
-            _activeShrinePos = shrine.transform.position;
-            _cachedScore     = shrine.Score;
-
-            Log.Info($"StoneKinRitual: started — tier={tier} score={_cachedScore} at {_activeShrinePos}");
-        }
-
-        private static void Complete(Player player)
-        {
-            // Recompute tier at completion in case feats advanced during
-            // the hold (rare but possible). The pre-check at TryStart
-            // protects against the common "boon not earned" case.
-            BoonDef def = BoonRegistry.Get(TSPBoons.StoneKin);
-            int tier = BoonSystem.ComputeBoonTier(player, def);
-
-            if (tier > 0)
-            {
-                TSPBoons.ApplyStoneKin(player, tier, _cachedScore);
-                Notify.Center("the stone takes you as kin", 0f);
-            }
-
-            Log.Info($"StoneKinRitual: completed — granted tier={tier} score={_cachedScore}");
-            _state = RitualState.Completed;
+            TSPBoons.ApplyStoneKin(player, tier, _cachedScore);
+            Notify.Center("the stone takes you as kin", 0f);
+            Log.Debug($"StoneKinRitual: completed — granted tier={tier} score={_cachedScore}");
         }
 
         private static void Abort()
